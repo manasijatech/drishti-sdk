@@ -1,0 +1,39 @@
+{
+  "name": "market-stack-sdk",
+  "version": "0.1.0",
+  "description": "TypeScript/JavaScript client for the Alpha API (/v1)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "keywords": [
+    "alpha-api",
+    "sdk",
+    "typescript",
+    "javascript",
+    "http-client"
+  ],
+  "author": "Manasija",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "typescript": "~5.6.0"
+  },
+  "license": "MIT"
+}
