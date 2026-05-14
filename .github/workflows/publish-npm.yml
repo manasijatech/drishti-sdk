@@ -2,8 +2,11 @@ name: Publish Package
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+    paths:
+      - 'js/**'
+      - '.github/workflows/publish-npm.yml'
 
 permissions:
   id-token: write
@@ -12,6 +15,9 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: js
     steps:
       - uses: actions/checkout@v6
 
