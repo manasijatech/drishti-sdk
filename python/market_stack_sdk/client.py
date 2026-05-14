@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from typing import Any, Mapping, TypeVar, cast
 
 import httpx
@@ -30,7 +29,7 @@ from market_stack_sdk.types import (
     SymbolMetadataResponse,
 )
 
-DEFAULT_BASE_URL = os.getenv("ALPHA_API_BASE_URL", "http://127.0.0.1:8000")
+DEFAULT_BASE_URL = "https://developers.manasija.in"
 DEFAULT_TIMEOUT_SEC = 60.0
 
 TResponse = TypeVar("TResponse")

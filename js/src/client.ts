@@ -21,8 +21,7 @@ import type {
   SymbolMetadataResponse,
 } from "./types.js";
 
-const runtimeEnv = globalThis as { process?: { env?: Record<string, string | undefined> } };
-export const DEFAULT_BASE_URL = runtimeEnv.process?.env?.ALPHA_API_BASE_URL ?? "http://127.0.0.1:8000";
+export const DEFAULT_BASE_URL = "https://developers.manasija.in";
 
 export type JsonBody = Record<string, JsonValue> | JsonValue[] | null;
 export type QueryValue = string | number | boolean | null | undefined;
