@@ -7,6 +7,41 @@ export type PaginatedResponse<TItem> = {
   has_next: boolean;
 };
 
+export type AttachmentLookupStatus = "ready" | "not_found" | "invalid_id" | "no_attachment" | "no_transcript";
+
+export type AttachmentLookupItem = {
+  id: string;
+  status: AttachmentLookupStatus;
+  url?: string | null;
+  expires_in?: number | null;
+  message?: string | null;
+};
+
+export type BatchAttachmentLookupResponse = {
+  data: AttachmentLookupItem[];
+};
+
+export type StringListResponse = {
+  data: string[];
+};
+
+export type SymbolMetadata = {
+  symbol: string;
+  company_name?: string | null;
+  logo?: string | null;
+  market_cap?: number | null;
+  sector?: string | null;
+  basic_industry?: string | null;
+  industry?: string | null;
+  macro_economic_indicator?: string | null;
+  theme?: string | null;
+  scrip_code?: string | null;
+};
+
+export type SymbolMetadataResponse = {
+  data: SymbolMetadata[];
+};
+
 export type Attachment = {
   has_attachment: boolean;
   url: string;
@@ -44,12 +79,30 @@ export type AnnouncementDetail = {
   earnings_significant?: boolean | null;
 };
 
+export type AnnouncementBatchResponse = {
+  data: AnnouncementDetail[];
+  missing_ids: string[];
+};
+
+export type NewsItem = {
+  id: string;
+  title?: string | null;
+  description?: string | null;
+  content?: string | null;
+  source?: string | null;
+  symbol?: string | null;
+  sentiment?: string | null;
+  date?: string | null;
+  link?: string | null;
+  image?: string | null;
+};
+
 export type Alert = {
   id: string;
   symbol: string;
-  type?: string | null;
+  alert_type?: string | null;
   reason?: string | null;
-  timestamp?: string | null;
+  date?: string | null;
   meta: Record<string, JsonValue>;
 };
 
@@ -63,13 +116,6 @@ export type Concall = {
   month?: string | null;
   filename?: string | null;
   type?: string | null;
-  date?: string | null;
-};
-
-export type MarketReport = {
-  id: string;
-  type?: string | null;
-  summary?: string | null;
   date?: string | null;
 };
 
@@ -120,7 +166,6 @@ export type LedgerEntry = {
 };
 
 export type AccountDetailResponse = { data: AccountResponse };
-export type AccountListResponse = { data: AccountResponse[] };
 export type AccountUsageResponse = {
   account_id: string;
   balance: number;
@@ -132,73 +177,6 @@ export type AccountUsageResponse = {
 export type AccountUsageEnvelope = { data: AccountUsageResponse };
 export type LedgerListResponse = { data: LedgerEntry[] };
 export type AccountLimitsResponse = Record<string, Record<string, number>>;
-
-export type ApiKeyPayload = {
-  api_key: string;
-  account_id?: string | null;
-  user_id: string;
-  status: string;
-  rpm?: number | null;
-  daily?: number | null;
-  apis: string[] | string;
-  ws_channels: string[] | string;
-  issued_at: string;
-  updated_at: string;
-  deleted_at?: string | null;
-};
-
-export type ApiKeyCreateResponse = { data: ApiKeyPayload };
-export type ApiKeyGetResponse = { data: ApiKeyPayload };
-export type ApiKeyDeleteResponse = { data: Record<string, JsonValue> };
-export type MetaPage = { total: number; page: number; per_page: number; total_pages: number; has_next: boolean };
-export type LinksPage = { self: string; next?: string | null; last: string };
-export type ApiKeyListResponse = { data: ApiKeyPayload[]; meta: MetaPage; links?: LinksPage | null };
-export type MigrateResponse = { data: Record<string, number> };
-export type CacheClearResponse = { data: Record<string, number> };
-export type UsagePoint = { bucket: string; count: number };
-export type UsageResponse = { data: { usage: UsagePoint[] } | Record<string, UsagePoint[]> };
-
-export type ApiKeyAdminPayload = {
-  api_key: string;
-  account_id: string;
-  user_id: string;
-  status: string;
-  rpm?: number | null;
-  daily?: number | null;
-  allowed_products: string[] | string;
-  allowed_ws_products: string[] | string;
-  issued_at: string;
-  updated_at: string;
-  deleted_at?: string | null;
-};
-
-export type ApiKeyAdminListResponse = { data: ApiKeyAdminPayload[] };
-export type UsageHistoryPoint = {
-  bucket_date: string;
-  api_key?: string | null;
-  route_id?: string | null;
-  request_count: number;
-  credits_debited: number;
-};
-export type UsageHistoryEnvelope = { data: Record<string, JsonValue> };
-
-export type AdminApiKeyDetail = {
-  api_key: ApiKeyAdminPayload;
-  live_usage: Record<string, number>;
-  usage_history: UsageHistoryPoint[];
-  recent_ledger: LedgerEntry[];
-};
-
-export type AdminApiKeyDetailResponse = { data: AdminApiKeyDetail };
-
-export type AdminAccountDashboard = {
-  account: AccountResponse;
-  api_keys: ApiKeyAdminPayload[];
-  usage_history: UsageHistoryPoint[];
-  recent_ledger: LedgerEntry[];
-};
-
-export type AdminAccountDashboardResponse = { data: AdminAccountDashboard };
 
 export type RequestCounts = { total: number; completed: number; failed: number };
 export type BatchJobResponse = {

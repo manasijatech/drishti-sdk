@@ -2,33 +2,23 @@ import { MarketStackApiError } from "./errors.js";
 import type {
   AccountDetailResponse,
   AccountLimitsResponse,
-  AccountListResponse,
   AccountUsageEnvelope,
-  AdminAccountDashboardResponse,
-  AdminApiKeyDetailResponse,
   Alert,
+  AnnouncementBatchResponse,
   AnnouncementDetail,
-  ApiKeyAdminListResponse,
-  ApiKeyAdminPayload,
-  ApiKeyCreateResponse,
-  ApiKeyDeleteResponse,
-  ApiKeyGetResponse,
-  ApiKeyListResponse,
+  BatchAttachmentLookupResponse,
   BatchJobCancelResponse,
   BatchJobListResponse,
   BatchJobResponse,
-  CacheClearResponse,
   Concall,
   JsonValue,
-  LedgerEntry,
   LedgerListResponse,
-  MarketReport,
-  MigrateResponse,
+  NewsItem,
   PaginatedResponse,
   PresignedUrlResponse,
+  StringListResponse,
   SummaryResponse,
-  UsageHistoryEnvelope,
-  UsageResponse,
+  SymbolMetadataResponse,
 } from "./types.js";
 
 const runtimeEnv = globalThis as { process?: { env?: Record<string, string | undefined> } };
@@ -39,7 +29,7 @@ export type QueryValue = string | number | boolean | null | undefined;
 export type QueryParams = Record<string, QueryValue | QueryValue[]>;
 export type PathParams = Record<string, string | number>;
 export type RequestOptions = Readonly<{
-  body?: JsonBody;
+  body?: JsonBody | FormData;
   query?: QueryParams;
   pathParams?: PathParams;
   headers?: Record<string, string>;
@@ -147,8 +137,14 @@ export class MarketStackClient {
     const url = new URL(joinUrl(this.baseUrl, resolvedPath));
     this.appendQuery(url, options.query);
     const headers = this.mergeHeaders({ Accept: "application/json", ...options.headers });
-    const body = options.body === undefined || options.body === null ? undefined : JSON.stringify(options.body);
-    if (body !== undefined) {
+    const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
+    let body: BodyInit | undefined;
+    if (options.body === undefined || options.body === null) {
+      body = undefined;
+    } else if (isFormData) {
+      body = options.body;
+    } else {
+      body = JSON.stringify(options.body);
       headers.set("Content-Type", "application/json");
     }
     const response = await this.fetchImpl(url.toString(), {
@@ -179,16 +175,28 @@ export class MarketStackClient {
     return this.request<TResponse>("DELETE", path, options);
   }
 
+  getNews(params: { query?: QueryParams } = {}): Promise<PaginatedResponse<NewsItem>> {
+    return this.get<PaginatedResponse<NewsItem>>("/v1/news", { query: params.query });
+  }
+
+  getSymbolsMetadata(params: { query?: QueryParams } = {}): Promise<SymbolMetadataResponse> {
+    return this.get<SymbolMetadataResponse>("/v1/symbols/metadata", { query: params.query });
+  }
+
+  getAnnouncementsCategories(params: { query?: QueryParams } = {}): Promise<StringListResponse> {
+    return this.get<StringListResponse>("/v1/announcements/categories", { query: params.query });
+  }
+
   getAnnouncements(params: { query?: QueryParams } = {}): Promise<PaginatedResponse<AnnouncementDetail>> {
     return this.get<PaginatedResponse<AnnouncementDetail>>("/v1/announcements", { query: params.query });
   }
 
-  getAnnouncementsAnnouncementId(params: { announcement_id: string | number; query?: QueryParams }): Promise<AnnouncementDetail> {
-    return this.get<AnnouncementDetail>("/v1/announcements/{announcement_id}", { pathParams: { announcement_id: params.announcement_id }, query: params.query });
+  getAnnouncementsItems(params: { query?: QueryParams } = {}): Promise<AnnouncementBatchResponse> {
+    return this.get<AnnouncementBatchResponse>("/v1/announcements/items", { query: params.query });
   }
 
-  getAnnouncementsAnnouncementIdAttachment(params: { announcement_id: string | number; query?: QueryParams }): Promise<PresignedUrlResponse> {
-    return this.get<PresignedUrlResponse>("/v1/announcements/{announcement_id}/attachment", { pathParams: { announcement_id: params.announcement_id }, query: params.query });
+  getAnnouncementsAttachments(params: { query?: QueryParams } = {}): Promise<BatchAttachmentLookupResponse> {
+    return this.get<BatchAttachmentLookupResponse>("/v1/announcements/attachments", { query: params.query });
   }
 
   postDailySummary(params: { body?: JsonBody; query?: QueryParams } = {}): Promise<SummaryResponse> {
@@ -203,8 +211,8 @@ export class MarketStackClient {
     return this.get<AnnouncementDetail>("/v1/earnings/{earnings_id}", { pathParams: { earnings_id: params.earnings_id }, query: params.query });
   }
 
-  getEarningsEarningsIdAttachment(params: { earnings_id: string | number; query?: QueryParams }): Promise<PresignedUrlResponse> {
-    return this.get<PresignedUrlResponse>("/v1/earnings/{earnings_id}/attachment", { pathParams: { earnings_id: params.earnings_id }, query: params.query });
+  getEarningsAttachments(params: { query?: QueryParams } = {}): Promise<BatchAttachmentLookupResponse> {
+    return this.get<BatchAttachmentLookupResponse>("/v1/earnings/attachments", { query: params.query });
   }
 
   getConcalls(params: { query?: QueryParams } = {}): Promise<PaginatedResponse<Concall>> {
@@ -219,20 +227,12 @@ export class MarketStackClient {
     return this.get<PresignedUrlResponse>("/v1/concalls/{concall_id}/transcript", { pathParams: { concall_id: params.concall_id }, query: params.query });
   }
 
+  getConcallsTranscripts(params: { query?: QueryParams } = {}): Promise<BatchAttachmentLookupResponse> {
+    return this.get<BatchAttachmentLookupResponse>("/v1/concalls/transcripts", { query: params.query });
+  }
+
   getAlerts(params: { query?: QueryParams } = {}): Promise<PaginatedResponse<Alert>> {
     return this.get<PaginatedResponse<Alert>>("/v1/alerts", { query: params.query });
-  }
-
-  getAlertsAlertId(params: { alert_id: string | number; query?: QueryParams }): Promise<Alert> {
-    return this.get<Alert>("/v1/alerts/{alert_id}", { pathParams: { alert_id: params.alert_id }, query: params.query });
-  }
-
-  getReports(params: { query?: QueryParams } = {}): Promise<PaginatedResponse<MarketReport>> {
-    return this.get<PaginatedResponse<MarketReport>>("/v1/reports", { query: params.query });
-  }
-
-  getReportsReportId(params: { report_id: string | number; query?: QueryParams }): Promise<MarketReport> {
-    return this.get<MarketReport>("/v1/reports/{report_id}", { pathParams: { report_id: params.report_id }, query: params.query });
   }
 
   getAccount(params: { query?: QueryParams } = {}): Promise<AccountDetailResponse> {
@@ -251,92 +251,26 @@ export class MarketStackClient {
     return this.get<LedgerListResponse>("/v1/account/ledger", { query: params.query });
   }
 
-  postAdminAccounts(params: { body?: JsonBody; query?: QueryParams } = {}): Promise<AccountDetailResponse> {
-    return this.post<AccountDetailResponse>("/v1/admin/accounts", { query: params.query, body: params.body });
-  }
-
-  getAdminAccounts(params: { query?: QueryParams } = {}): Promise<AccountListResponse> {
-    return this.get<AccountListResponse>("/v1/admin/accounts", { query: params.query });
-  }
-
-  getAdminAccountsAccountId(params: { account_id: string | number; query?: QueryParams }): Promise<AccountDetailResponse> {
-    return this.get<AccountDetailResponse>("/v1/admin/accounts/{account_id}", { pathParams: { account_id: params.account_id }, query: params.query });
-  }
-
-  patchAdminAccountsAccountId(params: { account_id: string | number; body?: JsonBody; query?: QueryParams }): Promise<AccountDetailResponse> {
-    return this.patch<AccountDetailResponse>("/v1/admin/accounts/{account_id}", { pathParams: { account_id: params.account_id }, query: params.query, body: params.body });
-  }
-
-  postAdminAccountsAccountIdCredits(params: { account_id: string | number; body?: JsonBody; query?: QueryParams }): Promise<{ data: LedgerEntry }> {
-    return this.post<{ data: LedgerEntry }>("/v1/admin/accounts/{account_id}/credits", { pathParams: { account_id: params.account_id }, query: params.query, body: params.body });
-  }
-
-  getAdminAccountsAccountIdLedger(params: { account_id: string | number; query?: QueryParams }): Promise<LedgerListResponse> {
-    return this.get<LedgerListResponse>("/v1/admin/accounts/{account_id}/ledger", { pathParams: { account_id: params.account_id }, query: params.query });
-  }
-
-  postAdminAccountsAccountIdApiKeys(params: { account_id: string | number; body?: JsonBody; query?: QueryParams }): Promise<{ data: ApiKeyAdminPayload }> {
-    return this.post<{ data: ApiKeyAdminPayload }>("/v1/admin/accounts/{account_id}/api-keys", { pathParams: { account_id: params.account_id }, query: params.query, body: params.body });
-  }
-
-  patchAdminAccountsAccountIdApiKeysApiKey(params: { account_id: string | number; api_key: string | number; body?: JsonBody; query?: QueryParams }): Promise<{ data: ApiKeyAdminPayload }> {
-    return this.patch<{ data: ApiKeyAdminPayload }>("/v1/admin/accounts/{account_id}/api-keys/{api_key}", { pathParams: { account_id: params.account_id, api_key: params.api_key }, query: params.query, body: params.body });
-  }
-
-  getAdminAccountsAccountIdApiKeys(params: { account_id: string | number; query?: QueryParams }): Promise<ApiKeyAdminListResponse> {
-    return this.get<ApiKeyAdminListResponse>("/v1/admin/accounts/{account_id}/api-keys", { pathParams: { account_id: params.account_id }, query: params.query });
-  }
-
-  getAdminAccountsAccountIdDashboard(params: { account_id: string | number; query?: QueryParams }): Promise<AdminAccountDashboardResponse> {
-    return this.get<AdminAccountDashboardResponse>("/v1/admin/accounts/{account_id}/dashboard", { pathParams: { account_id: params.account_id }, query: params.query });
-  }
-
-  getAdminAccountsAccountIdUsage(params: { account_id: string | number; query?: QueryParams }): Promise<UsageHistoryEnvelope> {
-    return this.get<UsageHistoryEnvelope>("/v1/admin/accounts/{account_id}/usage", { pathParams: { account_id: params.account_id }, query: params.query });
-  }
-
-  getAdminAccountsAccountIdApiKeysApiKey(params: { account_id: string | number; api_key: string | number; query?: QueryParams }): Promise<AdminApiKeyDetailResponse> {
-    return this.get<AdminApiKeyDetailResponse>("/v1/admin/accounts/{account_id}/api-keys/{api_key}", { pathParams: { account_id: params.account_id, api_key: params.api_key }, query: params.query });
-  }
-
-  getAdminAccountsAccountIdApiKeysApiKeyUsage(params: { account_id: string | number; api_key: string | number; query?: QueryParams }): Promise<UsageHistoryEnvelope> {
-    return this.get<UsageHistoryEnvelope>("/v1/admin/accounts/{account_id}/api-keys/{api_key}/usage", { pathParams: { account_id: params.account_id, api_key: params.api_key }, query: params.query });
-  }
-
-  postApiKeys(params: { body?: JsonBody; query?: QueryParams } = {}): Promise<ApiKeyCreateResponse> {
-    return this.post<ApiKeyCreateResponse>("/v1/api-keys", { query: params.query, body: params.body });
-  }
-
-  getApiKeysApiKey(params: { api_key: string | number; query?: QueryParams }): Promise<ApiKeyGetResponse> {
-    return this.get<ApiKeyGetResponse>("/v1/api-keys/{api_key}", { pathParams: { api_key: params.api_key }, query: params.query });
-  }
-
-  patchApiKeysApiKey(params: { api_key: string | number; body?: JsonBody; query?: QueryParams }): Promise<ApiKeyGetResponse> {
-    return this.patch<ApiKeyGetResponse>("/v1/api-keys/{api_key}", { pathParams: { api_key: params.api_key }, query: params.query, body: params.body });
-  }
-
-  deleteApiKeysApiKey(params: { api_key: string | number; query?: QueryParams }): Promise<ApiKeyDeleteResponse> {
-    return this.delete<ApiKeyDeleteResponse>("/v1/api-keys/{api_key}", { pathParams: { api_key: params.api_key }, query: params.query });
-  }
-
-  getApiKeys(params: { query?: QueryParams } = {}): Promise<ApiKeyListResponse> {
-    return this.get<ApiKeyListResponse>("/v1/api-keys", { query: params.query });
-  }
-
-  postApiKeysMigrate(params: { body?: JsonBody; query?: QueryParams } = {}): Promise<MigrateResponse> {
-    return this.post<MigrateResponse>("/v1/api-keys/migrate", { query: params.query, body: params.body });
-  }
-
-  deleteApiKeysCache(params: { query?: QueryParams } = {}): Promise<CacheClearResponse> {
-    return this.delete<CacheClearResponse>("/v1/api-keys/cache", { query: params.query });
-  }
-
-  getApiKeysApiKeyUsage(params: { api_key: string | number; query?: QueryParams }): Promise<UsageResponse> {
-    return this.get<UsageResponse>("/v1/api-keys/{api_key}/usage", { pathParams: { api_key: params.api_key }, query: params.query });
-  }
-
-  postBatchJobs(params: { body?: JsonBody; query?: QueryParams } = {}): Promise<BatchJobResponse> {
+  postBatchJobs(params: { body?: JsonBody | FormData; query?: QueryParams } = {}): Promise<BatchJobResponse> {
     return this.post<BatchJobResponse>("/v1/batch/jobs", { query: params.query, body: params.body });
+  }
+
+  postBatchJobsFile(params: {
+    file: Blob;
+    filename?: string;
+    display_name?: string;
+    metadata?: string;
+    query?: QueryParams;
+  }): Promise<BatchJobResponse> {
+    const form = new FormData();
+    form.append("file", params.file, params.filename ?? "batch.jsonl");
+    if (params.display_name !== undefined) {
+      form.append("display_name", params.display_name);
+    }
+    if (params.metadata !== undefined) {
+      form.append("metadata", params.metadata);
+    }
+    return this.post<BatchJobResponse>("/v1/batch/jobs", { query: params.query, body: form });
   }
 
   getBatchJobs(params: { query?: QueryParams } = {}): Promise<BatchJobListResponse> {

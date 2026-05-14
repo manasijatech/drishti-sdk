@@ -12,6 +12,39 @@ class Attachment(TypedDict, total=False):
     mime: str | None
 
 
+class AttachmentLookupItem(TypedDict, total=False):
+    id: str
+    status: str
+    url: str | None
+    expires_in: int | None
+    message: str | None
+
+
+class BatchAttachmentLookupResponse(TypedDict):
+    data: list[AttachmentLookupItem]
+
+
+class StringListResponse(TypedDict):
+    data: list[str]
+
+
+class SymbolMetadata(TypedDict, total=False):
+    symbol: str
+    company_name: str | None
+    logo: str | None
+    market_cap: int | float | None
+    sector: str | None
+    basic_industry: str | None
+    industry: str | None
+    macro_economic_indicator: str | None
+    theme: str | None
+    scrip_code: str | None
+
+
+class SymbolMetadataResponse(TypedDict):
+    data: list[SymbolMetadata]
+
+
 class Source(TypedDict):
     name: str
     url: str
@@ -43,12 +76,30 @@ class AnnouncementDetail(TypedDict, total=False):
     earnings_significant: bool | None
 
 
+class AnnouncementBatchResponse(TypedDict):
+    data: list[AnnouncementDetail]
+    missing_ids: list[str]
+
+
+class NewsItem(TypedDict, total=False):
+    id: str
+    title: str | None
+    description: str | None
+    content: str | None
+    source: str | None
+    symbol: str | None
+    sentiment: str | None
+    date: str | None
+    link: str | None
+    image: str | None
+
+
 class Alert(TypedDict, total=False):
     id: str
     symbol: str
-    type: str | None
+    alert_type: str | None
     reason: str | None
-    timestamp: str | None
+    date: str | None
     meta: dict[str, Any]
 
 
@@ -62,13 +113,6 @@ class Concall(TypedDict, total=False):
     month: str | None
     filename: str | None
     type: str | None
-    date: str | None
-
-
-class MarketReport(TypedDict, total=False):
-    id: str
-    type: str | None
-    summary: str | None
     date: str | None
 
 
@@ -131,11 +175,6 @@ class LedgerEntry(TypedDict, total=False):
 class AccountDetailResponse(TypedDict):
     data: AccountResponse
 
-
-class AccountListResponse(TypedDict):
-    data: list[AccountResponse]
-
-
 class AccountUsageResponse(TypedDict):
     account_id: str
     balance: int
@@ -154,121 +193,6 @@ class LedgerListResponse(TypedDict):
 
 
 AccountLimitsResponse: TypeAlias = dict[str, dict[str, int]]
-
-
-class ApiKeyPayload(TypedDict, total=False):
-    api_key: str
-    account_id: str | None
-    user_id: str
-    status: str
-    rpm: int | None
-    daily: int | None
-    apis: list[str] | str
-    ws_channels: list[str] | str
-    issued_at: str
-    updated_at: str
-    deleted_at: str | None
-
-
-class MetaPage(TypedDict):
-    total: int
-    page: int
-    per_page: int
-    total_pages: int
-    has_next: bool
-
-
-class LinksPage(TypedDict, total=False):
-    self: str
-    next: str | None
-    last: str
-
-
-class ApiKeyCreateResponse(TypedDict):
-    data: ApiKeyPayload
-
-
-class ApiKeyGetResponse(TypedDict):
-    data: ApiKeyPayload
-
-
-class ApiKeyDeleteResponse(TypedDict):
-    data: dict[str, Any]
-
-
-class ApiKeyListResponse(TypedDict, total=False):
-    data: list[ApiKeyPayload]
-    meta: MetaPage
-    links: LinksPage | None
-
-
-class MigrateResponse(TypedDict):
-    data: dict[str, int]
-
-
-class CacheClearResponse(TypedDict):
-    data: dict[str, int]
-
-
-class UsagePoint(TypedDict):
-    bucket: str
-    count: int
-
-
-class UsageResponse(TypedDict):
-    data: dict[str, list[UsagePoint]]
-
-
-class ApiKeyAdminPayload(TypedDict, total=False):
-    api_key: str
-    account_id: str
-    user_id: str
-    status: str
-    rpm: int | None
-    daily: int | None
-    allowed_products: list[str] | str
-    allowed_ws_products: list[str] | str
-    issued_at: str
-    updated_at: str
-    deleted_at: str | None
-
-
-class ApiKeyAdminListResponse(TypedDict):
-    data: list[ApiKeyAdminPayload]
-
-
-class UsageHistoryPoint(TypedDict, total=False):
-    bucket_date: str
-    api_key: str | None
-    route_id: str | None
-    request_count: int
-    credits_debited: int
-
-
-class UsageHistoryEnvelope(TypedDict):
-    data: dict[str, Any]
-
-
-class AdminApiKeyDetail(TypedDict):
-    api_key: ApiKeyAdminPayload
-    live_usage: dict[str, int]
-    usage_history: list[UsageHistoryPoint]
-    recent_ledger: list[LedgerEntry]
-
-
-class AdminApiKeyDetailResponse(TypedDict):
-    data: AdminApiKeyDetail
-
-
-class AdminAccountDashboard(TypedDict):
-    account: AccountResponse
-    api_keys: list[ApiKeyAdminPayload]
-    usage_history: list[UsageHistoryPoint]
-    recent_ledger: list[LedgerEntry]
-
-
-class AdminAccountDashboardResponse(TypedDict):
-    data: AdminAccountDashboard
 
 
 class RequestCounts(TypedDict):
@@ -324,6 +248,6 @@ class PaginatedAlertResponse(TypedDict):
     has_next: bool
 
 
-class PaginatedMarketReportResponse(TypedDict):
-    data: list[MarketReport]
+class PaginatedNewsResponse(TypedDict):
+    data: list[NewsItem]
     has_next: bool
