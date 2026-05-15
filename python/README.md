@@ -26,9 +26,16 @@ with MarketStackClient(api_key="YOUR_API_KEY") as client:
         )
     )
     # Dedicated helpers are available for every public route:
-    print(client.get_news())
-    print(client.get_announcements())
+    from market_stack_sdk import AnnouncementsQueryParams, DailySummaryRequest, NewsQueryParams
+
+    print(client.get_news(NewsQueryParams(symbols=["RELIANCE"], limit=10)))
+    print(client.get_announcements(AnnouncementsQueryParams(symbols=["RELIANCE"])))
     print(client.get_earnings_earnings_id(earnings_id="67c2f8a1b2c3d4e5f6a7b8d0"))
+    print(
+        client.post_daily_summary(
+            DailySummaryRequest(portfolio=[{"symbol": "RELIANCE", "exposure": 10}])
+        )
+    )
 ```
 
 All calls automatically send `X-API-Key` from the provided `api_key`.

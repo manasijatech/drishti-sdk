@@ -5,6 +5,12 @@ from typing import Any, Mapping, TypeVar, cast
 import httpx
 
 from market_stack_sdk.exceptions import MarketStackApiError
+from market_stack_sdk.params import (
+    DailySummaryRequest,
+    FeedQueryParams,
+    NewsQueryParams,
+    coerce_query_params,
+)
 from market_stack_sdk.types import (
     AccountDetailResponse,
     AccountLimitsResponse,
@@ -132,8 +138,11 @@ class MarketStackClient:
             raise MarketStackApiError(response.status_code, data)
         return data
 
-    def get_news(self, params: Mapping[str, Any] | None = None) -> PaginatedNewsResponse:
-        return self.get("/v1/news", params=params, path_params=None)
+    def get_news(
+        self,
+        params: NewsQueryParams | Mapping[str, Any] | None = None,
+    ) -> PaginatedNewsResponse:
+        return self.get("/v1/news", params=coerce_query_params(params), path_params=None)
 
     def get_symbols_metadata(self, params: Mapping[str, Any] | None = None) -> SymbolMetadataResponse:
         return self.get("/v1/symbols/metadata", params=params, path_params=None)
@@ -141,8 +150,11 @@ class MarketStackClient:
     def get_announcements_categories(self, params: Mapping[str, Any] | None = None) -> StringListResponse:
         return self.get("/v1/announcements/categories", params=params, path_params=None)
 
-    def get_announcements(self, params: Mapping[str, Any] | None = None) -> PaginatedAnnouncementResponse:
-        return self.get("/v1/announcements", params=params, path_params=None)
+    def get_announcements(
+        self,
+        params: FeedQueryParams | Mapping[str, Any] | None = None,
+    ) -> PaginatedAnnouncementResponse:
+        return self.get("/v1/announcements", params=coerce_query_params(params), path_params=None)
 
     def get_announcements_items(self, params: Mapping[str, Any] | None = None) -> AnnouncementBatchResponse:
         return self.get("/v1/announcements/items", params=params, path_params=None)
@@ -150,11 +162,23 @@ class MarketStackClient:
     def get_announcements_attachments(self, params: Mapping[str, Any] | None = None) -> BatchAttachmentLookupResponse:
         return self.get("/v1/announcements/attachments", params=params, path_params=None)
 
-    def post_daily_summary(self, body: JsonValue | None = None, params: Mapping[str, Any] | None = None) -> SummaryResponse:
-        return self.post("/v1/daily-summary", body=body, params=params, path_params=None)
+    def post_daily_summary(
+        self,
+        body: DailySummaryRequest | JsonValue | None = None,
+        params: Mapping[str, Any] | None = None,
+    ) -> SummaryResponse:
+        request_body: JsonValue | None
+        if isinstance(body, DailySummaryRequest):
+            request_body = body.to_request_body()
+        else:
+            request_body = body
+        return self.post("/v1/daily-summary", body=request_body, params=params, path_params=None)
 
-    def get_earnings(self, params: Mapping[str, Any] | None = None) -> PaginatedAnnouncementResponse:
-        return self.get("/v1/earnings", params=params, path_params=None)
+    def get_earnings(
+        self,
+        params: FeedQueryParams | Mapping[str, Any] | None = None,
+    ) -> PaginatedAnnouncementResponse:
+        return self.get("/v1/earnings", params=coerce_query_params(params), path_params=None)
 
     def get_earnings_earnings_id(self, earnings_id: str | int, params: Mapping[str, Any] | None = None) -> AnnouncementDetail:
         return self.get("/v1/earnings/{earnings_id}", params=params, path_params={"earnings_id": earnings_id})
