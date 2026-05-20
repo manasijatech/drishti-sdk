@@ -23,6 +23,8 @@ from market_stack_sdk.types import (
     BatchJobListResponse,
     BatchJobResponse,
     Concall,
+    ConcallArtifactUrlsResponse,
+    ConcallTranscriptBatchResponse,
     JsonValue,
     LedgerListResponse,
     PaginatedAlertResponse,
@@ -223,7 +225,7 @@ class MarketStackClient:
         symbol: str,
         quarter: str,
         params: Mapping[str, Any] | None = None,
-    ) -> dict[str, Any]:
+    ) -> ConcallArtifactUrlsResponse:
         query = dict(params or {})
         query["symbol"] = symbol
         query["quarter"] = quarter
@@ -234,7 +236,7 @@ class MarketStackClient:
         *,
         items: list[dict[str, str]],
         params: Mapping[str, Any] | None = None,
-    ) -> dict[str, Any]:
+    ) -> ConcallTranscriptBatchResponse:
         return self.post(
             "/v1/concalls/transcripts",
             body={"items": items},

@@ -1,20 +1,19 @@
 from __future__ import annotations
 
-from typing import Any, TypedDict, TypeAlias
+from typing import Any, Literal, TypedDict, TypeAlias
 
 JsonPrimitive: TypeAlias = str | int | float | bool | None
 JsonValue: TypeAlias = JsonPrimitive | dict[str, "JsonValue"] | list["JsonValue"]
 
 
-class Attachment(TypedDict, total=False):
-    has_attachment: bool
-    url: str
-    mime: str | None
+AttachmentLookupStatus: TypeAlias = Literal[
+    "ready", "not_found", "invalid_id", "no_attachment", "no_transcript"
+]
 
 
 class AttachmentLookupItem(TypedDict, total=False):
     id: str
-    status: str
+    status: AttachmentLookupStatus
     url: str | None
     expires_in: int | None
     message: str | None
@@ -69,6 +68,9 @@ class AnnouncementDetail(AnnouncementListItem, total=False):
     management_guidance: str | None
 
 
+AnnouncementSummary: TypeAlias = AnnouncementDetail
+
+
 class AnnouncementBatchResponse(TypedDict):
     data: list[AnnouncementListItem | AnnouncementDetail]
     missing_ids: list[str]
@@ -108,18 +110,20 @@ class NewsItem(TypedDict, total=False):
     link: str | None
 
 
+class AlertMeta(TypedDict):
+    primary_drivers: list[str]
+
+
 class Alert(TypedDict, total=False):
     id: str
     symbol: str
     type: str | None
-    alert_type: str | None
     reason: str | None
     timestamp: str | None
-    date: str | None
-    meta: dict[str, Any]
+    meta: AlertMeta
 
 
-class Concall(TypedDict, total=False):
+class ConcallListItem(TypedDict, total=False):
     id: str
     symbol: str
     short_analysis: JsonValue
@@ -128,7 +132,37 @@ class Concall(TypedDict, total=False):
     sentiment_analysis: JsonValue
     quarter: str | None
     date: str | None
+
+
+class ConcallDetail(ConcallListItem, total=False):
     expanded_analysis: JsonValue
+
+
+Concall: TypeAlias = ConcallDetail
+
+
+ConcallTranscriptLookupStatus: TypeAlias = Literal["ready", "not_found", "no_transcript"]
+
+
+class ConcallTranscriptLookupItem(TypedDict, total=False):
+    symbol: str
+    quarter: str
+    id: str | None
+    status: ConcallTranscriptLookupStatus
+    transcript_url: str | None
+    audio_url: str | None
+    expires_in: int | None
+    message: str | None
+
+
+class ConcallTranscriptBatchResponse(TypedDict):
+    data: list[ConcallTranscriptLookupItem]
+
+
+class ConcallArtifactUrlsResponse(TypedDict, total=False):
+    transcript_url: str | None
+    audio_url: str | None
+    expires_in: int | None
 
 
 class PresignedUrlResponse(TypedDict, total=False):

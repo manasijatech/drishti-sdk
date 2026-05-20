@@ -43,12 +43,6 @@ export type SymbolMetadataResponse = {
   data: SymbolMetadata[];
 };
 
-export type Attachment = {
-  has_attachment: boolean;
-  url: string;
-  mime?: string | null;
-};
-
 export type AnnouncementListItem = {
   id: string;
   symbol: string;
@@ -72,6 +66,9 @@ export type AnnouncementDetail = AnnouncementListItem & {
   earnings_significant?: boolean | null;
   management_guidance?: string | null;
 };
+
+/** Alias matching alpha-api `AnnouncementSummary` (detail rows with `detailed=true`). */
+export type AnnouncementSummary = AnnouncementDetail;
 
 export type AnnouncementBatchResponse = {
   data: Array<AnnouncementListItem | AnnouncementDetail>;
@@ -112,18 +109,20 @@ export type NewsItem = {
   link?: string | null;
 };
 
+export type AlertMeta = {
+  primary_drivers: string[];
+};
+
 export type Alert = {
   id: string;
   symbol: string;
   type?: string | null;
-  alert_type?: string | null;
   reason?: string | null;
   timestamp?: string | null;
-  date?: string | null;
-  meta: Record<string, JsonValue>;
+  meta: AlertMeta;
 };
 
-export type Concall = {
+export type ConcallListItem = {
   id: string;
   symbol: string;
   short_analysis?: JsonValue;
@@ -132,14 +131,25 @@ export type Concall = {
   sentiment_analysis?: JsonValue;
   quarter?: string | null;
   date?: string | null;
+};
+
+/** Alias for list/detail concall payloads (`expanded_analysis` when `detailed=true`). */
+export type Concall = ConcallListItem & {
   expanded_analysis?: JsonValue;
 };
+
+export type ConcallDetail = Concall;
+
+export type ConcallTranscriptLookupStatus =
+  | "ready"
+  | "not_found"
+  | "no_transcript";
 
 export type ConcallTranscriptLookupItem = {
   symbol: string;
   quarter: string;
   id?: string | null;
-  status: string;
+  status: ConcallTranscriptLookupStatus;
   transcript_url?: string | null;
   audio_url?: string | null;
   expires_in?: number | null;
