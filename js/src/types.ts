@@ -5,6 +5,7 @@ export type JsonObject = { [key: string]: JsonValue };
 export type PaginatedResponse<TItem> = {
   data: TItem[];
   has_next: boolean;
+  missing_ids?: string[];
 };
 
 export type AttachmentLookupStatus = "ready" | "not_found" | "invalid_id" | "no_attachment" | "no_transcript";
@@ -48,60 +49,76 @@ export type Attachment = {
   mime?: string | null;
 };
 
-export type Source = {
-  name: string;
-  url: string;
-};
-
-export type AnnouncementMetadata = {
-  hash?: string | null;
-  is_earnings?: boolean | null;
-  category?: string | null;
-  related_categories: string[];
-  descriptor?: string | null;
-  important?: boolean | null;
-};
-
-export type AnnouncementDetail = {
+export type AnnouncementListItem = {
   id: string;
   symbol: string;
+  company_name?: string | null;
+  image?: string | null;
   date?: string | null;
   headline?: string | null;
+  title?: string | null;
   summary?: string | null;
-  tags: string[];
   category?: string | null;
-  important: boolean;
-  attachment?: Attachment | null;
-  sources: Source[];
+  attachment_url?: string | null;
+};
+
+export type AnnouncementDetail = AnnouncementListItem & {
+  original_summary?: string | null;
+  related_categories?: string[];
+  descriptor?: string | null;
+  important?: boolean;
   full_summary?: string | null;
-  metadata?: AnnouncementMetadata | null;
   is_earnings?: boolean | null;
   earnings_significant?: boolean | null;
+  management_guidance?: string | null;
 };
 
 export type AnnouncementBatchResponse = {
-  data: AnnouncementDetail[];
+  data: Array<AnnouncementListItem | AnnouncementDetail>;
   missing_ids: string[];
+};
+
+export type EarningsListItem = {
+  id: string;
+  symbol: string;
+  company_name?: string | null;
+  image?: string | null;
+  date?: string | null;
+  summary?: string | null;
+  attachment_url?: string | null;
+};
+
+export type EarningsDetail = EarningsListItem & {
+  earnings_significant?: boolean;
+  ltp?: number | null;
+  percentage_change?: number | null;
+  market_cap?: number | null;
+  earnings_table_extraction?: JsonObject | null;
 };
 
 export type NewsItem = {
   id: string;
   title?: string | null;
-  description?: string | null;
-  content?: string | null;
+  specific_title?: string | null;
+  summary?: string | null;
+  long_summary?: string | null;
+  company?: string | null;
   source?: string | null;
   symbol?: string | null;
   sentiment?: string | null;
+  article_type?: string | null;
+  scrip_code?: string | null;
   date?: string | null;
   link?: string | null;
-  image?: string | null;
 };
 
 export type Alert = {
   id: string;
   symbol: string;
+  type?: string | null;
   alert_type?: string | null;
   reason?: string | null;
+  timestamp?: string | null;
   date?: string | null;
   meta: Record<string, JsonValue>;
 };
@@ -109,14 +126,34 @@ export type Alert = {
 export type Concall = {
   id: string;
   symbol: string;
-  summary?: string | null;
-  analysis?: JsonValue;
   short_analysis?: JsonValue;
+  transcript_url?: string | null;
+  audio_url?: string | null;
+  sentiment_analysis?: JsonValue;
   quarter?: string | null;
-  month?: string | null;
-  filename?: string | null;
-  type?: string | null;
   date?: string | null;
+  expanded_analysis?: JsonValue;
+};
+
+export type ConcallTranscriptLookupItem = {
+  symbol: string;
+  quarter: string;
+  id?: string | null;
+  status: string;
+  transcript_url?: string | null;
+  audio_url?: string | null;
+  expires_in?: number | null;
+  message?: string | null;
+};
+
+export type ConcallTranscriptBatchResponse = {
+  data: ConcallTranscriptLookupItem[];
+};
+
+export type ConcallArtifactUrlsResponse = {
+  transcript_url?: string | null;
+  audio_url?: string | null;
+  expires_in?: number | null;
 };
 
 export type PresignedUrlResponse = {
@@ -147,6 +184,7 @@ export type AccountResponse = {
   balance: number;
   products: ProductEntitlement[];
   websocket_addons: WebsocketAddonEntitlement[];
+  live_entitlement: Record<string, JsonValue>;
   metadata: Record<string, JsonValue>;
   created_at?: string | null;
   updated_at?: string | null;
@@ -172,11 +210,15 @@ export type AccountUsageResponse = {
   debited_today: number;
   live_usage: Record<string, number>;
   rate_limits: Record<string, Record<string, number>>;
+  live_entitlement: Record<string, JsonValue>;
   reserved: number;
 };
 export type AccountUsageEnvelope = { data: AccountUsageResponse };
 export type LedgerListResponse = { data: LedgerEntry[] };
-export type AccountLimitsResponse = Record<string, Record<string, number>>;
+export type AccountLimitsResponse = {
+  rest: Record<string, Record<string, number>>;
+  websocket: Record<string, JsonValue>;
+};
 
 export type RequestCounts = { total: number; completed: number; failed: number };
 export type BatchJobResponse = {

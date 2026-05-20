@@ -6,16 +6,20 @@ import type {
   Alert,
   AnnouncementBatchResponse,
   AnnouncementDetail,
+  AnnouncementListItem,
+  EarningsDetail,
+  EarningsListItem,
   BatchAttachmentLookupResponse,
   BatchJobCancelResponse,
   BatchJobListResponse,
   BatchJobResponse,
   Concall,
+  ConcallArtifactUrlsResponse,
+  ConcallTranscriptBatchResponse,
   JsonValue,
   LedgerListResponse,
   NewsItem,
   PaginatedResponse,
-  PresignedUrlResponse,
   StringListResponse,
   SummaryResponse,
   SymbolMetadataResponse,
@@ -186,12 +190,21 @@ export class MarketStackClient {
     return this.get<StringListResponse>("/v1/announcements/categories", { query: params.query });
   }
 
-  getAnnouncements(params: { query?: QueryParams } = {}): Promise<PaginatedResponse<AnnouncementDetail>> {
-    return this.get<PaginatedResponse<AnnouncementDetail>>("/v1/announcements", { query: params.query });
+  getAnnouncements(
+    params: { query?: QueryParams } = {}
+  ): Promise<PaginatedResponse<AnnouncementListItem | AnnouncementDetail>> {
+    return this.get<PaginatedResponse<AnnouncementListItem | AnnouncementDetail>>("/v1/announcements", {
+      query: params.query,
+    });
   }
 
-  getAnnouncementsItems(params: { query?: QueryParams } = {}): Promise<AnnouncementBatchResponse> {
-    return this.get<AnnouncementBatchResponse>("/v1/announcements/items", { query: params.query });
+  async getAnnouncementsItems(
+    params: { query?: QueryParams } = {}
+  ): Promise<AnnouncementBatchResponse> {
+    const result = await this.get<PaginatedResponse<AnnouncementListItem | AnnouncementDetail>>("/v1/announcements", {
+      query: params.query,
+    });
+    return { data: result.data, missing_ids: result.missing_ids ?? [] };
   }
 
   getAnnouncementsAttachments(params: { query?: QueryParams } = {}): Promise<BatchAttachmentLookupResponse> {
@@ -202,12 +215,16 @@ export class MarketStackClient {
     return this.post<SummaryResponse>("/v1/daily-summary", { query: params.query, body: params.body });
   }
 
-  getEarnings(params: { query?: QueryParams } = {}): Promise<PaginatedResponse<AnnouncementDetail>> {
-    return this.get<PaginatedResponse<AnnouncementDetail>>("/v1/earnings", { query: params.query });
+  getEarnings(
+    params: { query?: QueryParams } = {}
+  ): Promise<PaginatedResponse<EarningsListItem | EarningsDetail>> {
+    return this.get<PaginatedResponse<EarningsListItem | EarningsDetail>>("/v1/earnings", { query: params.query });
   }
 
-  getEarningsEarningsId(params: { earnings_id: string | number; query?: QueryParams }): Promise<AnnouncementDetail> {
-    return this.get<AnnouncementDetail>("/v1/earnings/{earnings_id}", { pathParams: { earnings_id: params.earnings_id }, query: params.query });
+  getEarningsDetail(params: {
+    query: QueryParams & { symbol: string; quarter: string };
+  }): Promise<EarningsListItem | EarningsDetail> {
+    return this.get<EarningsListItem | EarningsDetail>("/v1/earnings/detail", { query: params.query });
   }
 
   getEarningsAttachments(params: { query?: QueryParams } = {}): Promise<BatchAttachmentLookupResponse> {
@@ -218,16 +235,18 @@ export class MarketStackClient {
     return this.get<PaginatedResponse<Concall>>("/v1/concalls", { query: params.query });
   }
 
-  getConcallsConcallId(params: { concall_id: string | number; query?: QueryParams }): Promise<Concall> {
-    return this.get<Concall>("/v1/concalls/{concall_id}", { pathParams: { concall_id: params.concall_id }, query: params.query });
+  getConcallsDetail(params: { query: QueryParams & { symbol: string; quarter: string } }): Promise<Concall> {
+    return this.get<Concall>("/v1/concalls/detail", { query: params.query });
   }
 
-  getConcallsConcallIdTranscript(params: { concall_id: string | number; query?: QueryParams }): Promise<PresignedUrlResponse> {
-    return this.get<PresignedUrlResponse>("/v1/concalls/{concall_id}/transcript", { pathParams: { concall_id: params.concall_id }, query: params.query });
+  getConcallsTranscript(params: { query: QueryParams & { symbol: string; quarter: string } }): Promise<ConcallArtifactUrlsResponse> {
+    return this.get<ConcallArtifactUrlsResponse>("/v1/concalls/transcript", { query: params.query });
   }
 
-  getConcallsTranscripts(params: { query?: QueryParams } = {}): Promise<BatchAttachmentLookupResponse> {
-    return this.get<BatchAttachmentLookupResponse>("/v1/concalls/transcripts", { query: params.query });
+  postConcallsTranscripts(params: {
+    body: { items: Array<{ symbol: string; quarter: string }> };
+  }): Promise<ConcallTranscriptBatchResponse> {
+    return this.post<ConcallTranscriptBatchResponse>("/v1/concalls/transcripts", { body: params.body });
   }
 
   getAlerts(params: { query?: QueryParams } = {}): Promise<PaginatedResponse<Alert>> {

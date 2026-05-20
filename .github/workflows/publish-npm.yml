@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'js/**'
+      - 'js/package.json'
       - '.github/workflows/publish-npm.yml'
 
 permissions:

@@ -45,60 +45,76 @@ class SymbolMetadataResponse(TypedDict):
     data: list[SymbolMetadata]
 
 
-class Source(TypedDict):
-    name: str
-    url: str
-
-
-class AnnouncementMetadata(TypedDict, total=False):
-    hash: str | None
-    is_earnings: bool | None
-    category: str | None
-    related_categories: list[str]
-    descriptor: str | None
-    important: bool | None
-
-
-class AnnouncementDetail(TypedDict, total=False):
+class AnnouncementListItem(TypedDict, total=False):
     id: str
     symbol: str
+    company_name: str | None
+    image: str | None
     date: str | None
     headline: str | None
+    title: str | None
     summary: str | None
-    tags: list[str]
     category: str | None
+    attachment_url: str | None
+
+
+class AnnouncementDetail(AnnouncementListItem, total=False):
+    original_summary: str | None
+    related_categories: list[str]
+    descriptor: str | None
     important: bool
-    attachment: Attachment | None
-    sources: list[Source]
     full_summary: str | None
-    metadata: AnnouncementMetadata | None
     is_earnings: bool | None
     earnings_significant: bool | None
+    management_guidance: str | None
 
 
 class AnnouncementBatchResponse(TypedDict):
-    data: list[AnnouncementDetail]
+    data: list[AnnouncementListItem | AnnouncementDetail]
     missing_ids: list[str]
+
+
+class EarningsListItem(TypedDict, total=False):
+    id: str
+    symbol: str
+    company_name: str | None
+    image: str | None
+    date: str | None
+    summary: str | None
+    attachment_url: str | None
+
+
+class EarningsDetail(EarningsListItem, total=False):
+    earnings_significant: bool
+    ltp: float | int | None
+    percentage_change: float | int | None
+    market_cap: float | int | None
+    earnings_table_extraction: dict[str, object] | None
 
 
 class NewsItem(TypedDict, total=False):
     id: str
     title: str | None
-    description: str | None
-    content: str | None
+    specific_title: str | None
+    summary: str | None
+    long_summary: str | None
+    company: str | None
     source: str | None
     symbol: str | None
     sentiment: str | None
+    article_type: str | None
+    scrip_code: str | None
     date: str | None
     link: str | None
-    image: str | None
 
 
 class Alert(TypedDict, total=False):
     id: str
     symbol: str
+    type: str | None
     alert_type: str | None
     reason: str | None
+    timestamp: str | None
     date: str | None
     meta: dict[str, Any]
 
@@ -106,14 +122,13 @@ class Alert(TypedDict, total=False):
 class Concall(TypedDict, total=False):
     id: str
     symbol: str
-    summary: str | None
-    analysis: JsonValue
     short_analysis: JsonValue
+    transcript_url: str | None
+    audio_url: str | None
+    sentiment_analysis: JsonValue
     quarter: str | None
-    month: str | None
-    filename: str | None
-    type: str | None
     date: str | None
+    expanded_analysis: JsonValue
 
 
 class PresignedUrlResponse(TypedDict, total=False):
@@ -154,6 +169,7 @@ class AccountResponse(TypedDict, total=False):
     balance: int
     products: list[ProductEntitlement]
     websocket_addons: list[WebsocketAddonEntitlement]
+    live_entitlement: dict[str, Any]
     metadata: dict[str, Any]
     created_at: str | None
     updated_at: str | None
@@ -181,6 +197,7 @@ class AccountUsageResponse(TypedDict):
     debited_today: int
     live_usage: dict[str, int]
     rate_limits: dict[str, dict[str, int]]
+    live_entitlement: dict[str, Any]
     reserved: int
 
 
@@ -192,7 +209,9 @@ class LedgerListResponse(TypedDict):
     data: list[LedgerEntry]
 
 
-AccountLimitsResponse: TypeAlias = dict[str, dict[str, int]]
+class AccountLimitsResponse(TypedDict):
+    rest: dict[str, dict[str, int]]
+    websocket: dict[str, Any]
 
 
 class RequestCounts(TypedDict):
@@ -234,7 +253,13 @@ class BatchJobCancelResponse(TypedDict):
 
 
 class PaginatedAnnouncementResponse(TypedDict):
-    data: list[AnnouncementDetail]
+    data: list[AnnouncementListItem | AnnouncementDetail]
+    has_next: bool
+    missing_ids: list[str]
+
+
+class PaginatedEarningsResponse(TypedDict):
+    data: list[EarningsListItem | EarningsDetail]
     has_next: bool
 
 

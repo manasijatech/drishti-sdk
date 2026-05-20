@@ -28,6 +28,9 @@ from market_stack_sdk.types import (
     PaginatedAlertResponse,
     PaginatedAnnouncementResponse,
     PaginatedConcallResponse,
+    PaginatedEarningsResponse,
+    EarningsDetail,
+    EarningsListItem,
     PaginatedNewsResponse,
     PresignedUrlResponse,
     StringListResponse,
@@ -157,7 +160,11 @@ class MarketStackClient:
         return self.get("/v1/announcements", params=coerce_query_params(params), path_params=None)
 
     def get_announcements_items(self, params: Mapping[str, Any] | None = None) -> AnnouncementBatchResponse:
-        return self.get("/v1/announcements/items", params=params, path_params=None)
+        result = self.get("/v1/announcements", params=params, path_params=None)
+        return {
+            "data": result.get("data", []),
+            "missing_ids": result.get("missing_ids", []),
+        }
 
     def get_announcements_attachments(self, params: Mapping[str, Any] | None = None) -> BatchAttachmentLookupResponse:
         return self.get("/v1/announcements/attachments", params=params, path_params=None)
@@ -177,11 +184,20 @@ class MarketStackClient:
     def get_earnings(
         self,
         params: FeedQueryParams | Mapping[str, Any] | None = None,
-    ) -> PaginatedAnnouncementResponse:
+    ) -> PaginatedEarningsResponse:
         return self.get("/v1/earnings", params=coerce_query_params(params), path_params=None)
 
-    def get_earnings_earnings_id(self, earnings_id: str | int, params: Mapping[str, Any] | None = None) -> AnnouncementDetail:
-        return self.get("/v1/earnings/{earnings_id}", params=params, path_params={"earnings_id": earnings_id})
+    def get_earnings_detail(
+        self,
+        *,
+        symbol: str,
+        quarter: str,
+        params: Mapping[str, Any] | None = None,
+    ) -> EarningsListItem | EarningsDetail:
+        query = dict(params or {})
+        query["symbol"] = symbol
+        query["quarter"] = quarter
+        return self.get("/v1/earnings/detail", params=query, path_params=None)
 
     def get_earnings_attachments(self, params: Mapping[str, Any] | None = None) -> BatchAttachmentLookupResponse:
         return self.get("/v1/earnings/attachments", params=params, path_params=None)
@@ -189,14 +205,42 @@ class MarketStackClient:
     def get_concalls(self, params: Mapping[str, Any] | None = None) -> PaginatedConcallResponse:
         return self.get("/v1/concalls", params=params, path_params=None)
 
-    def get_concalls_concall_id(self, concall_id: str | int, params: Mapping[str, Any] | None = None) -> Concall:
-        return self.get("/v1/concalls/{concall_id}", params=params, path_params={"concall_id": concall_id})
+    def get_concalls_detail(
+        self,
+        *,
+        symbol: str,
+        quarter: str,
+        params: Mapping[str, Any] | None = None,
+    ) -> Concall:
+        query = dict(params or {})
+        query["symbol"] = symbol
+        query["quarter"] = quarter
+        return self.get("/v1/concalls/detail", params=query, path_params=None)
 
-    def get_concalls_concall_id_transcript(self, concall_id: str | int, params: Mapping[str, Any] | None = None) -> PresignedUrlResponse:
-        return self.get("/v1/concalls/{concall_id}/transcript", params=params, path_params={"concall_id": concall_id})
+    def get_concalls_transcript(
+        self,
+        *,
+        symbol: str,
+        quarter: str,
+        params: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        query = dict(params or {})
+        query["symbol"] = symbol
+        query["quarter"] = quarter
+        return self.get("/v1/concalls/transcript", params=query, path_params=None)
 
-    def get_concalls_transcripts(self, params: Mapping[str, Any] | None = None) -> BatchAttachmentLookupResponse:
-        return self.get("/v1/concalls/transcripts", params=params, path_params=None)
+    def post_concalls_transcripts(
+        self,
+        *,
+        items: list[dict[str, str]],
+        params: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        return self.post(
+            "/v1/concalls/transcripts",
+            body={"items": items},
+            params=params,
+            path_params=None,
+        )
 
     def get_alerts(self, params: Mapping[str, Any] | None = None) -> PaginatedAlertResponse:
         return self.get("/v1/alerts", params=params, path_params=None)

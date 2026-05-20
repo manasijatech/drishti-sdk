@@ -24,22 +24,12 @@ const client = new MarketStackClient({
   // baseUrl: "https://developers.manasija.in",
 });
 
-console.log(await client.get("/v1/news"));
-console.log(
-  await client.get("/v1/earnings/{earnings_id}", {
-    pathParams: { earnings_id: "67c2f8a1b2c3d4e5f6a7b8d0" },
-  }),
-);
-console.log(
-  await client.post("/v1/daily-summary", {
-    body: { portfolio: [{ symbol: "RELIANCE", exposure: 10 }] },
-  }),
-);
-
-// Dedicated helpers are available for every public route:
+// Dedicated helpers are available for every route:
 console.log(await client.getNews());
 console.log(await client.getAnnouncements());
-console.log(await client.getEarningsEarningsId({ earnings_id: "67c2f8a1b2c3d4e5f6a7b8d0" }));
+console.log(
+  await client.getEarningsDetail({ query: { symbol: "MEDIASSIST", quarter: "q4_26", detailed: true } }),
+);
 ```
 
 All calls automatically send `X-API-Key` using the `apiKey` provided in the constructor.
