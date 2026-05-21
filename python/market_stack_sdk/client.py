@@ -54,6 +54,14 @@ DEFAULT_TIMEOUT_SEC = 60.0
 TResponse = TypeVar("TResponse")
 
 
+def _normalize_earnings_item_payload(item: Any) -> Any:
+    if not isinstance(item, dict):
+        return item
+    if "earnings_table" not in item and "earnings_table_extraction" in item:
+        item["earnings_table"] = item.get("earnings_table_extraction")
+    return item
+
+
 class MarketStackClient:
     """Sync HTTP client for Alpha API v1 with endpoint-specific response typing."""
 
@@ -204,13 +212,19 @@ class MarketStackClient:
         self,
         params: EarningsQueryParams | Mapping[str, Any] | None = None,
     ) -> PaginatedEarningsResponse:
-        return self.get("/v1/earnings", params=coerce_query_params(params), path_params=None)
+        response = self.get("/v1/earnings", params=coerce_query_params(params), path_params=None)
+        if isinstance(response, dict):
+            data = response.get("data")
+            if isinstance(data, list):
+                response["data"] = [_normalize_earnings_item_payload(item) for item in data]
+        return response
 
     def get_earnings_detail(
         self,
         params: SymbolQuarterQueryParams | Mapping[str, Any],
     ) -> EarningsListItem | EarningsDetail:
-        return self.get("/v1/earnings/detail", params=coerce_query_params(params), path_params=None)
+        response = self.get("/v1/earnings/detail", params=coerce_query_params(params), path_params=None)
+        return _normalize_earnings_item_payload(response)
 
     def get_earnings_attachments(
         self,

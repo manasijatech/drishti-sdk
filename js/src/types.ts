@@ -57,14 +57,10 @@ export type AnnouncementListItem = {
 };
 
 export type AnnouncementDetail = AnnouncementListItem & {
-  original_summary?: string | null;
+  long_summary?: string | null;
   related_categories?: string[];
   descriptor?: string | null;
   important?: boolean;
-  full_summary?: string | null;
-  is_earnings?: boolean | null;
-  earnings_significant?: boolean | null;
-  management_guidance?: string | null;
 };
 
 /** Alias matching alpha-api `AnnouncementSummary` (detail rows with `detailed=true`). */
@@ -90,7 +86,7 @@ export type EarningsDetail = EarningsListItem & {
   ltp?: number | null;
   percentage_change?: number | null;
   market_cap?: number | null;
-  earnings_table_extraction?: JsonObject | null;
+  earnings_table?: JsonObject | null;
 };
 
 export type NewsItem = {

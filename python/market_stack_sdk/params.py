@@ -14,7 +14,7 @@ def _format_query_params(raw: dict[str, Any]) -> dict[str, Any] | None:
     for key, value in raw.items():
         if value is None:
             continue
-        if key in {"symbols", "categories", "ids", "type"} and isinstance(value, list):
+        if key in {"symbols", "scrip_codes", "categories", "ids", "type"} and isinstance(value, list):
             out[key] = ",".join(str(item) for item in value)
         else:
             out[key] = value
@@ -27,6 +27,7 @@ class NewsQueryParams(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     symbols: list[str] | None = None
+    scrip_codes: list[str] | None = None
     sentiment: NewsSentiment | None = None
     from_: str | None = Field(default=None, alias="from")
     to: str | None = None
@@ -45,6 +46,7 @@ class PaginatedFeedQueryParams(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     symbols: list[str] | None = None
+    scrip_codes: list[str] | None = None
     from_: str | None = Field(default=None, alias="from")
     to: str | None = None
     detailed: bool | None = None
@@ -91,6 +93,7 @@ class AlertsQueryParams(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     symbols: list[str] | None = None
+    scrip_codes: list[str] | None = None
     type: list[str] | None = None
     from_: str | None = Field(default=None, alias="from")
     to: str | None = None
@@ -117,6 +120,7 @@ class SymbolMetadataQueryParams(BaseModel):
     """GET /v1/symbols/metadata."""
 
     symbols: list[str]
+    scrip_codes: list[str] | None = None
 
     def to_query_params(self) -> dict[str, Any] | None:
         return _format_query_params(self.model_dump(exclude_none=True))
@@ -134,7 +138,8 @@ class SymbolQuarterDetailQueryParams(BaseModel):
 class SymbolQuarterQueryParams(SymbolQuarterDetailQueryParams):
     """GET /v1/earnings/detail, GET /v1/concalls/detail, GET /v1/concalls/transcript."""
 
-    symbol: str
+    symbol: str | None = None
+    scrip_code: str | None = None
     quarter: str
 
 

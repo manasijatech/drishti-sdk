@@ -64,6 +64,17 @@ export type MarketStackClientOptions = Readonly<{
   fetchImpl?: typeof fetch;
 }>;
 
+function normalizeEarningsItemPayload(item: unknown): unknown {
+  if (!item || typeof item !== "object" || Array.isArray(item)) {
+    return item;
+  }
+  const record = item as Record<string, unknown>;
+  if (record.earnings_table === undefined && record.earnings_table_extraction !== undefined) {
+    record.earnings_table = record.earnings_table_extraction;
+  }
+  return record;
+}
+
 function joinUrl(base: string, path: string): string {
   const b = base.replace(/\/+$/, "");
   const p = path.replace(/^\/+/, "");
@@ -198,12 +209,14 @@ export class MarketStackClient {
   }
 
   getNews(params: NewsQueryParams = {}): Promise<PaginatedResponse<NewsItem>> {
-    return this.get<PaginatedResponse<NewsItem>>("/v1/news", { query: serializeQueryParams(params, ["symbols"]) });
+    return this.get<PaginatedResponse<NewsItem>>("/v1/news", {
+      query: serializeQueryParams(params, ["symbols", "scrip_codes"]),
+    });
   }
 
   getSymbolsMetadata(params: SymbolMetadataQueryParams): Promise<SymbolMetadataResponse> {
     return this.get<SymbolMetadataResponse>("/v1/symbols/metadata", {
-      query: serializeQueryParams(params, ["symbols"]),
+      query: serializeQueryParams(params, ["symbols", "scrip_codes"]),
     });
   }
 
@@ -240,14 +253,21 @@ export class MarketStackClient {
     params: EarningsQueryParams = {}
   ): Promise<PaginatedResponse<EarningsListItem | EarningsDetail>> {
     return this.get<PaginatedResponse<EarningsListItem | EarningsDetail>>("/v1/earnings", {
-      query: serializeQueryParams(params, ["symbols"]),
+      query: serializeQueryParams(params, ["symbols", "scrip_codes"]),
+    }).then((response) => {
+      response.data = response.data.map(
+        (item) => normalizeEarningsItemPayload(item) as EarningsListItem | EarningsDetail
+      );
+      return response;
     });
   }
 
   getEarningsDetail(params: SymbolQuarterQueryParams): Promise<EarningsListItem | EarningsDetail> {
     return this.get<EarningsListItem | EarningsDetail>("/v1/earnings/detail", {
       query: serializeQueryParams(params),
-    });
+    }).then(
+      (response) => normalizeEarningsItemPayload(response) as EarningsListItem | EarningsDetail
+    );
   }
 
   getEarningsAttachments(params: DocumentIdsQueryParams): Promise<BatchAttachmentLookupResponse> {
@@ -257,7 +277,9 @@ export class MarketStackClient {
   }
 
   getConcalls(params: ConcallsQueryParams = {}): Promise<PaginatedResponse<Concall>> {
-    return this.get<PaginatedResponse<Concall>>("/v1/concalls", { query: serializeQueryParams(params, ["symbols"]) });
+    return this.get<PaginatedResponse<Concall>>("/v1/concalls", {
+      query: serializeQueryParams(params, ["symbols", "scrip_codes"]),
+    });
   }
 
   getConcallsDetail(params: SymbolQuarterQueryParams): Promise<Concall> {
@@ -276,7 +298,7 @@ export class MarketStackClient {
 
   getAlerts(params: AlertsQueryParams = {}): Promise<PaginatedResponse<Alert>> {
     return this.get<PaginatedResponse<Alert>>("/v1/alerts", {
-      query: serializeQueryParams(params, ["symbols", "type"]),
+      query: serializeQueryParams(params, ["symbols", "scrip_codes", "type"]),
     });
   }
 

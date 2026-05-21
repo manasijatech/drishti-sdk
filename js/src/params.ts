@@ -13,6 +13,8 @@ export type FiscalQuarterParam = string;
 export type NewsQueryParams = {
   /** Serialized as comma-separated `symbols`. */
   symbols?: string[];
+  /** Serialized as comma-separated `scrip_codes`. */
+  scrip_codes?: string[];
   sentiment?: NewsSentiment;
   /** Query key: `from`. */
   from?: IsoDateTimeParam;
@@ -23,6 +25,7 @@ export type NewsQueryParams = {
 
 export type PaginatedFeedQueryParams = {
   symbols?: string[];
+  scrip_codes?: string[];
   from?: IsoDateTimeParam;
   to?: IsoDateTimeParam;
   detailed?: boolean;
@@ -50,6 +53,7 @@ export type ConcallsQueryParams = PaginatedFeedQueryParams;
 
 export type AlertsQueryParams = {
   symbols?: string[];
+  scrip_codes?: string[];
   /** Alert type filter. Query key: `type`. */
   type?: string[];
   from?: IsoDateTimeParam;
@@ -67,6 +71,7 @@ export type DocumentIdsQueryParams = {
 /** GET /v1/symbols/metadata */
 export type SymbolMetadataQueryParams = {
   symbols: string[];
+  scrip_codes?: string[];
 };
 
 /** Optional flags for GET /v1/earnings/detail and GET /v1/concalls/detail */
@@ -76,7 +81,8 @@ export type SymbolQuarterDetailQueryParams = {
 
 /** GET /v1/earnings/detail, GET /v1/concalls/detail, GET /v1/concalls/transcript */
 export type SymbolQuarterQueryParams = SymbolQuarterDetailQueryParams & {
-  symbol: string;
+  symbol?: string;
+  scrip_code?: string;
   quarter: string;
 };
 
@@ -151,5 +157,5 @@ export function serializeAnnouncementsQueryParams(
   if (isByIdsParams(params)) {
     return serializeQueryParams(params, ["ids"]);
   }
-  return serializeQueryParams(params, ["symbols", "categories"]);
+  return serializeQueryParams(params, ["symbols", "scrip_codes", "categories"]);
 }

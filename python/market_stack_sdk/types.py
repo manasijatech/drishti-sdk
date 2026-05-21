@@ -58,14 +58,10 @@ class AnnouncementListItem(TypedDict, total=False):
 
 
 class AnnouncementDetail(AnnouncementListItem, total=False):
-    original_summary: str | None
+    long_summary: str | None
     related_categories: list[str]
     descriptor: str | None
     important: bool
-    full_summary: str | None
-    is_earnings: bool | None
-    earnings_significant: bool | None
-    management_guidance: str | None
 
 
 AnnouncementSummary: TypeAlias = AnnouncementDetail
@@ -91,7 +87,7 @@ class EarningsDetail(EarningsListItem, total=False):
     ltp: float | int | None
     percentage_change: float | int | None
     market_cap: float | int | None
-    earnings_table_extraction: dict[str, object] | None
+    earnings_table: dict[str, object] | None
 
 
 class NewsItem(TypedDict, total=False):
