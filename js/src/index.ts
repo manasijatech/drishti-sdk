@@ -8,5 +8,7 @@ export type {
   RequestOptions,
 } from "./client.js";
 export type * from "./types.js";
+export type * from "./params.js";
+export { serializeAnnouncementsQueryParams, serializeQueryParams } from "./params.js";
 export { MarketStackApiError } from "./errors.js";
 export type { ApiErrorBody } from "./errors.js";

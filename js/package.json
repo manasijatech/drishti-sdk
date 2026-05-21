@@ -1,6 +1,6 @@
 {
   "name": "@manasija/market-stack-sdk",
-  "version": "0.1.5",
+  "version": "0.1.7",
   "description": "TypeScript/JavaScript client for the Alpha API (/v1)",
   "type": "module",
   "main": "./dist/index.js",

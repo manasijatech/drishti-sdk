@@ -28,7 +28,7 @@ const client = new MarketStackClient({
 console.log(await client.getNews());
 console.log(await client.getAnnouncements());
 console.log(
-  await client.getEarningsDetail({ query: { symbol: "MEDIASSIST", quarter: "q4_26", detailed: true } }),
+  await client.getEarningsDetail({ symbol: "MEDIASSIST", quarter: "q4_26", detailed: true }),
 );
 ```
 

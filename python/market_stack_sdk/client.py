@@ -6,9 +6,18 @@ import httpx
 
 from market_stack_sdk.exceptions import MarketStackApiError
 from market_stack_sdk.params import (
+    AccountLedgerQueryParams,
+    AlertsQueryParams,
+    AnnouncementsByIdsQueryParams,
+    AnnouncementsListQueryParams,
+    BatchJobsListQueryParams,
+    ConcallsQueryParams,
     DailySummaryRequest,
-    FeedQueryParams,
+    DocumentIdsQueryParams,
+    EarningsQueryParams,
     NewsQueryParams,
+    SymbolMetadataQueryParams,
+    SymbolQuarterQueryParams,
     coerce_query_params,
 )
 from market_stack_sdk.types import (
@@ -34,7 +43,6 @@ from market_stack_sdk.types import (
     EarningsDetail,
     EarningsListItem,
     PaginatedNewsResponse,
-    PresignedUrlResponse,
     StringListResponse,
     SummaryResponse,
     SymbolMetadataResponse,
@@ -149,152 +157,161 @@ class MarketStackClient:
     ) -> PaginatedNewsResponse:
         return self.get("/v1/news", params=coerce_query_params(params), path_params=None)
 
-    def get_symbols_metadata(self, params: Mapping[str, Any] | None = None) -> SymbolMetadataResponse:
-        return self.get("/v1/symbols/metadata", params=params, path_params=None)
+    def get_symbols_metadata(
+        self,
+        params: SymbolMetadataQueryParams | Mapping[str, Any],
+    ) -> SymbolMetadataResponse:
+        return self.get("/v1/symbols/metadata", params=coerce_query_params(params), path_params=None)
 
-    def get_announcements_categories(self, params: Mapping[str, Any] | None = None) -> StringListResponse:
-        return self.get("/v1/announcements/categories", params=params, path_params=None)
+    def get_announcements_categories(self) -> StringListResponse:
+        return self.get("/v1/announcements/categories", path_params=None)
 
     def get_announcements(
         self,
-        params: FeedQueryParams | Mapping[str, Any] | None = None,
+        params: AnnouncementsListQueryParams | Mapping[str, Any] | None = None,
     ) -> PaginatedAnnouncementResponse:
         return self.get("/v1/announcements", params=coerce_query_params(params), path_params=None)
 
-    def get_announcements_items(self, params: Mapping[str, Any] | None = None) -> AnnouncementBatchResponse:
-        result = self.get("/v1/announcements", params=params, path_params=None)
+    def get_announcements_items(
+        self,
+        params: AnnouncementsByIdsQueryParams | Mapping[str, Any],
+    ) -> AnnouncementBatchResponse:
+        result = self.get("/v1/announcements", params=coerce_query_params(params), path_params=None)
         return {
             "data": result.get("data", []),
             "missing_ids": result.get("missing_ids", []),
         }
 
-    def get_announcements_attachments(self, params: Mapping[str, Any] | None = None) -> BatchAttachmentLookupResponse:
-        return self.get("/v1/announcements/attachments", params=params, path_params=None)
+    def get_announcements_attachments(
+        self,
+        params: DocumentIdsQueryParams | Mapping[str, Any],
+    ) -> BatchAttachmentLookupResponse:
+        return self.get("/v1/announcements/attachments", params=coerce_query_params(params), path_params=None)
 
     def post_daily_summary(
         self,
-        body: DailySummaryRequest | JsonValue | None = None,
-        params: Mapping[str, Any] | None = None,
+        params: Mapping[str, Any],
     ) -> SummaryResponse:
-        request_body: JsonValue | None
+        body = params["body"]
+        request_body: JsonValue
         if isinstance(body, DailySummaryRequest):
             request_body = body.to_request_body()
         else:
             request_body = body
-        return self.post("/v1/daily-summary", body=request_body, params=params, path_params=None)
+        return self.post("/v1/daily-summary", body=request_body, path_params=None)
 
     def get_earnings(
         self,
-        params: FeedQueryParams | Mapping[str, Any] | None = None,
+        params: EarningsQueryParams | Mapping[str, Any] | None = None,
     ) -> PaginatedEarningsResponse:
         return self.get("/v1/earnings", params=coerce_query_params(params), path_params=None)
 
     def get_earnings_detail(
         self,
-        *,
-        symbol: str,
-        quarter: str,
-        params: Mapping[str, Any] | None = None,
+        params: SymbolQuarterQueryParams | Mapping[str, Any],
     ) -> EarningsListItem | EarningsDetail:
-        query = dict(params or {})
-        query["symbol"] = symbol
-        query["quarter"] = quarter
-        return self.get("/v1/earnings/detail", params=query, path_params=None)
+        return self.get("/v1/earnings/detail", params=coerce_query_params(params), path_params=None)
 
-    def get_earnings_attachments(self, params: Mapping[str, Any] | None = None) -> BatchAttachmentLookupResponse:
-        return self.get("/v1/earnings/attachments", params=params, path_params=None)
+    def get_earnings_attachments(
+        self,
+        params: DocumentIdsQueryParams | Mapping[str, Any],
+    ) -> BatchAttachmentLookupResponse:
+        return self.get("/v1/earnings/attachments", params=coerce_query_params(params), path_params=None)
 
-    def get_concalls(self, params: Mapping[str, Any] | None = None) -> PaginatedConcallResponse:
-        return self.get("/v1/concalls", params=params, path_params=None)
+    def get_concalls(
+        self,
+        params: ConcallsQueryParams | Mapping[str, Any] | None = None,
+    ) -> PaginatedConcallResponse:
+        return self.get("/v1/concalls", params=coerce_query_params(params), path_params=None)
 
     def get_concalls_detail(
         self,
-        *,
-        symbol: str,
-        quarter: str,
-        params: Mapping[str, Any] | None = None,
+        params: SymbolQuarterQueryParams | Mapping[str, Any],
     ) -> Concall:
-        query = dict(params or {})
-        query["symbol"] = symbol
-        query["quarter"] = quarter
-        return self.get("/v1/concalls/detail", params=query, path_params=None)
+        return self.get("/v1/concalls/detail", params=coerce_query_params(params), path_params=None)
 
     def get_concalls_transcript(
         self,
-        *,
-        symbol: str,
-        quarter: str,
-        params: Mapping[str, Any] | None = None,
+        params: SymbolQuarterQueryParams | Mapping[str, Any],
     ) -> ConcallArtifactUrlsResponse:
-        query = dict(params or {})
-        query["symbol"] = symbol
-        query["quarter"] = quarter
-        return self.get("/v1/concalls/transcript", params=query, path_params=None)
+        return self.get("/v1/concalls/transcript", params=coerce_query_params(params), path_params=None)
 
     def post_concalls_transcripts(
         self,
-        *,
-        items: list[dict[str, str]],
-        params: Mapping[str, Any] | None = None,
+        params: Mapping[str, Any],
     ) -> ConcallTranscriptBatchResponse:
         return self.post(
             "/v1/concalls/transcripts",
-            body={"items": items},
-            params=params,
+            body={"items": params["items"]},
             path_params=None,
         )
 
-    def get_alerts(self, params: Mapping[str, Any] | None = None) -> PaginatedAlertResponse:
-        return self.get("/v1/alerts", params=params, path_params=None)
+    def get_alerts(
+        self,
+        params: AlertsQueryParams | Mapping[str, Any] | None = None,
+    ) -> PaginatedAlertResponse:
+        return self.get("/v1/alerts", params=coerce_query_params(params), path_params=None)
 
-    def get_account(self, params: Mapping[str, Any] | None = None) -> AccountDetailResponse:
-        return self.get("/v1/account", params=params, path_params=None)
+    def get_account(self) -> AccountDetailResponse:
+        return self.get("/v1/account", path_params=None)
 
-    def get_account_limits(self, params: Mapping[str, Any] | None = None) -> AccountLimitsResponse:
-        return self.get("/v1/account/limits", params=params, path_params=None)
+    def get_account_limits(self) -> AccountLimitsResponse:
+        return self.get("/v1/account/limits", path_params=None)
 
-    def get_account_usage(self, params: Mapping[str, Any] | None = None) -> AccountUsageEnvelope:
-        return self.get("/v1/account/usage", params=params, path_params=None)
+    def get_account_usage(self) -> AccountUsageEnvelope:
+        return self.get("/v1/account/usage", path_params=None)
 
-    def get_account_ledger(self, params: Mapping[str, Any] | None = None) -> LedgerListResponse:
-        return self.get("/v1/account/ledger", params=params, path_params=None)
+    def get_account_ledger(
+        self,
+        params: AccountLedgerQueryParams | Mapping[str, Any] | None = None,
+    ) -> LedgerListResponse:
+        return self.get("/v1/account/ledger", params=coerce_query_params(params), path_params=None)
 
-    def post_batch_jobs(self, body: JsonValue | None = None, params: Mapping[str, Any] | None = None) -> BatchJobResponse:
-        return self.post("/v1/batch/jobs", body=body, params=params, path_params=None)
+    def post_batch_jobs(
+        self,
+        params: Mapping[str, Any] | None = None,
+    ) -> BatchJobResponse:
+        body = (params or {}).get("body")
+        return self.post("/v1/batch/jobs", body=body, path_params=None)
 
     def post_batch_jobs_file(
         self,
-        *,
-        file_name: str,
-        file_bytes: bytes,
-        display_name: str | None = None,
-        metadata: str | None = None,
-        params: Mapping[str, Any] | None = None,
+        params: Mapping[str, Any],
     ) -> BatchJobResponse:
         form_data: dict[str, str] = {}
+        display_name = params.get("display_name")
+        metadata = params.get("metadata")
         if display_name is not None:
-            form_data["display_name"] = display_name
+            form_data["display_name"] = str(display_name)
         if metadata is not None:
-            form_data["metadata"] = metadata
+            form_data["metadata"] = str(metadata)
         return self.request(
             "POST",
             "/v1/batch/jobs",
-            params=params,
             data=form_data,
-            files={"file": (file_name, file_bytes, "application/jsonl")},
+            files={
+                "file": (
+                    str(params["file_name"]),
+                    params["file_bytes"],
+                    "application/jsonl",
+                )
+            },
         )
 
-    def get_batch_jobs(self, params: Mapping[str, Any] | None = None) -> BatchJobListResponse:
-        return self.get("/v1/batch/jobs", params=params, path_params=None)
+    def get_batch_jobs(
+        self,
+        params: BatchJobsListQueryParams | Mapping[str, Any] | None = None,
+    ) -> BatchJobListResponse:
+        return self.get("/v1/batch/jobs", params=coerce_query_params(params), path_params=None)
 
-    def get_batch_jobs_job_id(self, job_id: str | int, params: Mapping[str, Any] | None = None) -> BatchJobResponse:
-        return self.get("/v1/batch/jobs/{job_id}", params=params, path_params={"job_id": job_id})
+    def get_batch_jobs_job_id(self, params: Mapping[str, Any]) -> BatchJobResponse:
+        return self.get("/v1/batch/jobs/{job_id}", path_params={"job_id": params["job_id"]})
 
-    def delete_batch_jobs_job_id(self, job_id: str | int, params: Mapping[str, Any] | None = None) -> BatchJobCancelResponse:
-        return self.delete("/v1/batch/jobs/{job_id}", params=params, path_params={"job_id": job_id})
+    def delete_batch_jobs_job_id(self, params: Mapping[str, Any]) -> BatchJobCancelResponse:
+        return self.delete("/v1/batch/jobs/{job_id}", path_params={"job_id": params["job_id"]})
 
-    def get_batch_jobs_job_id_results(self, job_id: str | int, params: Mapping[str, Any] | None = None) -> str:
-        return self.get("/v1/batch/jobs/{job_id}/results", params=params, path_params={"job_id": job_id})
+    def get_batch_jobs_job_id_results(self, params: Mapping[str, Any]) -> str:
+        return self.get("/v1/batch/jobs/{job_id}/results", path_params={"job_id": params["job_id"]})
 
     def request_v1(
         self,
@@ -304,4 +321,4 @@ class MarketStackClient:
         json: JsonValue | None = None,
         params: Mapping[str, Any] | None = None,
     ) -> JsonValue | str | None:
-        return self.request(method=method, path=f"/v1/{path.removeprefix('/')}" , body=json, params=params)
+        return self.request(method=method, path=f"/v1/{path.removeprefix('/')}", body=json, params=params)

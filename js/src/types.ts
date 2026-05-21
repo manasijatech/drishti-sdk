@@ -145,6 +145,11 @@ export type ConcallTranscriptLookupStatus =
   | "not_found"
   | "no_transcript";
 
+export type SymbolQuarterKey = {
+  symbol: string;
+  quarter: string;
+};
+
 export type ConcallTranscriptLookupItem = {
   symbol: string;
   quarter: string;

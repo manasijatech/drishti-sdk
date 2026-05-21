@@ -1,4 +1,22 @@
 import { MarketStackApiError } from "./errors.js";
+import {
+  serializeAnnouncementsQueryParams,
+  serializeQueryParams,
+  type AccountLedgerQueryParams,
+  type AlertsQueryParams,
+  type AnnouncementsByIdsQueryParams,
+  type AnnouncementsQueryParams,
+  type BatchJobsListQueryParams,
+  type ConcallsQueryParams,
+  type DocumentIdsQueryParams,
+  type EarningsQueryParams,
+  type NewsQueryParams,
+  type SymbolMetadataQueryParams,
+  type SymbolQuarterQueryParams,
+  type ConcallTranscriptBatchParams,
+  type BatchJobIdParams,
+  type DailySummaryParams,
+} from "./params.js";
 import type {
   AccountDetailResponse,
   AccountLimitsResponse,
@@ -29,6 +47,7 @@ export const DEFAULT_BASE_URL = "https://developers.manasija.in";
 
 export type JsonBody = Record<string, JsonValue> | JsonValue[] | null;
 export type QueryValue = string | number | boolean | null | undefined;
+/** Serialized query string map used by low-level `request()`. Prefer endpoint param types on client methods. */
 export type QueryParams = Record<string, QueryValue | QueryValue[]>;
 export type PathParams = Record<string, string | number>;
 export type RequestOptions = Readonly<{
@@ -178,99 +197,107 @@ export class MarketStackClient {
     return this.request<TResponse>("DELETE", path, options);
   }
 
-  getNews(params: { query?: QueryParams } = {}): Promise<PaginatedResponse<NewsItem>> {
-    return this.get<PaginatedResponse<NewsItem>>("/v1/news", { query: params.query });
+  getNews(params: NewsQueryParams = {}): Promise<PaginatedResponse<NewsItem>> {
+    return this.get<PaginatedResponse<NewsItem>>("/v1/news", { query: serializeQueryParams(params, ["symbols"]) });
   }
 
-  getSymbolsMetadata(params: { query?: QueryParams } = {}): Promise<SymbolMetadataResponse> {
-    return this.get<SymbolMetadataResponse>("/v1/symbols/metadata", { query: params.query });
-  }
-
-  getAnnouncementsCategories(params: { query?: QueryParams } = {}): Promise<StringListResponse> {
-    return this.get<StringListResponse>("/v1/announcements/categories", { query: params.query });
-  }
-
-  getAnnouncements(
-    params: { query?: QueryParams } = {}
-  ): Promise<PaginatedResponse<AnnouncementListItem | AnnouncementDetail>> {
-    return this.get<PaginatedResponse<AnnouncementListItem | AnnouncementDetail>>("/v1/announcements", {
-      query: params.query,
+  getSymbolsMetadata(params: SymbolMetadataQueryParams): Promise<SymbolMetadataResponse> {
+    return this.get<SymbolMetadataResponse>("/v1/symbols/metadata", {
+      query: serializeQueryParams(params, ["symbols"]),
     });
   }
 
-  async getAnnouncementsItems(
-    params: { query?: QueryParams } = {}
-  ): Promise<AnnouncementBatchResponse> {
+  getAnnouncementsCategories(): Promise<StringListResponse> {
+    return this.get<StringListResponse>("/v1/announcements/categories");
+  }
+
+  getAnnouncements(
+    params: AnnouncementsQueryParams = {}
+  ): Promise<PaginatedResponse<AnnouncementListItem | AnnouncementDetail>> {
+    return this.get<PaginatedResponse<AnnouncementListItem | AnnouncementDetail>>("/v1/announcements", {
+      query: serializeAnnouncementsQueryParams(params),
+    });
+  }
+
+  async getAnnouncementsItems(params: AnnouncementsByIdsQueryParams): Promise<AnnouncementBatchResponse> {
     const result = await this.get<PaginatedResponse<AnnouncementListItem | AnnouncementDetail>>("/v1/announcements", {
-      query: params.query,
+      query: serializeAnnouncementsQueryParams(params),
     });
     return { data: result.data, missing_ids: result.missing_ids ?? [] };
   }
 
-  getAnnouncementsAttachments(params: { query?: QueryParams } = {}): Promise<BatchAttachmentLookupResponse> {
-    return this.get<BatchAttachmentLookupResponse>("/v1/announcements/attachments", { query: params.query });
+  getAnnouncementsAttachments(params: DocumentIdsQueryParams): Promise<BatchAttachmentLookupResponse> {
+    return this.get<BatchAttachmentLookupResponse>("/v1/announcements/attachments", {
+      query: serializeQueryParams(params, ["ids"]),
+    });
   }
 
-  postDailySummary(params: { body?: JsonBody; query?: QueryParams } = {}): Promise<SummaryResponse> {
-    return this.post<SummaryResponse>("/v1/daily-summary", { query: params.query, body: params.body });
+  postDailySummary(params: DailySummaryParams): Promise<SummaryResponse> {
+    return this.post<SummaryResponse>("/v1/daily-summary", { body: params.body });
   }
 
   getEarnings(
-    params: { query?: QueryParams } = {}
+    params: EarningsQueryParams = {}
   ): Promise<PaginatedResponse<EarningsListItem | EarningsDetail>> {
-    return this.get<PaginatedResponse<EarningsListItem | EarningsDetail>>("/v1/earnings", { query: params.query });
+    return this.get<PaginatedResponse<EarningsListItem | EarningsDetail>>("/v1/earnings", {
+      query: serializeQueryParams(params, ["symbols"]),
+    });
   }
 
-  getEarningsDetail(params: {
-    query: QueryParams & { symbol: string; quarter: string };
-  }): Promise<EarningsListItem | EarningsDetail> {
-    return this.get<EarningsListItem | EarningsDetail>("/v1/earnings/detail", { query: params.query });
+  getEarningsDetail(params: SymbolQuarterQueryParams): Promise<EarningsListItem | EarningsDetail> {
+    return this.get<EarningsListItem | EarningsDetail>("/v1/earnings/detail", {
+      query: serializeQueryParams(params),
+    });
   }
 
-  getEarningsAttachments(params: { query?: QueryParams } = {}): Promise<BatchAttachmentLookupResponse> {
-    return this.get<BatchAttachmentLookupResponse>("/v1/earnings/attachments", { query: params.query });
+  getEarningsAttachments(params: DocumentIdsQueryParams): Promise<BatchAttachmentLookupResponse> {
+    return this.get<BatchAttachmentLookupResponse>("/v1/earnings/attachments", {
+      query: serializeQueryParams(params, ["ids"]),
+    });
   }
 
-  getConcalls(params: { query?: QueryParams } = {}): Promise<PaginatedResponse<Concall>> {
-    return this.get<PaginatedResponse<Concall>>("/v1/concalls", { query: params.query });
+  getConcalls(params: ConcallsQueryParams = {}): Promise<PaginatedResponse<Concall>> {
+    return this.get<PaginatedResponse<Concall>>("/v1/concalls", { query: serializeQueryParams(params, ["symbols"]) });
   }
 
-  getConcallsDetail(params: { query: QueryParams & { symbol: string; quarter: string } }): Promise<Concall> {
-    return this.get<Concall>("/v1/concalls/detail", { query: params.query });
+  getConcallsDetail(params: SymbolQuarterQueryParams): Promise<Concall> {
+    return this.get<Concall>("/v1/concalls/detail", { query: serializeQueryParams(params) });
   }
 
-  getConcallsTranscript(params: { query: QueryParams & { symbol: string; quarter: string } }): Promise<ConcallArtifactUrlsResponse> {
-    return this.get<ConcallArtifactUrlsResponse>("/v1/concalls/transcript", { query: params.query });
+  getConcallsTranscript(params: SymbolQuarterQueryParams): Promise<ConcallArtifactUrlsResponse> {
+    return this.get<ConcallArtifactUrlsResponse>("/v1/concalls/transcript", {
+      query: serializeQueryParams(params),
+    });
   }
 
-  postConcallsTranscripts(params: {
-    body: { items: Array<{ symbol: string; quarter: string }> };
-  }): Promise<ConcallTranscriptBatchResponse> {
-    return this.post<ConcallTranscriptBatchResponse>("/v1/concalls/transcripts", { body: params.body });
+  postConcallsTranscripts(params: ConcallTranscriptBatchParams): Promise<ConcallTranscriptBatchResponse> {
+    return this.post<ConcallTranscriptBatchResponse>("/v1/concalls/transcripts", { body: { items: params.items } });
   }
 
-  getAlerts(params: { query?: QueryParams } = {}): Promise<PaginatedResponse<Alert>> {
-    return this.get<PaginatedResponse<Alert>>("/v1/alerts", { query: params.query });
+  getAlerts(params: AlertsQueryParams = {}): Promise<PaginatedResponse<Alert>> {
+    return this.get<PaginatedResponse<Alert>>("/v1/alerts", {
+      query: serializeQueryParams(params, ["symbols", "type"]),
+    });
   }
 
-  getAccount(params: { query?: QueryParams } = {}): Promise<AccountDetailResponse> {
-    return this.get<AccountDetailResponse>("/v1/account", { query: params.query });
+  getAccount(): Promise<AccountDetailResponse> {
+    return this.get<AccountDetailResponse>("/v1/account");
   }
 
-  getAccountLimits(params: { query?: QueryParams } = {}): Promise<AccountLimitsResponse> {
-    return this.get<AccountLimitsResponse>("/v1/account/limits", { query: params.query });
+  getAccountLimits(): Promise<AccountLimitsResponse> {
+    return this.get<AccountLimitsResponse>("/v1/account/limits");
   }
 
-  getAccountUsage(params: { query?: QueryParams } = {}): Promise<AccountUsageEnvelope> {
-    return this.get<AccountUsageEnvelope>("/v1/account/usage", { query: params.query });
+  getAccountUsage(): Promise<AccountUsageEnvelope> {
+    return this.get<AccountUsageEnvelope>("/v1/account/usage");
   }
 
-  getAccountLedger(params: { query?: QueryParams } = {}): Promise<LedgerListResponse> {
-    return this.get<LedgerListResponse>("/v1/account/ledger", { query: params.query });
+  getAccountLedger(params: AccountLedgerQueryParams = {}): Promise<LedgerListResponse> {
+    return this.get<LedgerListResponse>("/v1/account/ledger", { query: serializeQueryParams(params) });
   }
 
-  postBatchJobs(params: { body?: JsonBody | FormData; query?: QueryParams } = {}): Promise<BatchJobResponse> {
-    return this.post<BatchJobResponse>("/v1/batch/jobs", { query: params.query, body: params.body });
+  postBatchJobs(params: { body?: JsonBody | FormData } = {}): Promise<BatchJobResponse> {
+    return this.post<BatchJobResponse>("/v1/batch/jobs", { body: params.body });
   }
 
   postBatchJobsFile(params: {
@@ -278,7 +305,6 @@ export class MarketStackClient {
     filename?: string;
     display_name?: string;
     metadata?: string;
-    query?: QueryParams;
   }): Promise<BatchJobResponse> {
     const form = new FormData();
     form.append("file", params.file, params.filename ?? "batch.jsonl");
@@ -288,22 +314,22 @@ export class MarketStackClient {
     if (params.metadata !== undefined) {
       form.append("metadata", params.metadata);
     }
-    return this.post<BatchJobResponse>("/v1/batch/jobs", { query: params.query, body: form });
+    return this.post<BatchJobResponse>("/v1/batch/jobs", { body: form });
   }
 
-  getBatchJobs(params: { query?: QueryParams } = {}): Promise<BatchJobListResponse> {
-    return this.get<BatchJobListResponse>("/v1/batch/jobs", { query: params.query });
+  getBatchJobs(params: BatchJobsListQueryParams = {}): Promise<BatchJobListResponse> {
+    return this.get<BatchJobListResponse>("/v1/batch/jobs", { query: serializeQueryParams(params) });
   }
 
-  getBatchJobsJobId(params: { job_id: string | number; query?: QueryParams }): Promise<BatchJobResponse> {
-    return this.get<BatchJobResponse>("/v1/batch/jobs/{job_id}", { pathParams: { job_id: params.job_id }, query: params.query });
+  getBatchJobsJobId(params: BatchJobIdParams): Promise<BatchJobResponse> {
+    return this.get<BatchJobResponse>("/v1/batch/jobs/{job_id}", { pathParams: { job_id: params.job_id } });
   }
 
-  deleteBatchJobsJobId(params: { job_id: string | number; query?: QueryParams }): Promise<BatchJobCancelResponse> {
-    return this.delete<BatchJobCancelResponse>("/v1/batch/jobs/{job_id}", { pathParams: { job_id: params.job_id }, query: params.query });
+  deleteBatchJobsJobId(params: BatchJobIdParams): Promise<BatchJobCancelResponse> {
+    return this.delete<BatchJobCancelResponse>("/v1/batch/jobs/{job_id}", { pathParams: { job_id: params.job_id } });
   }
 
-  getBatchJobsJobIdResults(params: { job_id: string | number; query?: QueryParams }): Promise<string> {
-    return this.get<string>("/v1/batch/jobs/{job_id}/results", { pathParams: { job_id: params.job_id }, query: params.query });
+  getBatchJobsJobIdResults(params: BatchJobIdParams): Promise<string> {
+    return this.get<string>("/v1/batch/jobs/{job_id}/results", { pathParams: { job_id: params.job_id } });
   }
 }

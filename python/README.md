@@ -21,10 +21,18 @@ with MarketStackClient(api_key="YOUR_API_KEY") as client:
 
     print(client.get_news(NewsQueryParams(symbols=["RELIANCE"], limit=10)))
     print(client.get_announcements(AnnouncementsQueryParams(symbols=["RELIANCE"])))
-    print(client.get_earnings_detail(symbol="MEDIASSIST", quarter="q4_26", params={"detailed": True}))
+    print(
+        client.get_earnings_detail(
+            {"symbol": "MEDIASSIST", "quarter": "q4_26", "detailed": True}
+        )
+    )
     print(
         client.post_daily_summary(
-            DailySummaryRequest(portfolio=[{"symbol": "RELIANCE", "exposure": 10}])
+            {
+                "body": DailySummaryRequest(
+                    portfolio=[{"symbol": "RELIANCE", "exposure": 10}]
+                )
+            }
         )
     )
 ```

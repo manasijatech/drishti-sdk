@@ -141,6 +141,11 @@ class ConcallDetail(ConcallListItem, total=False):
 Concall: TypeAlias = ConcallDetail
 
 
+class SymbolQuarterKey(TypedDict):
+    symbol: str
+    quarter: str
+
+
 ConcallTranscriptLookupStatus: TypeAlias = Literal["ready", "not_found", "no_transcript"]
 
 
@@ -165,7 +170,7 @@ class ConcallArtifactUrlsResponse(TypedDict, total=False):
     expires_in: int | None
 
 
-class PresignedUrlResponse(TypedDict, total=False):
+class PresignedUrlResponse(TypedDict):
     url: str
     expires_in: int | None
 
