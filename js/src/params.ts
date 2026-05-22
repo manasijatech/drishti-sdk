@@ -38,13 +38,7 @@ export type AnnouncementsListQueryParams = PaginatedFeedQueryParams & {
   categories?: string[];
 };
 
-/** GET /v1/announcements?ids=… batch fetch. */
-export type AnnouncementsByIdsQueryParams = {
-  ids: string[];
-  detailed?: boolean;
-};
-
-export type AnnouncementsQueryParams = AnnouncementsListQueryParams | AnnouncementsByIdsQueryParams;
+export type AnnouncementsQueryParams = AnnouncementsListQueryParams;
 
 /** GET /v1/earnings — same filters as announcements except categories. */
 export type EarningsQueryParams = PaginatedFeedQueryParams;
@@ -70,7 +64,7 @@ export type DocumentIdsQueryParams = {
 
 /** GET /v1/symbols/metadata */
 export type SymbolMetadataQueryParams = {
-  symbols: string[];
+  symbols?: string[];
   scrip_codes?: string[];
 };
 
@@ -123,10 +117,6 @@ function joinList(values: string[]): string {
   return values.join(",");
 }
 
-function isByIdsParams(params: AnnouncementsQueryParams): params is AnnouncementsByIdsQueryParams {
-  return "ids" in params && Array.isArray(params.ids);
-}
-
 /**
  * Convert a params object to flat query-string fields for HTTP.
  * Keys listed in `listKeys` are joined with commas (alpha-api list filter convention).
@@ -154,8 +144,5 @@ export function serializeQueryParams<T extends object>(
 export function serializeAnnouncementsQueryParams(
   params: AnnouncementsQueryParams
 ): Record<string, QueryPrimitive> {
-  if (isByIdsParams(params)) {
-    return serializeQueryParams(params, ["ids"]);
-  }
   return serializeQueryParams(params, ["symbols", "scrip_codes", "categories"]);
 }

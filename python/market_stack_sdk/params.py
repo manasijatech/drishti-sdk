@@ -65,20 +65,6 @@ class AnnouncementsListQueryParams(PaginatedFeedQueryParams):
     categories: list[str] | None = None
 
 
-class AnnouncementsByIdsQueryParams(BaseModel):
-    """GET /v1/announcements when fetching explicit ObjectIds."""
-
-    model_config = ConfigDict(populate_by_name=True)
-
-    ids: list[str]
-    detailed: bool | None = None
-
-    def to_query_params(self) -> dict[str, Any] | None:
-        return _format_query_params(
-            self.model_dump(exclude_none=True, by_alias=True)
-        )
-
-
 class EarningsQueryParams(PaginatedFeedQueryParams):
     """GET /v1/earnings."""
 
@@ -119,7 +105,7 @@ class DocumentIdsQueryParams(BaseModel):
 class SymbolMetadataQueryParams(BaseModel):
     """GET /v1/symbols/metadata."""
 
-    symbols: list[str]
+    symbols: list[str] | None = None
     scrip_codes: list[str] | None = None
 
     def to_query_params(self) -> dict[str, Any] | None:
@@ -168,7 +154,7 @@ class BatchJobsListQueryParams(BaseModel):
 
 
 FeedQueryParams = AnnouncementsListQueryParams
-AnnouncementsQueryParams = AnnouncementsListQueryParams | AnnouncementsByIdsQueryParams
+AnnouncementsQueryParams = AnnouncementsListQueryParams
 
 
 class DailySummaryPortfolioItem(BaseModel):

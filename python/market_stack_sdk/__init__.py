@@ -3,7 +3,6 @@ from market_stack_sdk.exceptions import MarketStackApiError
 from market_stack_sdk.params import (
     AccountLedgerQueryParams,
     AlertsQueryParams,
-    AnnouncementsByIdsQueryParams,
     AnnouncementsListQueryParams,
     AnnouncementsQueryParams,
     BatchJobsListQueryParams,
@@ -26,7 +25,6 @@ __all__ = [
     "DEFAULT_BASE_URL",
     "AccountLedgerQueryParams",
     "AlertsQueryParams",
-    "AnnouncementsByIdsQueryParams",
     "AnnouncementsListQueryParams",
     "AnnouncementsQueryParams",
     "BatchJobsListQueryParams",

@@ -4,7 +4,6 @@ import {
   serializeQueryParams,
   type AccountLedgerQueryParams,
   type AlertsQueryParams,
-  type AnnouncementsByIdsQueryParams,
   type AnnouncementsQueryParams,
   type BatchJobsListQueryParams,
   type ConcallsQueryParams,
@@ -22,7 +21,6 @@ import type {
   AccountLimitsResponse,
   AccountUsageEnvelope,
   Alert,
-  AnnouncementBatchResponse,
   AnnouncementDetail,
   AnnouncementListItem,
   EarningsDetail,
@@ -232,13 +230,6 @@ export class MarketStackClient {
     });
   }
 
-  async getAnnouncementsItems(params: AnnouncementsByIdsQueryParams): Promise<AnnouncementBatchResponse> {
-    const result = await this.get<PaginatedResponse<AnnouncementListItem | AnnouncementDetail>>("/v1/announcements", {
-      query: serializeAnnouncementsQueryParams(params),
-    });
-    return { data: result.data, missing_ids: result.missing_ids ?? [] };
-  }
-
   getAnnouncementsAttachments(params: DocumentIdsQueryParams): Promise<BatchAttachmentLookupResponse> {
     return this.get<BatchAttachmentLookupResponse>("/v1/announcements/attachments", {
       query: serializeQueryParams(params, ["ids"]),
@@ -318,8 +309,13 @@ export class MarketStackClient {
     return this.get<LedgerListResponse>("/v1/account/ledger", { query: serializeQueryParams(params) });
   }
 
-  postBatchJobs(params: { body?: JsonBody | FormData } = {}): Promise<BatchJobResponse> {
-    return this.post<BatchJobResponse>("/v1/batch/jobs", { body: params.body });
+  postBatchJobs(params: {
+    file: Blob;
+    filename?: string;
+    display_name?: string;
+    metadata?: string;
+  }): Promise<BatchJobResponse> {
+    return this.postBatchJobsFile(params);
   }
 
   postBatchJobsFile(params: {

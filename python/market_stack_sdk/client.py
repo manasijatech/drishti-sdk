@@ -8,7 +8,6 @@ from market_stack_sdk.exceptions import MarketStackApiError
 from market_stack_sdk.params import (
     AccountLedgerQueryParams,
     AlertsQueryParams,
-    AnnouncementsByIdsQueryParams,
     AnnouncementsListQueryParams,
     BatchJobsListQueryParams,
     ConcallsQueryParams,
@@ -25,7 +24,6 @@ from market_stack_sdk.types import (
     AccountLimitsResponse,
     AccountUsageEnvelope,
     Alert,
-    AnnouncementBatchResponse,
     AnnouncementDetail,
     BatchAttachmentLookupResponse,
     BatchJobCancelResponse,
@@ -180,16 +178,6 @@ class MarketStackClient:
     ) -> PaginatedAnnouncementResponse:
         return self.get("/v1/announcements", params=coerce_query_params(params), path_params=None)
 
-    def get_announcements_items(
-        self,
-        params: AnnouncementsByIdsQueryParams | Mapping[str, Any],
-    ) -> AnnouncementBatchResponse:
-        result = self.get("/v1/announcements", params=coerce_query_params(params), path_params=None)
-        return {
-            "data": result.get("data", []),
-            "missing_ids": result.get("missing_ids", []),
-        }
-
     def get_announcements_attachments(
         self,
         params: DocumentIdsQueryParams | Mapping[str, Any],
@@ -283,10 +271,9 @@ class MarketStackClient:
 
     def post_batch_jobs(
         self,
-        params: Mapping[str, Any] | None = None,
+        params: Mapping[str, Any],
     ) -> BatchJobResponse:
-        body = (params or {}).get("body")
-        return self.post("/v1/batch/jobs", body=body, path_params=None)
+        return self.post_batch_jobs_file(params)
 
     def post_batch_jobs_file(
         self,
