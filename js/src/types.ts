@@ -83,9 +83,6 @@ export type EarningsListItem = {
 
 export type EarningsDetail = EarningsListItem & {
   earnings_significant?: boolean;
-  ltp?: number | null;
-  percentage_change?: number | null;
-  market_cap?: number | null;
   earnings_table?: JsonObject | null;
 };
 

@@ -84,9 +84,6 @@ class EarningsListItem(TypedDict, total=False):
 
 class EarningsDetail(EarningsListItem, total=False):
     earnings_significant: bool
-    ltp: float | int | None
-    percentage_change: float | int | None
-    market_cap: float | int | None
     earnings_table: dict[str, object] | None
 
 
