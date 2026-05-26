@@ -1,0 +1,4 @@
+interface:
+  display_name: "Drishti SDK"
+  short_description: "Use the Drishti Alpha API SDKs"
+  default_prompt: "Use $drishti-sdk to call Drishti Alpha API endpoints from JavaScript or Python."

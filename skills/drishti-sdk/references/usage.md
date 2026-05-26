@@ -1,0 +1,106 @@
+# Drishti SDK Usage Reference
+
+## Repository Shape
+
+- Root README describes this as the Market-Stack SDK for Drishti Alpha API (`/v1`).
+- JavaScript/TypeScript SDK lives in `js/`.
+- Python SDK lives in `python/`.
+- Default API base URL: `https://developers.manasija.in`.
+- Authentication: `X-API-Key` from client constructor.
+
+## Endpoint Helper Map
+
+| API area | JavaScript/TypeScript | Python |
+| --- | --- | --- |
+| News list | `getNews(params?)` | `get_news(...)` |
+| Symbol metadata | `getSymbolsMetadata(params)` | `get_symbols_metadata(...)` |
+| Announcement categories | `getAnnouncementsCategories()` | `get_announcements_categories()` |
+| Announcements list/detail rows | `getAnnouncements(params?)` | `get_announcements(...)` |
+| Announcement attachments | `getAnnouncementsAttachments({ ids })` | `get_announcements_attachments(...)` |
+| Daily summary | `postDailySummary({ body })` | `post_daily_summary(...)` |
+| Earnings list/detail rows | `getEarnings(params?)` | `get_earnings(...)` |
+| Earnings detail | `getEarningsDetail({ symbol?, scrip_code?, quarter, detailed? })` | `get_earnings_detail(...)` |
+| Earnings attachments | `getEarningsAttachments({ ids })` | `get_earnings_attachments(...)` |
+| Concalls list | `getConcalls(params?)` | `get_concalls(...)` |
+| Concalls detail | `getConcallsDetail({ symbol?, scrip_code?, quarter, detailed? })` | `get_concalls_detail(...)` |
+| Concall transcript/audio URLs | `getConcallsTranscript({ symbol?, scrip_code?, quarter })` | `get_concalls_transcript(...)` |
+| Batch concall transcripts | `postConcallsTranscripts({ items })` | `post_concalls_transcripts(...)` |
+| Alerts list | `getAlerts(params?)` | `get_alerts(...)` |
+| Account detail | `getAccount()` | `get_account()` |
+| Account limits | `getAccountLimits()` | `get_account_limits()` |
+| Account usage | `getAccountUsage()` | `get_account_usage()` |
+| Account ledger | `getAccountLedger(params?)` | `get_account_ledger(...)` |
+| Create batch job | `postBatchJobsFile(params)` or `postBatchJobs(params)` | `post_batch_jobs_file(...)` or `post_batch_jobs(...)` |
+| List batch jobs | `getBatchJobs(params?)` | `get_batch_jobs(...)` |
+| Get batch job | `getBatchJobsJobId({ job_id })` | `get_batch_jobs_job_id(...)` |
+| Cancel batch job | `deleteBatchJobsJobId({ job_id })` | `delete_batch_jobs_job_id(...)` |
+| Batch job results | `getBatchJobsJobIdResults({ job_id })` | `get_batch_jobs_job_id_results(...)` |
+
+## Common Params
+
+- `symbols`, `scrip_codes` for instruments.
+- `from`/`from_`, `to`, `page`, `limit` for feeds.
+- `detailed` when detail expansion is supported.
+- Announcements support `categories`.
+- Alerts support `type`, `important`.
+
+Use either `symbol` or `scrip_code` with required `quarter` for earnings/concall detail APIs.
+
+## JavaScript Example
+
+```ts
+import { DrishtiClient, DrishtiApiError } from "drishti-sdk";
+
+const client = new DrishtiClient({ apiKey: process.env.DRISHTI_API_KEY! });
+
+try {
+  const announcements = await client.getAnnouncements({
+    symbols: ["RELIANCE"],
+    categories: ["board meeting"],
+    detailed: true,
+    limit: 10,
+  });
+
+  const summary = await client.postDailySummary({
+    body: { portfolio: [{ symbol: "RELIANCE", exposure: 10 }] },
+  });
+
+  console.log(announcements.data, summary.status);
+} catch (error) {
+  if (error instanceof DrishtiApiError) {
+    console.error(error.statusCode, error.body);
+  }
+  throw error;
+}
+```
+
+## Python Example
+
+```python
+from drishti_sdk import DrishtiApiError, DrishtiClient
+
+try:
+    with DrishtiClient(api_key="YOUR_API_KEY") as client:
+        news = client.get_news(symbols=["RELIANCE"], limit=10)
+        announcements = client.get_announcements(symbols=["RELIANCE"], detailed=True, limit=10)
+        summary = client.post_daily_summary(
+            body={"portfolio": [{"symbol": "RELIANCE", "exposure": 10}]}
+        )
+except DrishtiApiError as error:
+    print(error.status_code, error.body)
+    raise
+```
+
+## WebSocket
+
+Websocket is supported in both SDKs at `/v1/ws`.
+
+- JS/TS: `const ws = client.websocket(); await ws.connect(); await ws.subscribe({ product: "announcements", symbols: ["RELIANCE"] });`
+- Python: `async with client.websocket() as ws: await ws.subscribe("announcements", symbols=["RELIANCE"])`
+
+## Low-Level Calls
+
+Use low-level calls for `/v1` endpoints not wrapped by helper methods.
+
+- JS: `client.request("GET", "/v1/news", { query: { symbols: "RELIANCE" } })`
+- Python: `client.request_v1("GET", "news", params={"symbols": "RELIANCE"})`
