@@ -366,8 +366,3 @@ export class DrishtiClient {
     });
   }
 }
-
-/** Backward-compatible alias. Prefer `DrishtiClient`. */
-export const MarketStackClient = DrishtiClient;
-/** Backward-compatible alias. Prefer `DrishtiClientOptions`. */
-export type MarketStackClientOptions = DrishtiClientOptions;

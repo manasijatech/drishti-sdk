@@ -1,8 +1,7 @@
-export { DEFAULT_BASE_URL, DrishtiClient, MarketStackClient } from "./client.js";
+export { DEFAULT_BASE_URL, DrishtiClient } from "./client.js";
 export type {
   DrishtiClientOptions,
   JsonBody,
-  MarketStackClientOptions,
   PathParams,
   QueryParams,
   QueryValue,

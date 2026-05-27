@@ -1,6 +1,6 @@
 {
   "name": "drishti-sdk",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "TypeScript/JavaScript client for the Alpha API (/v1)",
   "type": "module",
   "main": "./dist/index.js",
