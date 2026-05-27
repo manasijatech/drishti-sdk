@@ -31,9 +31,9 @@ npm run build
 ## Quick Start
 
 ```ts
-import { MarketStackClient } from "drishti-sdk";
+import { DrishtiClient } from "drishti-sdk";
 
-const client = new MarketStackClient({
+const client = new DrishtiClient({
   apiKey: process.env.ALPHA_API_KEY!,
 });
 
@@ -45,16 +45,16 @@ const news = await client.getNews({
 console.log(news.data.length);
 ```
 
-All SDK calls automatically send `X-API-Key` using the key passed to `MarketStackClient`.
+All SDK calls automatically send `X-API-Key` using the key passed to `DrishtiClient`.
 
 ## HTTP Usage
 
 ### Common endpoint examples
 
 ```ts
-import { MarketStackClient } from "drishti-sdk";
+import { DrishtiClient } from "drishti-sdk";
 
-const client = new MarketStackClient({ apiKey: process.env.ALPHA_API_KEY! });
+const client = new DrishtiClient({ apiKey: process.env.ALPHA_API_KEY! });
 
 // Announcements
 const announcements = await client.getAnnouncements({
@@ -92,9 +92,9 @@ const usage = await client.getAccountUsage();
 Use this when you need an endpoint not yet wrapped by a helper method.
 
 ```ts
-import { MarketStackClient } from "drishti-sdk";
+import { DrishtiClient } from "drishti-sdk";
 
-const client = new MarketStackClient({ apiKey: process.env.ALPHA_API_KEY! });
+const client = new DrishtiClient({ apiKey: process.env.ALPHA_API_KEY! });
 
 const response = await client.request("GET", "/v1/news", {
   query: { symbols: "RELIANCE", limit: 5 },
@@ -108,9 +108,9 @@ You can also use shortcut methods: `get`, `post`, `put`, `patch`, `delete`.
 HTTP failures throw `MarketStackApiError`.
 
 ```ts
-import { MarketStackApiError, MarketStackClient } from "drishti-sdk";
+import { MarketStackApiError, DrishtiClient } from "drishti-sdk";
 
-const client = new MarketStackClient({ apiKey: process.env.ALPHA_API_KEY! });
+const client = new DrishtiClient({ apiKey: process.env.ALPHA_API_KEY! });
 
 try {
   await client.getAccount();
@@ -128,9 +128,9 @@ try {
 ### Async iterator style
 
 ```ts
-import { MarketStackClient } from "drishti-sdk";
+import { DrishtiClient } from "drishti-sdk";
 
-const client = new MarketStackClient({ apiKey: process.env.ALPHA_API_KEY! });
+const client = new DrishtiClient({ apiKey: process.env.ALPHA_API_KEY! });
 const ws = client.websocket();
 
 await ws.connect();
@@ -150,9 +150,9 @@ for await (const event of ws.events()) {
 ### Callback style with reconnect
 
 ```ts
-import { MarketStackClient } from "drishti-sdk";
+import { DrishtiClient } from "drishti-sdk";
 
-const client = new MarketStackClient({ apiKey: process.env.ALPHA_API_KEY! });
+const client = new DrishtiClient({ apiKey: process.env.ALPHA_API_KEY! });
 
 const ws = client.websocket({
   autoReconnect: true,
@@ -184,9 +184,9 @@ Upload JSONL files for batch processing:
 ```ts
 import { readFile } from "node:fs/promises";
 import { Blob } from "node:buffer";
-import { MarketStackClient } from "drishti-sdk";
+import { DrishtiClient } from "drishti-sdk";
 
-const client = new MarketStackClient({ apiKey: process.env.ALPHA_API_KEY! });
+const client = new DrishtiClient({ apiKey: process.env.ALPHA_API_KEY! });
 
 const fileBuffer = await readFile("./batch.jsonl");
 const fileBlob = new Blob([fileBuffer], { type: "application/jsonl" });

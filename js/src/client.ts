@@ -56,7 +56,7 @@ export type RequestOptions = Readonly<{
   headers?: Record<string, string>;
 }>;
 
-export type MarketStackClientOptions = Readonly<{
+export type DrishtiClientOptions = Readonly<{
   apiKey: string;
   baseUrl?: string;
   headers?: Record<string, string>;
@@ -98,19 +98,19 @@ async function parseResponse<TResponse extends JsonValue | string | null>(respon
   return data as TResponse;
 }
 
-export class MarketStackClient {
+export class DrishtiClient {
   private readonly baseUrl: string;
   private readonly apiKey: string;
   private readonly extraHeaders: Record<string, string>;
   private readonly fetchImpl?: typeof fetch;
 
-  constructor(options: MarketStackClientOptions) {
+  constructor(options: DrishtiClientOptions) {
     this.baseUrl = options.baseUrl ?? DEFAULT_BASE_URL;
     this.apiKey = options.apiKey;
     this.extraHeaders = { ...options.headers };
     this.fetchImpl = options.fetchImpl;
     if (!this.apiKey || this.apiKey.trim().length === 0) {
-      throw new Error("MarketStackClient requires a non-empty apiKey");
+      throw new Error("DrishtiClient requires a non-empty apiKey");
     }
   }
 
@@ -366,3 +366,8 @@ export class MarketStackClient {
     });
   }
 }
+
+/** Backward-compatible alias. Prefer `DrishtiClient`. */
+export const MarketStackClient = DrishtiClient;
+/** Backward-compatible alias. Prefer `DrishtiClientOptions`. */
+export type MarketStackClientOptions = DrishtiClientOptions;
