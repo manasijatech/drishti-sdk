@@ -1,6 +1,6 @@
 # Market-Stack SDK
 
-Official HTTP client libraries for Alpha API (`/v1`) using API key authentication (`X-API-Key`).
+Official HTTP and WebSocket client libraries for Alpha API (`/v1`) using API key authentication.
 
 | Language   | Directory | Package name      |
 |-----------|-----------|-------------------|

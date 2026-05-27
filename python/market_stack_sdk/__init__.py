@@ -1,5 +1,5 @@
 from market_stack_sdk.client import DEFAULT_BASE_URL, MarketStackClient
-from market_stack_sdk.exceptions import MarketStackApiError
+from market_stack_sdk.exceptions import MarketStackApiError, MarketStackWebSocketError
 from market_stack_sdk.params import (
     AccountLedgerQueryParams,
     AlertsQueryParams,
@@ -20,27 +20,56 @@ from market_stack_sdk.params import (
     coerce_query_params,
 )
 from market_stack_sdk import types as response_types
+from market_stack_sdk.websocket import (
+    ALPHA_WS_PRODUCTS,
+    AlphaWebSocketClientSessionOptions,
+    AlphaWebSocketProduct,
+    AlphaWebSocketSession,
+    DataEvent,
+    ErrorEvent,
+    RawEvent,
+    SubscribeOptions,
+    SubscribedEvent,
+    WebSocketEvent,
+    build_websocket_url,
+    parse_websocket_message,
+    stream_product,
+)
 
 __all__ = [
     "DEFAULT_BASE_URL",
+    "ALPHA_WS_PRODUCTS",
     "AccountLedgerQueryParams",
     "AlertsQueryParams",
+    "AlphaWebSocketClientSessionOptions",
+    "AlphaWebSocketProduct",
+    "AlphaWebSocketSession",
     "AnnouncementsListQueryParams",
     "AnnouncementsQueryParams",
     "BatchJobsListQueryParams",
     "ConcallsQueryParams",
     "DailySummaryPortfolioItem",
     "DailySummaryRequest",
+    "DataEvent",
     "DocumentIdsQueryParams",
     "EarningsQueryParams",
+    "ErrorEvent",
     "FeedQueryParams",
     "MarketStackApiError",
     "MarketStackClient",
+    "MarketStackWebSocketError",
     "NewsQueryParams",
+    "RawEvent",
+    "SubscribeOptions",
+    "SubscribedEvent",
     "SymbolMetadataQueryParams",
     "SymbolQuarterDetailQueryParams",
     "SymbolQuarterQueryParams",
     "BatchJobIdParams",
+    "WebSocketEvent",
+    "build_websocket_url",
     "coerce_query_params",
+    "parse_websocket_message",
     "response_types",
+    "stream_product",
 ]

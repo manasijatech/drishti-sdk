@@ -10,3 +10,7 @@ class MarketStackApiError(Exception):
         self.status_code = status_code
         self.body = body
         super().__init__(f"Market-Stack API error {status_code}: {body}")
+
+
+class MarketStackWebSocketError(Exception):
+    """Raised when the WebSocket connection fails or closes unexpectedly."""

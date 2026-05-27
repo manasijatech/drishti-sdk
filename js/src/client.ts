@@ -1,4 +1,5 @@
 import { MarketStackApiError } from "./errors.js";
+import { AlphaWebSocketSession, type AlphaWebSocketSessionOptions } from "./websocket.js";
 import {
   serializeAnnouncementsQueryParams,
   serializeQueryParams,
@@ -101,13 +102,13 @@ export class MarketStackClient {
   private readonly baseUrl: string;
   private readonly apiKey: string;
   private readonly extraHeaders: Record<string, string>;
-  private readonly fetchImpl: typeof fetch;
+  private readonly fetchImpl?: typeof fetch;
 
   constructor(options: MarketStackClientOptions) {
     this.baseUrl = options.baseUrl ?? DEFAULT_BASE_URL;
     this.apiKey = options.apiKey;
     this.extraHeaders = { ...options.headers };
-    this.fetchImpl = options.fetchImpl ?? fetch;
+    this.fetchImpl = options.fetchImpl;
     if (!this.apiKey || this.apiKey.trim().length === 0) {
       throw new Error("MarketStackClient requires a non-empty apiKey");
     }
@@ -178,7 +179,10 @@ export class MarketStackClient {
       body = JSON.stringify(options.body);
       headers.set("Content-Type", "application/json");
     }
-    const response = await this.fetchImpl(url.toString(), {
+    const fetchFn = this.fetchImpl
+      ? this.fetchImpl.bind(globalThis)
+      : ((input: RequestInfo | URL, init?: RequestInit) => globalThis.fetch(input, init));
+    const response = await fetchFn(url.toString(), {
       method: method.toUpperCase(),
       headers,
       body,
@@ -349,5 +353,16 @@ export class MarketStackClient {
 
   getBatchJobsJobIdResults(params: BatchJobIdParams): Promise<string> {
     return this.get<string>("/v1/batch/jobs/{job_id}/results", { pathParams: { job_id: params.job_id } });
+  }
+
+  websocket(
+    options: Omit<AlphaWebSocketSessionOptions, "apiKey" | "baseUrl" | "headers"> = {},
+  ): AlphaWebSocketSession {
+    return new AlphaWebSocketSession({
+      apiKey: this.apiKey,
+      baseUrl: this.baseUrl,
+      headers: this.extraHeaders,
+      ...options,
+    });
   }
 }

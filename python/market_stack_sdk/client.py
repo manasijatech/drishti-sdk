@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Mapping, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Mapping, TypeVar, cast
+
+if TYPE_CHECKING:
+    from market_stack_sdk.websocket import (
+        AlphaWebSocketClientSessionOptions,
+        AlphaWebSocketSession,
+    )
 
 import httpx
 
@@ -323,3 +329,13 @@ class MarketStackClient:
         params: Mapping[str, Any] | None = None,
     ) -> JsonValue | str | None:
         return self.request(method=method, path=f"/v1/{path.removeprefix('/')}", body=json, params=params)
+
+    def websocket(self, **kwargs: AlphaWebSocketClientSessionOptions) -> AlphaWebSocketSession:
+        from market_stack_sdk.websocket import AlphaWebSocketSession
+
+        return AlphaWebSocketSession(
+            api_key=self._api_key,
+            base_url=self._base_url,
+            headers=self._extra_headers,
+            **kwargs,
+        )

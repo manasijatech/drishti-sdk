@@ -4,13 +4,17 @@ build-backend = "hatchling.build"
 
 [project]
 name = "market-stack-sdk"
-version = "0.1.10"
+version = "0.2.0"
 description = "Python client for the Alpha API (/v1)"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Market-Stack" }]
-dependencies = ["httpx>=0.27.0,<1", "pydantic>=2.0,<3"]
+dependencies = [
+  "httpx>=0.27.0,<1",
+  "pydantic>=2.0,<3",
+  "websockets>=12.0,<16",
+]
 keywords = ["alpha-api", "sdk", "python", "http-client"]
 classifiers = [
   "Development Status :: 3 - Alpha",
