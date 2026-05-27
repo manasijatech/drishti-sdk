@@ -1,6 +1,6 @@
 {
-  "name": "@manasija/market-stack-sdk",
-  "version": "0.2.0",
+  "name": "drishti-sdk",
+  "version": "0.2.1",
   "description": "TypeScript/JavaScript client for the Alpha API (/v1)",
   "type": "module",
   "main": "./dist/index.js",

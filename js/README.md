@@ -1,45 +1,134 @@
-# market-stack-sdk (JavaScript / TypeScript)
+# Drishti SDK (JavaScript / TypeScript)
 
-HTTP client for Alpha API (`/v1`). Requires Node 18+ (global `fetch`).
+Official JavaScript/TypeScript SDK for the Manasija Alpha API (`/v1`).
 
-## Install
+This SDK provides:
 
-From this directory:
+- A typed HTTP client for all endpoints of drishti api
+- A low-level request layer for custom endpoint access
+- A WebSocket session client for real-time streams
+
+## Requirements
+
+- Node.js `18+`
+- A valid Alpha API key
+
+## Installation
+
+Install from npm:
+
+```bash
+npm install drishti-sdk
+```
+
+If you are developing this package locally:
 
 ```bash
 npm install
 npm run build
 ```
 
-To use as a local package: `npm pack` or `npm link`.
+## Quick Start
 
-## Usage
-
-```typescript
-import { MarketStackClient } from "market-stack-sdk";
+```ts
+import { MarketStackClient } from "drishti-sdk";
 
 const client = new MarketStackClient({
   apiKey: process.env.ALPHA_API_KEY!,
-  // Optional override. Defaults to https://developers.manasija.in
-  // baseUrl: "https://developers.manasija.in",
 });
 
-// Dedicated helpers are available for every route:
-console.log(await client.getNews());
-console.log(await client.getAnnouncements());
-console.log(
-  await client.getEarningsDetail({ symbol: "MEDIASSIST", quarter: "q4_26", detailed: true }),
-);
+const news = await client.getNews({
+  symbols: ["RELIANCE", "TCS"],
+  limit: 10,
+});
+
+console.log(news.data.length);
 ```
 
-All calls automatically send `X-API-Key` using the `apiKey` provided in the constructor.
+All SDK calls automatically send `X-API-Key` using the key passed to `MarketStackClient`.
 
-Use `get`, `post`, `put`, `patch`, `delete`, or `request` to call any public `/v1` endpoint programmatically.
+## HTTP Usage
 
-## WebSocket (`/v1/ws`)
+### Common endpoint examples
 
-```typescript
-import { MarketStackClient } from "market-stack-sdk";
+```ts
+import { MarketStackClient } from "drishti-sdk";
+
+const client = new MarketStackClient({ apiKey: process.env.ALPHA_API_KEY! });
+
+// Announcements
+const announcements = await client.getAnnouncements({
+  symbols: ["RELIANCE"],
+  detailed: true,
+  limit: 20,
+});
+
+// Earnings detail
+const earnings = await client.getEarningsDetail({
+  symbol: "MEDIASSIST",
+  quarter: "q4_26",
+  detailed: true,
+});
+
+// Concall transcript URLs
+const transcript = await client.getConcallsTranscript({
+  symbol: "TCS",
+  quarter: "q4_26",
+});
+
+// Alerts feed
+const alerts = await client.getAlerts({
+  symbols: ["INFY"],
+  important: true,
+  limit: 25,
+});
+
+// Account usage
+const usage = await client.getAccountUsage();
+```
+
+### Low-level request access
+
+Use this when you need an endpoint not yet wrapped by a helper method.
+
+```ts
+import { MarketStackClient } from "drishti-sdk";
+
+const client = new MarketStackClient({ apiKey: process.env.ALPHA_API_KEY! });
+
+const response = await client.request("GET", "/v1/news", {
+  query: { symbols: "RELIANCE", limit: 5 },
+});
+```
+
+You can also use shortcut methods: `get`, `post`, `put`, `patch`, `delete`.
+
+## Error Handling
+
+HTTP failures throw `MarketStackApiError`.
+
+```ts
+import { MarketStackApiError, MarketStackClient } from "drishti-sdk";
+
+const client = new MarketStackClient({ apiKey: process.env.ALPHA_API_KEY! });
+
+try {
+  await client.getAccount();
+} catch (error) {
+  if (error instanceof MarketStackApiError) {
+    console.error(error.statusCode);
+    console.error(error.body);
+  }
+  throw error;
+}
+```
+
+## WebSocket Usage (`/v1/ws`)
+
+### Async iterator style
+
+```ts
+import { MarketStackClient } from "drishti-sdk";
 
 const client = new MarketStackClient({ apiKey: process.env.ALPHA_API_KEY! });
 const ws = client.websocket();
@@ -49,46 +138,113 @@ await ws.subscribe({ product: "announcements", symbols: ["RELIANCE"], detailed: 
 
 for await (const event of ws.events()) {
   if (event.kind === "subscribed") {
-    console.log("ready", event.product, event.tier);
+    console.log("subscribed", event.product, event.tier);
   } else if (event.kind === "data") {
-    console.log(event.channel, event.data.symbol);
+    console.log(event.channel, event.data);
+  } else if (event.kind === "error") {
+    console.error(event.message);
   }
 }
-
-await ws.close();
 ```
 
-Direct session import (without creating `MarketStackClient`):
+### Callback style with reconnect
 
-```typescript
-import { AlphaWebSocketSession } from "market-stack-sdk";
+```ts
+import { MarketStackClient } from "drishti-sdk";
 
-const ws = new AlphaWebSocketSession({
-  apiKey: process.env.ALPHA_API_KEY!,
-  autoReconnect: true,
-});
+const client = new MarketStackClient({ apiKey: process.env.ALPHA_API_KEY! });
 
-await ws.connect();
-await ws.subscribe({ product: "news", symbols: ["RELIANCE"], detailed: true });
-await ws.run();
-```
-
-Callback style:
-
-```typescript
 const ws = client.websocket({
-  onData: (event) => console.log(event.data),
+  autoReconnect: true,
+  reconnectInitialDelayMs: 1000,
+  reconnectMaxDelayMs: 30000,
+  onReconnectAttempt: (attempt, delayMs, reason) => {
+    console.log("reconnect", { attempt, delayMs, reason });
+  },
+  onData: (event) => {
+    if (event.kind === "data") console.log(event.channel, event.data);
+  },
 });
 
 await ws.connect();
 await ws.subscribe({ product: "alerts", symbols: ["RELIANCE"] });
 await ws.run();
-
-// Optional resilience hooks:
-// autoReconnect: true,
-// reconnectInitialDelayMs: 1000,
-// reconnectMaxDelayMs: 30000,
-// onReconnectAttempt: (attempt, delayMs, reason) => console.log({ attempt, delayMs, reason }),
-// onOpen: () => console.log("ws connected"),
-// onClose: (reason) => console.log("ws closed", reason),
 ```
+
+Direct import is also supported:
+
+```ts
+import { AlphaWebSocketSession } from "drishti-sdk";
+```
+
+## Batch Jobs
+
+Upload JSONL files for batch processing:
+
+```ts
+import { readFile } from "node:fs/promises";
+import { Blob } from "node:buffer";
+import { MarketStackClient } from "drishti-sdk";
+
+const client = new MarketStackClient({ apiKey: process.env.ALPHA_API_KEY! });
+
+const fileBuffer = await readFile("./batch.jsonl");
+const fileBlob = new Blob([fileBuffer], { type: "application/jsonl" });
+
+const job = await client.postBatchJobsFile({
+  file: fileBlob,
+  filename: "batch.jsonl",
+  display_name: "Quarterly run",
+});
+
+const status = await client.getBatchJobsJobId({ job_id: job.id });
+```
+
+## API Surface
+
+### REST helper methods
+
+- `getNews`
+- `getSymbolsMetadata`
+- `getAnnouncementsCategories`
+- `getAnnouncements`
+- `getAnnouncementsAttachments`
+- `postDailySummary`
+- `getEarnings`
+- `getEarningsDetail`
+- `getEarningsAttachments`
+- `getConcalls`
+- `getConcallsDetail`
+- `getConcallsTranscript`
+- `postConcallsTranscripts`
+- `getAlerts`
+- `getAccount`
+- `getAccountLimits`
+- `getAccountUsage`
+- `getAccountLedger`
+- `postBatchJobs`
+- `postBatchJobsFile`
+- `getBatchJobs`
+- `getBatchJobsJobId`
+- `deleteBatchJobsJobId`
+- `getBatchJobsJobIdResults`
+- `websocket`
+
+### Low-level HTTP methods
+
+- `request`
+- `get`
+- `post`
+- `put`
+- `patch`
+- `delete`
+
+## TypeScript Support
+
+The package ships with `.d.ts` files and typed request/response models from:
+
+- `types.ts` (response payloads)
+- `params.ts` (query/body input models)
+
+This enables strong autocomplete and type checking for both endpoint helpers and WebSocket events.
+
