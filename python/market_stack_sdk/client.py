@@ -19,6 +19,7 @@ from market_stack_sdk.params import (
     ConcallsQueryParams,
     DailySummaryRequest,
     DocumentIdsQueryParams,
+    NewsSentiment,
     EarningsQueryParams,
     NewsQueryParams,
     SymbolMetadataQueryParams,
@@ -66,7 +67,7 @@ def _normalize_earnings_item_payload(item: Any) -> Any:
     return item
 
 
-class MarketStackClient:
+class DrishtiClient:
     """Sync HTTP client for Alpha API v1 with endpoint-specific response typing."""
 
     def __init__(
@@ -78,7 +79,7 @@ class MarketStackClient:
         headers: Mapping[str, str] | None = None,
     ) -> None:
         if not api_key.strip():
-            raise ValueError("MarketStackClient requires a non-empty api_key")
+            raise ValueError("DrishtiClient requires a non-empty api_key")
         self._base_url = (base_url or DEFAULT_BASE_URL).rstrip("/")
         self._api_key = api_key
         self._extra_headers = dict(headers) if headers else {}
@@ -87,7 +88,7 @@ class MarketStackClient:
     def close(self) -> None:
         self._client.close()
 
-    def __enter__(self) -> "MarketStackClient":
+    def __enter__(self) -> "DrishtiClient":
         return self
 
     def __exit__(self, *args: object) -> None:
@@ -165,14 +166,33 @@ class MarketStackClient:
 
     def get_news(
         self,
-        params: NewsQueryParams | Mapping[str, Any] | None = None,
+        *,
+        symbols: list[str] | None = None,
+        scrip_codes: list[str] | None = None,
+        sentiment: NewsSentiment | None = None,
+        from_: str | None = None,
+        to: str | None = None,
+        page: int | None = None,
+        limit: int | None = None,
     ) -> PaginatedNewsResponse:
+        params = NewsQueryParams(
+            symbols=symbols,
+            scrip_codes=scrip_codes,
+            sentiment=sentiment,
+            from_=from_,
+            to=to,
+            page=page,
+            limit=limit,
+        )
         return self.get("/v1/news", params=coerce_query_params(params), path_params=None)
 
     def get_symbols_metadata(
         self,
-        params: SymbolMetadataQueryParams | Mapping[str, Any],
+        *,
+        symbols: list[str] | None = None,
+        scrip_codes: list[str] | None = None,
     ) -> SymbolMetadataResponse:
+        params = SymbolMetadataQueryParams(symbols=symbols, scrip_codes=scrip_codes)
         return self.get("/v1/symbols/metadata", params=coerce_query_params(params), path_params=None)
 
     def get_announcements_categories(self) -> StringListResponse:
@@ -180,32 +200,64 @@ class MarketStackClient:
 
     def get_announcements(
         self,
-        params: AnnouncementsListQueryParams | Mapping[str, Any] | None = None,
+        *,
+        symbols: list[str] | None = None,
+        scrip_codes: list[str] | None = None,
+        categories: list[str] | None = None,
+        from_: str | None = None,
+        to: str | None = None,
+        detailed: bool | None = None,
+        page: int | None = None,
+        limit: int | None = None,
     ) -> PaginatedAnnouncementResponse:
+        params = AnnouncementsListQueryParams(
+            symbols=symbols,
+            scrip_codes=scrip_codes,
+            categories=categories,
+            from_=from_,
+            to=to,
+            detailed=detailed,
+            page=page,
+            limit=limit,
+        )
         return self.get("/v1/announcements", params=coerce_query_params(params), path_params=None)
 
     def get_announcements_attachments(
         self,
-        params: DocumentIdsQueryParams | Mapping[str, Any],
+        *,
+        ids: list[str],
     ) -> BatchAttachmentLookupResponse:
+        params = DocumentIdsQueryParams(ids=ids)
         return self.get("/v1/announcements/attachments", params=coerce_query_params(params), path_params=None)
 
     def post_daily_summary(
         self,
-        params: Mapping[str, Any],
+        *,
+        portfolio: list[Mapping[str, Any]],
     ) -> SummaryResponse:
-        body = params["body"]
-        request_body: JsonValue
-        if isinstance(body, DailySummaryRequest):
-            request_body = body.to_request_body()
-        else:
-            request_body = body
+        request_body = DailySummaryRequest(portfolio=portfolio).to_request_body()
         return self.post("/v1/daily-summary", body=request_body, path_params=None)
 
     def get_earnings(
         self,
-        params: EarningsQueryParams | Mapping[str, Any] | None = None,
+        *,
+        symbols: list[str] | None = None,
+        scrip_codes: list[str] | None = None,
+        from_: str | None = None,
+        to: str | None = None,
+        detailed: bool | None = None,
+        page: int | None = None,
+        limit: int | None = None,
     ) -> PaginatedEarningsResponse:
+        params = EarningsQueryParams(
+            symbols=symbols,
+            scrip_codes=scrip_codes,
+            from_=from_,
+            to=to,
+            detailed=detailed,
+            page=page,
+            limit=limit,
+        )
         response = self.get("/v1/earnings", params=coerce_query_params(params), path_params=None)
         if isinstance(response, dict):
             data = response.get("data")
@@ -215,49 +267,116 @@ class MarketStackClient:
 
     def get_earnings_detail(
         self,
-        params: SymbolQuarterQueryParams | Mapping[str, Any],
+        *,
+        quarter: str,
+        symbol: str | None = None,
+        scrip_code: str | None = None,
+        detailed: bool | None = None,
     ) -> EarningsListItem | EarningsDetail:
+        params = SymbolQuarterQueryParams(
+            symbol=symbol,
+            scrip_code=scrip_code,
+            quarter=quarter,
+            detailed=detailed,
+        )
         response = self.get("/v1/earnings/detail", params=coerce_query_params(params), path_params=None)
         return _normalize_earnings_item_payload(response)
 
     def get_earnings_attachments(
         self,
-        params: DocumentIdsQueryParams | Mapping[str, Any],
+        *,
+        ids: list[str],
     ) -> BatchAttachmentLookupResponse:
+        params = DocumentIdsQueryParams(ids=ids)
         return self.get("/v1/earnings/attachments", params=coerce_query_params(params), path_params=None)
 
     def get_concalls(
         self,
-        params: ConcallsQueryParams | Mapping[str, Any] | None = None,
+        *,
+        symbols: list[str] | None = None,
+        scrip_codes: list[str] | None = None,
+        from_: str | None = None,
+        to: str | None = None,
+        detailed: bool | None = None,
+        page: int | None = None,
+        limit: int | None = None,
     ) -> PaginatedConcallResponse:
+        params = ConcallsQueryParams(
+            symbols=symbols,
+            scrip_codes=scrip_codes,
+            from_=from_,
+            to=to,
+            detailed=detailed,
+            page=page,
+            limit=limit,
+        )
         return self.get("/v1/concalls", params=coerce_query_params(params), path_params=None)
 
     def get_concalls_detail(
         self,
-        params: SymbolQuarterQueryParams | Mapping[str, Any],
+        *,
+        quarter: str,
+        symbol: str | None = None,
+        scrip_code: str | None = None,
+        detailed: bool | None = None,
     ) -> Concall:
+        params = SymbolQuarterQueryParams(
+            symbol=symbol,
+            scrip_code=scrip_code,
+            quarter=quarter,
+            detailed=detailed,
+        )
         return self.get("/v1/concalls/detail", params=coerce_query_params(params), path_params=None)
 
     def get_concalls_transcript(
         self,
-        params: SymbolQuarterQueryParams | Mapping[str, Any],
+        *,
+        quarter: str,
+        symbol: str | None = None,
+        scrip_code: str | None = None,
+        detailed: bool | None = None,
     ) -> ConcallArtifactUrlsResponse:
+        params = SymbolQuarterQueryParams(
+            symbol=symbol,
+            scrip_code=scrip_code,
+            quarter=quarter,
+            detailed=detailed,
+        )
         return self.get("/v1/concalls/transcript", params=coerce_query_params(params), path_params=None)
 
     def post_concalls_transcripts(
         self,
-        params: Mapping[str, Any],
+        *,
+        items: list[Mapping[str, str]],
     ) -> ConcallTranscriptBatchResponse:
         return self.post(
             "/v1/concalls/transcripts",
-            body={"items": params["items"]},
+            body={"items": items},
             path_params=None,
         )
 
     def get_alerts(
         self,
-        params: AlertsQueryParams | Mapping[str, Any] | None = None,
+        *,
+        symbols: list[str] | None = None,
+        scrip_codes: list[str] | None = None,
+        type: list[str] | None = None,
+        from_: str | None = None,
+        to: str | None = None,
+        important: bool | None = None,
+        page: int | None = None,
+        limit: int | None = None,
     ) -> PaginatedAlertResponse:
+        params = AlertsQueryParams(
+            symbols=symbols,
+            scrip_codes=scrip_codes,
+            type=type,
+            from_=from_,
+            to=to,
+            important=important,
+            page=page,
+            limit=limit,
+        )
         return self.get("/v1/alerts", params=coerce_query_params(params), path_params=None)
 
     def get_account(self) -> AccountDetailResponse:
@@ -271,23 +390,36 @@ class MarketStackClient:
 
     def get_account_ledger(
         self,
-        params: AccountLedgerQueryParams | Mapping[str, Any] | None = None,
+        *,
+        limit: int | None = None,
     ) -> LedgerListResponse:
+        params = AccountLedgerQueryParams(limit=limit)
         return self.get("/v1/account/ledger", params=coerce_query_params(params), path_params=None)
 
     def post_batch_jobs(
         self,
-        params: Mapping[str, Any],
+        *,
+        file_name: str,
+        file_bytes: bytes,
+        display_name: str | None = None,
+        metadata: str | None = None,
     ) -> BatchJobResponse:
-        return self.post_batch_jobs_file(params)
+        return self.post_batch_jobs_file(
+            file_name=file_name,
+            file_bytes=file_bytes,
+            display_name=display_name,
+            metadata=metadata,
+        )
 
     def post_batch_jobs_file(
         self,
-        params: Mapping[str, Any],
+        *,
+        file_name: str,
+        file_bytes: bytes,
+        display_name: str | None = None,
+        metadata: str | None = None,
     ) -> BatchJobResponse:
         form_data: dict[str, str] = {}
-        display_name = params.get("display_name")
-        metadata = params.get("metadata")
         if display_name is not None:
             form_data["display_name"] = str(display_name)
         if metadata is not None:
@@ -298,8 +430,8 @@ class MarketStackClient:
             data=form_data,
             files={
                 "file": (
-                    str(params["file_name"]),
-                    params["file_bytes"],
+                    file_name,
+                    file_bytes,
                     "application/jsonl",
                 )
             },
@@ -307,18 +439,20 @@ class MarketStackClient:
 
     def get_batch_jobs(
         self,
-        params: BatchJobsListQueryParams | Mapping[str, Any] | None = None,
+        *,
+        limit: int | None = None,
     ) -> BatchJobListResponse:
+        params = BatchJobsListQueryParams(limit=limit)
         return self.get("/v1/batch/jobs", params=coerce_query_params(params), path_params=None)
 
-    def get_batch_jobs_job_id(self, params: Mapping[str, Any]) -> BatchJobResponse:
-        return self.get("/v1/batch/jobs/{job_id}", path_params={"job_id": params["job_id"]})
+    def get_batch_jobs_job_id(self, *, job_id: str | int) -> BatchJobResponse:
+        return self.get("/v1/batch/jobs/{job_id}", path_params={"job_id": job_id})
 
-    def delete_batch_jobs_job_id(self, params: Mapping[str, Any]) -> BatchJobCancelResponse:
-        return self.delete("/v1/batch/jobs/{job_id}", path_params={"job_id": params["job_id"]})
+    def delete_batch_jobs_job_id(self, *, job_id: str | int) -> BatchJobCancelResponse:
+        return self.delete("/v1/batch/jobs/{job_id}", path_params={"job_id": job_id})
 
-    def get_batch_jobs_job_id_results(self, params: Mapping[str, Any]) -> str:
-        return self.get("/v1/batch/jobs/{job_id}/results", path_params={"job_id": params["job_id"]})
+    def get_batch_jobs_job_id_results(self, *, job_id: str | int) -> str:
+        return self.get("/v1/batch/jobs/{job_id}/results", path_params={"job_id": job_id})
 
     def request_v1(
         self,

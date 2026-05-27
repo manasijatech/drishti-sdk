@@ -8,7 +8,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 NewsSentiment = Literal["positive", "negative", "neutral"]
 
-
 def _format_query_params(raw: dict[str, Any]) -> dict[str, Any] | None:
     out: dict[str, Any] = {}
     for key, value in raw.items():

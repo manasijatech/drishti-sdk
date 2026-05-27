@@ -1,100 +1,185 @@
-# market-stack-sdk (Python)
+# Drishti SDK (Python)
 
-HTTP client for Alpha API (`/v1`).
+Official Python SDK for the Manasija Alpha API (`/v1`).
 
-## Install
+This SDK provides:
+- A synchronous HTTP client with named-argument endpoint helpers
+- A low-level request interface for advanced/custom usage
+- A WebSocket client for real-time streams (`/v1/ws`)
 
-From this directory:
+## Requirements
+
+- Python `3.10+`
+- A valid Alpha API key
+
+## Installation
 
 ```bash
-pip install .
+pip install drishti-sdk
 ```
 
-## Usage
+
+## Quick Start
 
 ```python
-from market_stack_sdk import MarketStackClient
+from market_stack_sdk import DrishtiClient
 
-with MarketStackClient(api_key="YOUR_API_KEY") as client:
-    # Defaults to https://developers.manasija.in
-    from market_stack_sdk import AnnouncementsQueryParams, DailySummaryRequest, NewsQueryParams
-
-    print(client.get_news(NewsQueryParams(symbols=["RELIANCE"], limit=10)))
-    print(client.get_announcements(AnnouncementsQueryParams(symbols=["RELIANCE"])))
-    print(
-        client.get_earnings_detail(
-            {"symbol": "MEDIASSIST", "quarter": "q4_26", "detailed": True}
-        )
+with DrishtiClient(api_key="YOUR_API_KEY") as client:
+    news = client.get_news(
+        symbols=["RELIANCE", "TCS"],
+        limit=10,
     )
-    print(
-        client.post_daily_summary(
-            {
-                "body": DailySummaryRequest(
-                    portfolio=[{"symbol": "RELIANCE", "exposure": 10}]
-                )
-            }
-        )
+    print(len(news["data"]))
+```
+
+All requests automatically include `X-API-Key` using the provided `api_key`.
+
+## HTTP Usage
+
+```python
+from market_stack_sdk import DrishtiClient
+
+with DrishtiClient(api_key="YOUR_API_KEY") as client:
+    announcements = client.get_announcements(
+        symbols=["RELIANCE"],
+        categories=["Corporate Action"],
+        detailed=True,
+        limit=20,
+    )
+
+    earnings = client.get_earnings_detail(
+        symbol="MEDIASSIST",
+        quarter="q4_26",
+        detailed=True,
+    )
+
+    transcript = client.get_concalls_transcript(
+        symbol="TCS",
+        quarter="q4_26",
+    )
+
+    alerts = client.get_alerts(
+        symbols=["INFY"],
+        important=True,
+        limit=25,
     )
 ```
 
-All calls automatically send `X-API-Key` from the provided `api_key`.
+## Error Handling
 
-Use `get`, `post`, `put`, `patch`, `delete`, or `request` for any public `/v1` endpoint.
+```python
+from market_stack_sdk import MarketStackApiError, DrishtiClient
 
-## WebSocket (`/v1/ws`)
+try:
+    with DrishtiClient(api_key="YOUR_API_KEY") as client:
+        client.get_account()
+except MarketStackApiError as exc:
+    print(exc.status_code)
+    print(exc.body)
+    raise
+```
 
-Requires the `websockets` package (installed with this SDK).
+## WebSocket Usage (`/v1/ws`)
 
 ```python
 import asyncio
-from market_stack_sdk import MarketStackClient, SubscribeOptions
+from market_stack_sdk import DrishtiClient, SubscribeOptions
+
 
 async def main() -> None:
-    client = MarketStackClient(api_key="YOUR_API_KEY")
+    client = DrishtiClient(api_key="YOUR_API_KEY")
     async with client.websocket() as ws:
         await ws.subscribe(
-            SubscribeOptions(product="announcements", symbols=["RELIANCE"], detailed=False)
+            SubscribeOptions(
+                product="announcements",
+                symbols=["RELIANCE"],
+                detailed=False,
+            )
         )
         async for event in ws.events():
             if event.kind == "subscribed":
                 print("ready", event.product, event.tier)
             elif event.kind == "data":
-                print(event.channel, event.data.get("symbol"))
+                print(event.channel, event.data)
+
 
 asyncio.run(main())
 ```
 
-Direct session import (without creating `MarketStackClient`):
+Reconnect/callback style:
 
 ```python
-import asyncio
-from market_stack_sdk import AlphaWebSocketSession, SubscribeOptions
-
-async def main() -> None:
-    async with AlphaWebSocketSession(api_key="YOUR_API_KEY", auto_reconnect=True) as ws:
-        await ws.subscribe(
-            SubscribeOptions(product="news", symbols=["RELIANCE"], detailed=True)
-        )
-        await ws.run()
-
-asyncio.run(main())
-```
-
-Callback style:
-
-```python
-async with client.websocket(on_data=lambda e: print(e.data)) as ws:
-    await ws.subscribe(product="alerts", symbols=["RELIANCE"])
+async with client.websocket(
+    auto_reconnect=True,
+    reconnect_initial_delay=1.0,
+    reconnect_max_delay=30.0,
+    on_reconnect_attempt=lambda attempt, delay, reason: print(attempt, delay, reason),
+    on_data=lambda event: print(event.data) if event.kind == "data" else None,
+) as ws:
+    await ws.subscribe("alerts", symbols=["RELIANCE"])
     await ws.run()
+```
 
-# Optional resilience hooks:
-# async with client.websocket(
-#     auto_reconnect=True,
-#     reconnect_initial_delay=1.0,
-#     reconnect_max_delay=30.0,
-#     on_reconnect_attempt=lambda attempt, delay, reason: print(attempt, delay, reason),
-#     on_open=lambda reason: print("connected", reason),
-#     on_close=lambda reason: print("closed", reason),
-# ) as ws:
-#     ...
+## Batch Jobs
+
+```python
+from market_stack_sdk import DrishtiClient
+
+with DrishtiClient(api_key="YOUR_API_KEY") as client:
+    with open("batch.jsonl", "rb") as f:
+        file_bytes = f.read()
+
+    job = client.post_batch_jobs_file(
+        file_name="batch.jsonl",
+        file_bytes=file_bytes,
+        display_name="Quarterly run",
+    )
+
+    status = client.get_batch_jobs_job_id(job_id=job["id"])
+```
+
+## API Surface
+
+### REST helper methods
+
+- `get_news`
+- `get_symbols_metadata`
+- `get_announcements_categories`
+- `get_announcements`
+- `get_announcements_attachments`
+- `post_daily_summary`
+- `get_earnings`
+- `get_earnings_detail`
+- `get_earnings_attachments`
+- `get_concalls`
+- `get_concalls_detail`
+- `get_concalls_transcript`
+- `post_concalls_transcripts`
+- `get_alerts`
+- `get_account`
+- `get_account_limits`
+- `get_account_usage`
+- `get_account_ledger`
+- `post_batch_jobs`
+- `post_batch_jobs_file`
+- `get_batch_jobs`
+- `get_batch_jobs_job_id`
+- `delete_batch_jobs_job_id`
+- `get_batch_jobs_job_id_results`
+- `websocket`
+
+### Low-level HTTP methods
+
+- `request`
+- `get`
+- `post`
+- `put`
+- `patch`
+- `delete`
+- `request_v1`
+
+## Development
+
+```bash
+pip install -e .[dev]
 ```

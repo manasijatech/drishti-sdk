@@ -36,7 +36,7 @@ LifecycleHandler: TypeAlias = Callable[[str], None | Awaitable[None]]
 
 
 class AlphaWebSocketClientSessionOptions(TypedDict, total=False):
-    """Keyword options for ``MarketStackClient.websocket()`` (API key and base URL come from the HTTP client)."""
+    """Keyword options for ``DrishtiClient.websocket()`` (API key and base URL come from the HTTP client)."""
 
     ping_interval: float | None
     ping_timeout: float | None

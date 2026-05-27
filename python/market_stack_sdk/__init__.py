@@ -1,4 +1,4 @@
-from market_stack_sdk.client import DEFAULT_BASE_URL, MarketStackClient
+from market_stack_sdk.client import DEFAULT_BASE_URL, DrishtiClient
 from market_stack_sdk.exceptions import MarketStackApiError, MarketStackWebSocketError
 from market_stack_sdk.params import (
     AccountLedgerQueryParams,
@@ -55,8 +55,8 @@ __all__ = [
     "EarningsQueryParams",
     "ErrorEvent",
     "FeedQueryParams",
+    "DrishtiClient",
     "MarketStackApiError",
-    "MarketStackClient",
     "MarketStackWebSocketError",
     "NewsQueryParams",
     "RawEvent",

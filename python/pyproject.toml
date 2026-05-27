@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "market-stack-sdk"
+name = "drishti-sdk"
 version = "0.2.0"
 description = "Python client for the Alpha API (/v1)"
 readme = "README.md"
