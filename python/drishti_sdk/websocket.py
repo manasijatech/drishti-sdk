@@ -10,7 +10,7 @@ from typing import Any, Literal, TypedDict, TypeAlias, cast
 
 import websockets
 
-from market_stack_sdk.exceptions import MarketStackWebSocketError
+from drishti_sdk.exceptions import DrishtiWebSocketError
 
 _DEFAULT_BASE_URL = "https://developers.manasija.in"
 
@@ -163,7 +163,7 @@ def parse_websocket_message(raw: str) -> WebSocketEvent:
 
 
 class AlphaWebSocketSession:
-    """Async WebSocket client for Alpha API ``/v1/ws``."""
+    """Async WebSocket client for Drishti API ``/v1/ws``."""
 
     def __init__(
         self,
@@ -282,7 +282,7 @@ class AlphaWebSocketSession:
             detailed=bool(options.detailed),
         )
         if not self.connected or self._ws is None:
-            raise MarketStackWebSocketError("WebSocket is not connected; call connect() first")
+            raise DrishtiWebSocketError("WebSocket is not connected; call connect() first")
         await self._ws.send(json.dumps(options.to_message()))
 
     async def _dispatch(self, event: WebSocketEvent) -> None:
@@ -295,11 +295,11 @@ class AlphaWebSocketSession:
 
     async def events(self) -> AsyncIterator[WebSocketEvent]:
         if not self.connected:
-            raise MarketStackWebSocketError("WebSocket is not connected; call connect() first")
+            raise DrishtiWebSocketError("WebSocket is not connected; call connect() first")
         while not self._closed:
             if self._ws is None:
                 if not self._auto_reconnect:
-                    raise MarketStackWebSocketError("WebSocket closed")
+                    raise DrishtiWebSocketError("WebSocket closed")
                 await self._reconnect("WebSocket closed")
                 continue
             try:
@@ -316,7 +316,7 @@ class AlphaWebSocketSession:
                     self._closed = True
                     break
                 if not self._auto_reconnect:
-                    raise MarketStackWebSocketError(f"WebSocket closed: {exc}") from exc
+                    raise DrishtiWebSocketError(f"WebSocket closed: {exc}") from exc
                 await self._reconnect(str(exc))
 
     async def run(self) -> None:

@@ -1,19 +1,19 @@
 export type ApiErrorBody = unknown;
 
-export class MarketStackWebSocketError extends Error {
+export class DrishtiWebSocketError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "MarketStackWebSocketError";
+    this.name = "DrishtiWebSocketError";
   }
 }
 
-export class MarketStackApiError extends Error {
+export class DrishtiApiError extends Error {
   readonly statusCode: number;
   readonly body: ApiErrorBody;
 
   constructor(statusCode: number, body: ApiErrorBody) {
-    super(`Market-Stack API error ${statusCode}: ${String(body)}`);
-    this.name = "MarketStackApiError";
+    super(`Drishti API error ${statusCode}: ${String(body)}`);
+    this.name = "DrishtiApiError";
     this.statusCode = statusCode;
     this.body = body;
   }

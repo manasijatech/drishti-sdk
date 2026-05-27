@@ -63,7 +63,7 @@ export type AnnouncementDetail = AnnouncementListItem & {
   important?: boolean;
 };
 
-/** Alias matching alpha-api `AnnouncementSummary` (detail rows with `detailed=true`). */
+/** Alias matching drishti-api `AnnouncementSummary` (detail rows with `detailed=true`). */
 export type AnnouncementSummary = AnnouncementDetail;
 
 export type AnnouncementBatchResponse = {

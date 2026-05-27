@@ -10,7 +10,7 @@ export type {
 export type * from "./types.js";
 export type * from "./params.js";
 export { serializeAnnouncementsQueryParams, serializeQueryParams } from "./params.js";
-export { MarketStackApiError, MarketStackWebSocketError } from "./errors.js";
+export { DrishtiApiError, DrishtiWebSocketError } from "./errors.js";
 export type { ApiErrorBody } from "./errors.js";
 export {
   ALPHA_WS_PRODUCTS,

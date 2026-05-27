@@ -1,7 +1,7 @@
 {
   "name": "drishti-sdk",
   "version": "0.2.3",
-  "description": "TypeScript/JavaScript client for the Alpha API (/v1)",
+  "description": "TypeScript/JavaScript client for the Drishti API (/v1)",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -13,7 +13,7 @@
     }
   },
   "keywords": [
-    "alpha-api",
+    "drishti-api",
     "sdk",
     "typescript",
     "javascript",
@@ -38,6 +38,6 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/manasijatech/Market-Stack-SDK.git"
+    "url": "git+https://github.com/manasijatech/Drishti-SDK.git"
   }
 }

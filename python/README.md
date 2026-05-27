@@ -1,6 +1,6 @@
 # Drishti SDK (Python)
 
-Official Python SDK for the Manasija Alpha API (`/v1`).
+Official Python SDK for the Manasija Drishti API (`/v1`).
 
 This SDK provides:
 - A synchronous HTTP client with named-argument endpoint helpers
@@ -10,7 +10,7 @@ This SDK provides:
 ## Requirements
 
 - Python `3.10+`
-- A valid Alpha API key
+- A valid Drishti API key
 
 ## Installation
 
@@ -22,7 +22,7 @@ pip install drishti-sdk
 ## Quick Start
 
 ```python
-from market_stack_sdk import DrishtiClient
+from drishti_sdk import DrishtiClient
 
 with DrishtiClient(api_key="YOUR_API_KEY") as client:
     news = client.get_news(
@@ -37,7 +37,7 @@ All requests automatically include `X-API-Key` using the provided `api_key`.
 ## HTTP Usage
 
 ```python
-from market_stack_sdk import DrishtiClient
+from drishti_sdk import DrishtiClient
 
 with DrishtiClient(api_key="YOUR_API_KEY") as client:
     announcements = client.get_announcements(
@@ -68,12 +68,12 @@ with DrishtiClient(api_key="YOUR_API_KEY") as client:
 ## Error Handling
 
 ```python
-from market_stack_sdk import MarketStackApiError, DrishtiClient
+from drishti_sdk import DrishtiApiError, DrishtiClient
 
 try:
     with DrishtiClient(api_key="YOUR_API_KEY") as client:
         client.get_account()
-except MarketStackApiError as exc:
+except DrishtiApiError as exc:
     print(exc.status_code)
     print(exc.body)
     raise
@@ -83,7 +83,7 @@ except MarketStackApiError as exc:
 
 ```python
 import asyncio
-from market_stack_sdk import DrishtiClient, SubscribeOptions
+from drishti_sdk import DrishtiClient, SubscribeOptions
 
 
 async def main() -> None:
@@ -123,7 +123,7 @@ async with client.websocket(
 ## Batch Jobs
 
 ```python
-from market_stack_sdk import DrishtiClient
+from drishti_sdk import DrishtiClient
 
 with DrishtiClient(api_key="YOUR_API_KEY") as client:
     with open("batch.jsonl", "rb") as f:

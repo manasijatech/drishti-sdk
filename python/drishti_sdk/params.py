@@ -1,4 +1,4 @@
-"""Request parameter models for Alpha API /v1 endpoints."""
+"""Request parameter models for Drishti API /v1 endpoints."""
 
 from __future__ import annotations
 

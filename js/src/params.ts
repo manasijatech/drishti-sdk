@@ -1,4 +1,4 @@
-/** Query parameter models aligned with alpha-api /v1 route definitions. */
+/** Query parameter models aligned with drishti-api /v1 route definitions. */
 
 import type { SymbolQuarterKey } from "./types.js";
 
@@ -119,7 +119,7 @@ function joinList(values: string[]): string {
 
 /**
  * Convert a params object to flat query-string fields for HTTP.
- * Keys listed in `listKeys` are joined with commas (alpha-api list filter convention).
+ * Keys listed in `listKeys` are joined with commas (drishti-api list filter convention).
  */
 export function serializeQueryParams<T extends object>(
   params: T,

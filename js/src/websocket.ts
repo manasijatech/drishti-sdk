@@ -1,5 +1,5 @@
 import { DEFAULT_BASE_URL } from "./client.js";
-import { MarketStackWebSocketError } from "./errors.js";
+import { DrishtiWebSocketError } from "./errors.js";
 import {
   ALPHA_WS_PRODUCTS,
 } from "./websocket-types.js";
@@ -228,7 +228,7 @@ export class AlphaWebSocketSession {
       };
       const onError = (): void => {
         cleanup();
-        reject(new MarketStackWebSocketError("WebSocket connection failed"));
+        reject(new DrishtiWebSocketError("WebSocket connection failed"));
       };
       const cleanup = (): void => {
         socket.removeEventListener("open", onOpen);
@@ -298,7 +298,7 @@ export class AlphaWebSocketSession {
       detailed: options.detailed !== false,
     });
     if (!this.connected || this.socket === null) {
-      throw new MarketStackWebSocketError("WebSocket is not connected; call connect() first");
+      throw new DrishtiWebSocketError("WebSocket is not connected; call connect() first");
     }
     this.socket.send(subscribeMessage(options));
   }
@@ -325,7 +325,7 @@ export class AlphaWebSocketSession {
   }
 
   private rejectWaiters(message: string): void {
-    const error = new MarketStackWebSocketError(message);
+    const error = new DrishtiWebSocketError(message);
     while (this.waiters.length > 0) {
       this.waiters.shift()?.reject(error);
     }
@@ -384,7 +384,7 @@ export class AlphaWebSocketSession {
       return queued;
     }
     if (this.closed) {
-      throw new MarketStackWebSocketError("WebSocket closed");
+      throw new DrishtiWebSocketError("WebSocket closed");
     }
     return await new Promise<WebSocketEvent>((resolve, reject) => {
       this.waiters.push({ resolve, reject });
@@ -393,7 +393,7 @@ export class AlphaWebSocketSession {
 
   async *events(): AsyncGenerator<WebSocketEvent> {
     if (!this.connected) {
-      throw new MarketStackWebSocketError("WebSocket is not connected; call connect() first");
+      throw new DrishtiWebSocketError("WebSocket is not connected; call connect() first");
     }
     while (!this.closed) {
       yield await this.nextEvent();

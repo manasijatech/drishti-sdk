@@ -1,6 +1,6 @@
 # Drishti SDK (JavaScript / TypeScript)
 
-Official JavaScript/TypeScript SDK for the Manasija Alpha API (`/v1`).
+Official JavaScript/TypeScript SDK for the Manasija Drishti API (`/v1`).
 
 This SDK provides:
 
@@ -11,7 +11,7 @@ This SDK provides:
 ## Requirements
 
 - Node.js `18+`
-- A valid Alpha API key
+- A valid Drishti API key
 
 ## Installation
 
@@ -34,7 +34,7 @@ npm run build
 import { DrishtiClient } from "drishti-sdk";
 
 const client = new DrishtiClient({
-  apiKey: process.env.ALPHA_API_KEY!,
+  apiKey: process.env.DRISHTI_API_KEY!,
 });
 
 const news = await client.getNews({
@@ -54,7 +54,7 @@ All SDK calls automatically send `X-API-Key` using the key passed to `DrishtiCli
 ```ts
 import { DrishtiClient } from "drishti-sdk";
 
-const client = new DrishtiClient({ apiKey: process.env.ALPHA_API_KEY! });
+const client = new DrishtiClient({ apiKey: process.env.DRISHTI_API_KEY! });
 
 // Announcements
 const announcements = await client.getAnnouncements({
@@ -94,7 +94,7 @@ Use this when you need an endpoint not yet wrapped by a helper method.
 ```ts
 import { DrishtiClient } from "drishti-sdk";
 
-const client = new DrishtiClient({ apiKey: process.env.ALPHA_API_KEY! });
+const client = new DrishtiClient({ apiKey: process.env.DRISHTI_API_KEY! });
 
 const response = await client.request("GET", "/v1/news", {
   query: { symbols: "RELIANCE", limit: 5 },
@@ -105,17 +105,17 @@ You can also use shortcut methods: `get`, `post`, `put`, `patch`, `delete`.
 
 ## Error Handling
 
-HTTP failures throw `MarketStackApiError`.
+HTTP failures throw `DrishtiApiError`.
 
 ```ts
-import { MarketStackApiError, DrishtiClient } from "drishti-sdk";
+import { DrishtiApiError, DrishtiClient } from "drishti-sdk";
 
-const client = new DrishtiClient({ apiKey: process.env.ALPHA_API_KEY! });
+const client = new DrishtiClient({ apiKey: process.env.DRISHTI_API_KEY! });
 
 try {
   await client.getAccount();
 } catch (error) {
-  if (error instanceof MarketStackApiError) {
+  if (error instanceof DrishtiApiError) {
     console.error(error.statusCode);
     console.error(error.body);
   }
@@ -130,7 +130,7 @@ try {
 ```ts
 import { DrishtiClient } from "drishti-sdk";
 
-const client = new DrishtiClient({ apiKey: process.env.ALPHA_API_KEY! });
+const client = new DrishtiClient({ apiKey: process.env.DRISHTI_API_KEY! });
 const ws = client.websocket();
 
 await ws.connect();
@@ -152,7 +152,7 @@ for await (const event of ws.events()) {
 ```ts
 import { DrishtiClient } from "drishti-sdk";
 
-const client = new DrishtiClient({ apiKey: process.env.ALPHA_API_KEY! });
+const client = new DrishtiClient({ apiKey: process.env.DRISHTI_API_KEY! });
 
 const ws = client.websocket({
   autoReconnect: true,
@@ -186,7 +186,7 @@ import { readFile } from "node:fs/promises";
 import { Blob } from "node:buffer";
 import { DrishtiClient } from "drishti-sdk";
 
-const client = new DrishtiClient({ apiKey: process.env.ALPHA_API_KEY! });
+const client = new DrishtiClient({ apiKey: process.env.DRISHTI_API_KEY! });
 
 const fileBuffer = await readFile("./batch.jsonl");
 const fileBlob = new Blob([fileBuffer], { type: "application/jsonl" });

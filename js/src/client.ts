@@ -1,4 +1,4 @@
-import { MarketStackApiError } from "./errors.js";
+import { DrishtiApiError } from "./errors.js";
 import { AlphaWebSocketSession, type AlphaWebSocketSessionOptions } from "./websocket.js";
 import {
   serializeAnnouncementsQueryParams,
@@ -93,7 +93,7 @@ async function parseResponse<TResponse extends JsonValue | string | null>(respon
     data = await response.text();
   }
   if (!response.ok) {
-    throw new MarketStackApiError(response.status, data);
+    throw new DrishtiApiError(response.status, data);
   }
   return data as TResponse;
 }

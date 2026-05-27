@@ -3,15 +3,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Mapping, TypeVar, cast
 
 if TYPE_CHECKING:
-    from market_stack_sdk.websocket import (
+    from drishti_sdk.websocket import (
         AlphaWebSocketClientSessionOptions,
         AlphaWebSocketSession,
     )
 
 import httpx
 
-from market_stack_sdk.exceptions import MarketStackApiError
-from market_stack_sdk.params import (
+from drishti_sdk.exceptions import DrishtiApiError
+from drishti_sdk.params import (
     AccountLedgerQueryParams,
     AlertsQueryParams,
     AnnouncementsListQueryParams,
@@ -26,7 +26,7 @@ from market_stack_sdk.params import (
     SymbolQuarterQueryParams,
     coerce_query_params,
 )
-from market_stack_sdk.types import (
+from drishti_sdk.types import (
     AccountDetailResponse,
     AccountLimitsResponse,
     AccountUsageEnvelope,
@@ -68,7 +68,7 @@ def _normalize_earnings_item_payload(item: Any) -> Any:
 
 
 class DrishtiClient:
-    """Sync HTTP client for Alpha API v1 with endpoint-specific response typing."""
+    """Sync HTTP client for Drishti API v1 with endpoint-specific response typing."""
 
     def __init__(
         self,
@@ -161,7 +161,7 @@ class DrishtiClient:
         else:
             data = None
         if response.is_error:
-            raise MarketStackApiError(response.status_code, data)
+            raise DrishtiApiError(response.status_code, data)
         return data
 
     def get_news(
@@ -465,7 +465,7 @@ class DrishtiClient:
         return self.request(method=method, path=f"/v1/{path.removeprefix('/')}", body=json, params=params)
 
     def websocket(self, **kwargs: AlphaWebSocketClientSessionOptions) -> AlphaWebSocketSession:
-        from market_stack_sdk.websocket import AlphaWebSocketSession
+        from drishti_sdk.websocket import AlphaWebSocketSession
 
         return AlphaWebSocketSession(
             api_key=self._api_key,

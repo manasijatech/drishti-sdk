@@ -1,6 +1,6 @@
-from market_stack_sdk.client import DEFAULT_BASE_URL, DrishtiClient
-from market_stack_sdk.exceptions import MarketStackApiError, MarketStackWebSocketError
-from market_stack_sdk.params import (
+from drishti_sdk.client import DEFAULT_BASE_URL, DrishtiClient
+from drishti_sdk.exceptions import DrishtiApiError, DrishtiWebSocketError
+from drishti_sdk.params import (
     AccountLedgerQueryParams,
     AlertsQueryParams,
     AnnouncementsListQueryParams,
@@ -19,8 +19,8 @@ from market_stack_sdk.params import (
     BatchJobIdParams,
     coerce_query_params,
 )
-from market_stack_sdk import types as response_types
-from market_stack_sdk.websocket import (
+from drishti_sdk import types as response_types
+from drishti_sdk.websocket import (
     ALPHA_WS_PRODUCTS,
     AlphaWebSocketClientSessionOptions,
     AlphaWebSocketProduct,
@@ -56,8 +56,8 @@ __all__ = [
     "ErrorEvent",
     "FeedQueryParams",
     "DrishtiClient",
-    "MarketStackApiError",
-    "MarketStackWebSocketError",
+    "DrishtiApiError",
+    "DrishtiWebSocketError",
     "NewsQueryParams",
     "RawEvent",
     "SubscribeOptions",
