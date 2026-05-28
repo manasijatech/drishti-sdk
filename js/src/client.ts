@@ -54,6 +54,15 @@ export type RequestOptions = Readonly<{
   query?: QueryParams;
   pathParams?: PathParams;
   headers?: Record<string, string>;
+  retry?: RetryOptions;
+}>;
+
+export type RetryOptions = Readonly<{
+  maxRetries?: number;
+  initialDelayMs?: number;
+  maxDelayMs?: number;
+  multiplier?: number;
+  retryOnStatuses?: number[];
 }>;
 
 export type DrishtiClientOptions = Readonly<{
@@ -61,6 +70,13 @@ export type DrishtiClientOptions = Readonly<{
   baseUrl?: string;
   headers?: Record<string, string>;
   fetchImpl?: typeof fetch;
+  retry?: RetryOptions;
+}>;
+
+export type BatchWaitOptions = Readonly<{
+  pollIntervalMs?: number;
+  timeoutMs?: number;
+  terminalStatuses?: string[];
 }>;
 
 function normalizeEarningsItemPayload(item: unknown): unknown {
@@ -103,15 +119,45 @@ export class DrishtiClient {
   private readonly apiKey: string;
   private readonly extraHeaders: Record<string, string>;
   private readonly fetchImpl?: typeof fetch;
+  private readonly retryOptions: Required<RetryOptions>;
 
   constructor(options: DrishtiClientOptions) {
     this.baseUrl = options.baseUrl ?? DEFAULT_BASE_URL;
     this.apiKey = options.apiKey;
     this.extraHeaders = { ...options.headers };
     this.fetchImpl = options.fetchImpl;
+    this.retryOptions = {
+      maxRetries: options.retry?.maxRetries ?? 2,
+      initialDelayMs: options.retry?.initialDelayMs ?? 300,
+      maxDelayMs: options.retry?.maxDelayMs ?? 5000,
+      multiplier: options.retry?.multiplier ?? 2,
+      retryOnStatuses: options.retry?.retryOnStatuses ?? [408, 409, 425, 429, 500, 502, 503, 504],
+    };
     if (!this.apiKey || this.apiKey.trim().length === 0) {
       throw new Error("DrishtiClient requires a non-empty apiKey");
     }
+  }
+
+  private resolveRetryOptions(override?: RetryOptions): Required<RetryOptions> {
+    return {
+      maxRetries: override?.maxRetries ?? this.retryOptions.maxRetries,
+      initialDelayMs: override?.initialDelayMs ?? this.retryOptions.initialDelayMs,
+      maxDelayMs: override?.maxDelayMs ?? this.retryOptions.maxDelayMs,
+      multiplier: override?.multiplier ?? this.retryOptions.multiplier,
+      retryOnStatuses: override?.retryOnStatuses ?? this.retryOptions.retryOnStatuses,
+    };
+  }
+
+  private shouldRetry(error: unknown, response: Response | null, retryOnStatuses: number[]): boolean {
+    if (response) {
+      return retryOnStatuses.includes(response.status);
+    }
+    return error instanceof TypeError;
+  }
+
+  private computeDelayMs(attempt: number, options: Required<RetryOptions>): number {
+    const exp = options.initialDelayMs * Math.pow(options.multiplier, Math.max(0, attempt - 1));
+    return Math.min(options.maxDelayMs, exp);
   }
 
   private mergeHeaders(init?: HeadersInit): Headers {
@@ -182,12 +228,30 @@ export class DrishtiClient {
     const fetchFn = this.fetchImpl
       ? this.fetchImpl.bind(globalThis)
       : ((input: RequestInfo | URL, init?: RequestInit) => globalThis.fetch(input, init));
-    const response = await fetchFn(url.toString(), {
-      method: method.toUpperCase(),
-      headers,
-      body,
-    });
-    return parseResponse<TResponse>(response);
+    const retryOptions = this.resolveRetryOptions(options.retry);
+    const maxAttempts = retryOptions.maxRetries + 1;
+    let lastError: unknown = null;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      let response: Response | null = null;
+      try {
+        response = await fetchFn(url.toString(), {
+          method: method.toUpperCase(),
+          headers,
+          body,
+        });
+        if (response.ok || attempt >= maxAttempts || !this.shouldRetry(null, response, retryOptions.retryOnStatuses)) {
+          return parseResponse<TResponse>(response);
+        }
+      } catch (error) {
+        lastError = error;
+        if (attempt >= maxAttempts || !this.shouldRetry(error, null, retryOptions.retryOnStatuses)) {
+          throw error;
+        }
+      }
+      const delayMs = this.computeDelayMs(attempt, retryOptions);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+    throw lastError instanceof Error ? lastError : new Error("Request failed after retries");
   }
 
   get<TResponse extends JsonValue | string | null>(path: string, options: Omit<RequestOptions, "body"> = {}): Promise<TResponse> {
@@ -353,6 +417,47 @@ export class DrishtiClient {
 
   getBatchJobsJobIdResults(params: BatchJobIdParams): Promise<string> {
     return this.get<string>("/v1/batch/jobs/{job_id}/results", { pathParams: { job_id: params.job_id } });
+  }
+
+  async waitForBatchJobCompletion(
+    params: BatchJobIdParams & BatchWaitOptions
+  ): Promise<BatchJobResponse> {
+    const pollIntervalMs = params.pollIntervalMs ?? 2000;
+    const timeoutMs = params.timeoutMs ?? 5 * 60 * 1000;
+    const terminalStatuses = new Set((params.terminalStatuses ?? ["completed", "failed", "cancelled"]).map((s) => s.toLowerCase()));
+    const startedAt = Date.now();
+    while (true) {
+      const job = await this.getBatchJobsJobId({ job_id: params.job_id });
+      if (terminalStatuses.has(job.status.toLowerCase())) {
+        return job;
+      }
+      if (Date.now() - startedAt >= timeoutMs) {
+        throw new Error(`Timed out waiting for batch job ${params.job_id} to complete`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+    }
+  }
+
+  async submitBatchJobAndWait(
+    params: {
+      file: Blob;
+      filename?: string;
+      display_name?: string;
+      metadata?: string;
+    } & BatchWaitOptions
+  ): Promise<BatchJobResponse> {
+    const job = await this.postBatchJobsFile({
+      file: params.file,
+      filename: params.filename,
+      display_name: params.display_name,
+      metadata: params.metadata,
+    });
+    return this.waitForBatchJobCompletion({
+      job_id: job.id,
+      pollIntervalMs: params.pollIntervalMs,
+      timeoutMs: params.timeoutMs,
+      terminalStatuses: params.terminalStatuses,
+    });
   }
 
   websocket(

@@ -7,6 +7,7 @@ This SDK provides:
 - A typed HTTP client for all endpoints of drishti api
 - A low-level request layer for custom endpoint access
 - A WebSocket session client for real-time streams
+- Configurable retry/backoff for transient HTTP failures
 
 ## Requirements
 
@@ -46,6 +47,30 @@ console.log(news.data.length);
 ```
 
 All SDK calls automatically send `X-API-Key` using the key passed to `DrishtiClient`.
+
+## Retry Configuration
+
+Retries are configurable globally on the client and per request.
+
+```ts
+import { DrishtiClient } from "drishti-sdk";
+
+const client = new DrishtiClient({
+  apiKey: process.env.DRISHTI_API_KEY!,
+  retry: {
+    maxRetries: 3,
+    initialDelayMs: 250,
+    maxDelayMs: 4000,
+    multiplier: 2,
+    retryOnStatuses: [408, 429, 500, 502, 503, 504],
+  },
+});
+
+const news = await client.get("/v1/news", {
+  query: { limit: 10 },
+  retry: { maxRetries: 1 },
+});
+```
 
 ## HTTP Usage
 
@@ -200,6 +225,28 @@ const job = await client.postBatchJobsFile({
 const status = await client.getBatchJobsJobId({ job_id: job.id });
 ```
 
+Wait until completion:
+
+```ts
+const finalJob = await client.waitForBatchJobCompletion({
+  job_id: job.id,
+  pollIntervalMs: 2000,
+  timeoutMs: 300000,
+});
+```
+
+Submit and wait in one call:
+
+```ts
+const finalJob = await client.submitBatchJobAndWait({
+  file: fileBlob,
+  filename: "batch.jsonl",
+  display_name: "Quarterly run",
+  pollIntervalMs: 2000,
+  timeoutMs: 300000,
+});
+```
+
 ## API Surface
 
 ### REST helper methods
@@ -228,6 +275,8 @@ const status = await client.getBatchJobsJobId({ job_id: job.id });
 - `getBatchJobsJobId`
 - `deleteBatchJobsJobId`
 - `getBatchJobsJobIdResults`
+- `waitForBatchJobCompletion`
+- `submitBatchJobAndWait`
 - `websocket`
 
 ### Low-level HTTP methods
@@ -247,4 +296,3 @@ The package ships with `.d.ts` files and typed request/response models from:
 - `params.ts` (query/body input models)
 
 This enables strong autocomplete and type checking for both endpoint helpers and WebSocket events.
-

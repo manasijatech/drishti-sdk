@@ -6,6 +6,7 @@ This SDK provides:
 - A synchronous HTTP client with named-argument endpoint helpers
 - A low-level request interface for advanced/custom usage
 - A WebSocket client for real-time streams (`/v1/ws`)
+- Configurable retry/backoff for transient HTTP failures
 
 ## Requirements
 
@@ -33,6 +34,30 @@ with DrishtiClient(api_key="YOUR_API_KEY") as client:
 ```
 
 All requests automatically include `X-API-Key` using the provided `api_key`.
+
+## Retry Configuration
+
+Retries are configurable globally on the client and per request.
+
+```python
+from drishti_sdk import DrishtiClient
+
+with DrishtiClient(
+    api_key="YOUR_API_KEY",
+    retry_max_retries=3,
+    retry_initial_delay=0.25,
+    retry_max_delay=4.0,
+    retry_multiplier=2.0,
+    retry_on_statuses=(408, 429, 500, 502, 503, 504),
+) as client:
+    # Per-request override
+    news = client.request(
+        "GET",
+        "/v1/news",
+        params={"limit": 10},
+        retry_max_retries=1,
+    )
+```
 
 ## HTTP Usage
 
@@ -138,6 +163,28 @@ with DrishtiClient(api_key="YOUR_API_KEY") as client:
     status = client.get_batch_jobs_job_id(job_id=job["id"])
 ```
 
+Wait until completion:
+
+```python
+final_job = client.wait_for_batch_job_completion(
+    job_id=job["id"],
+    poll_interval=2.0,
+    timeout=300.0,
+)
+```
+
+Submit and wait in one call:
+
+```python
+final_job = client.submit_batch_job_and_wait(
+    file_name="batch.jsonl",
+    file_bytes=file_bytes,
+    display_name="Quarterly run",
+    poll_interval=2.0,
+    timeout=300.0,
+)
+```
+
 ## API Surface
 
 ### REST helper methods
@@ -166,6 +213,8 @@ with DrishtiClient(api_key="YOUR_API_KEY") as client:
 - `get_batch_jobs_job_id`
 - `delete_batch_jobs_job_id`
 - `get_batch_jobs_job_id_results`
+- `wait_for_batch_job_completion`
+- `submit_batch_job_and_wait`
 - `websocket`
 
 ### Low-level HTTP methods

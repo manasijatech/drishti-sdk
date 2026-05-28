@@ -1,10 +1,12 @@
 export { DEFAULT_BASE_URL, DrishtiClient } from "./client.js";
 export type {
+  BatchWaitOptions,
   DrishtiClientOptions,
   JsonBody,
   PathParams,
   QueryParams,
   QueryValue,
+  RetryOptions,
   RequestOptions,
 } from "./client.js";
 export type * from "./types.js";
