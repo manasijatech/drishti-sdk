@@ -424,7 +424,9 @@ export class DrishtiClient {
   ): Promise<BatchJobResponse> {
     const pollIntervalMs = params.pollIntervalMs ?? 2000;
     const timeoutMs = params.timeoutMs ?? 5 * 60 * 1000;
-    const terminalStatuses = new Set((params.terminalStatuses ?? ["completed", "failed", "cancelled"]).map((s) => s.toLowerCase()));
+    const terminalStatuses = new Set(
+      (params.terminalStatuses ?? ["succeeded", "partial", "failed", "cancelled", "completed"]).map((s) => s.toLowerCase())
+    );
     const startedAt = Date.now();
     while (true) {
       const job = await this.getBatchJobsJobId({ job_id: params.job_id });

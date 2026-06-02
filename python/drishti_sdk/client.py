@@ -499,7 +499,7 @@ class DrishtiClient:
         job_id: str | int,
         poll_interval: float = 2.0,
         timeout: float = 300.0,
-        terminal_statuses: tuple[str, ...] = ("completed", "failed", "cancelled"),
+        terminal_statuses: tuple[str, ...] = ("succeeded", "partial", "failed", "cancelled", "completed"),
     ) -> BatchJobResponse:
         started = time.monotonic()
         terminal = {status.lower() for status in terminal_statuses}
@@ -521,7 +521,7 @@ class DrishtiClient:
         metadata: str | None = None,
         poll_interval: float = 2.0,
         timeout: float = 300.0,
-        terminal_statuses: tuple[str, ...] = ("completed", "failed", "cancelled"),
+        terminal_statuses: tuple[str, ...] = ("succeeded", "partial", "failed", "cancelled", "completed"),
     ) -> BatchJobResponse:
         job = self.post_batch_jobs_file(
             file_name=file_name,
