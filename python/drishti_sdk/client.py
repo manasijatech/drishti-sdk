@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Any, Mapping, TypeVar, cast
 
 if TYPE_CHECKING:
     from drishti_sdk.websocket import (
-        AlphaWebSocketClientSessionOptions,
-        AlphaWebSocketSession,
+        DrishtiWebSocketClientSessionOptions,
+        DrishtiWebSocketSession,
     )
 
 import httpx
@@ -546,10 +546,10 @@ class DrishtiClient:
     ) -> JsonValue | str | None:
         return self.request(method=method, path=f"/v1/{path.removeprefix('/')}", body=json, params=params)
 
-    def websocket(self, **kwargs: AlphaWebSocketClientSessionOptions) -> AlphaWebSocketSession:
-        from drishti_sdk.websocket import AlphaWebSocketSession
+    def websocket(self, **kwargs: DrishtiWebSocketClientSessionOptions) -> DrishtiWebSocketSession:
+        from drishti_sdk.websocket import DrishtiWebSocketSession
 
-        return AlphaWebSocketSession(
+        return DrishtiWebSocketSession(
             api_key=self._api_key,
             base_url=self._base_url,
             headers=self._extra_headers,

@@ -199,7 +199,7 @@ await ws.run();
 Direct import is also supported:
 
 ```ts
-import { AlphaWebSocketSession } from "drishti-sdk";
+import { DrishtiWebSocketSession } from "drishti-sdk";
 ```
 
 ## Batch Jobs

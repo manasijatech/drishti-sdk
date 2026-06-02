@@ -1,10 +1,10 @@
 import { DEFAULT_BASE_URL } from "./client.js";
 import { DrishtiWebSocketError } from "./errors.js";
 import {
-  ALPHA_WS_PRODUCTS,
+  DRISHTI_WS_PRODUCTS,
 } from "./websocket-types.js";
 import type {
-  AlphaWebSocketProduct,
+  DrishtiWebSocketProduct,
   DataPayloadByChannel,
   SubscribeOptions,
   WebSocketEvent,
@@ -12,8 +12,8 @@ import type {
 } from "./websocket-types.js";
 
 export {
-  ALPHA_WS_PRODUCTS,
-  type AlphaWebSocketProduct,
+  DRISHTI_WS_PRODUCTS,
+  type DrishtiWebSocketProduct,
   type DataEvent,
   type DataPayloadByChannel,
   type ErrorEvent,
@@ -26,7 +26,7 @@ export {
   type WebSocketHandler,
 } from "./websocket-types.js";
 
-export type AlphaWebSocketSessionOptions = Readonly<{
+export type DrishtiWebSocketSessionOptions = Readonly<{
   apiKey: string;
   baseUrl?: string;
   headers?: Record<string, string>;
@@ -99,7 +99,7 @@ export function parseWebSocketMessage(raw: string): WebSocketEvent {
     const channel = String(record.channel);
     const data = record.data;
     if (data && typeof data === "object" && !Array.isArray(data)) {
-      if (isAlphaWebSocketProduct(channel)) {
+      if (isDrishtiWebSocketProduct(channel)) {
         return {
           kind: "data",
           channel,
@@ -112,7 +112,7 @@ export function parseWebSocketMessage(raw: string): WebSocketEvent {
         data: data as Record<string, unknown>,
       };
     }
-    if (isAlphaWebSocketProduct(channel)) {
+    if (isDrishtiWebSocketProduct(channel)) {
       return {
         kind: "data",
         channel,
@@ -128,8 +128,8 @@ export function parseWebSocketMessage(raw: string): WebSocketEvent {
   return { kind: "raw", payload: record };
 }
 
-function isAlphaWebSocketProduct(value: string): value is AlphaWebSocketProduct {
-  return (ALPHA_WS_PRODUCTS as readonly string[]).includes(value);
+function isDrishtiWebSocketProduct(value: string): value is DrishtiWebSocketProduct {
+  return (DRISHTI_WS_PRODUCTS as readonly string[]).includes(value);
 }
 
 function subscribeMessage(options: SubscribeOptions): string {
@@ -141,7 +141,7 @@ function subscribeMessage(options: SubscribeOptions): string {
   });
 }
 
-export class AlphaWebSocketSession {
+export class DrishtiWebSocketSession {
   private readonly apiKey: string;
   private readonly baseUrl: string;
   private readonly headers: Record<string, string>;
@@ -155,7 +155,7 @@ export class AlphaWebSocketSession {
   private readonly onClose?: (reason: string) => void | Promise<void>;
   private readonly onReconnectAttempt?: (attempt: number, delayMs: number, reason: string) => void | Promise<void>;
   private readonly handlers = new Map<string, WebSocketHandler[]>();
-  private readonly subscriptions = new Map<AlphaWebSocketProduct, SubscribeOptions>();
+  private readonly subscriptions = new Map<DrishtiWebSocketProduct, SubscribeOptions>();
   private socket: WebSocket | null = null;
   private readonly queue: WebSocketEvent[] = [];
   private readonly waiters: Array<{
@@ -166,9 +166,9 @@ export class AlphaWebSocketSession {
   private manuallyClosed = false;
   private reconnecting = false;
 
-  constructor(options: AlphaWebSocketSessionOptions) {
+  constructor(options: DrishtiWebSocketSessionOptions) {
     if (!options.apiKey || options.apiKey.trim().length === 0) {
-      throw new Error("AlphaWebSocketSession requires a non-empty apiKey");
+      throw new Error("DrishtiWebSocketSession requires a non-empty apiKey");
     }
     this.apiKey = options.apiKey;
     this.baseUrl = options.baseUrl ?? DEFAULT_BASE_URL;
@@ -409,14 +409,14 @@ export class AlphaWebSocketSession {
 
 export async function* streamProduct(options: {
   apiKey: string;
-  product: AlphaWebSocketProduct;
+  product: DrishtiWebSocketProduct;
   symbols?: readonly string[];
   detailed?: boolean;
   baseUrl?: string;
   headers?: Record<string, string>;
   webSocketImpl?: typeof WebSocket;
 }): AsyncGenerator<Record<string, unknown>> {
-  const session = new AlphaWebSocketSession({
+  const session = new DrishtiWebSocketSession({
     apiKey: options.apiKey,
     baseUrl: options.baseUrl,
     headers: options.headers,

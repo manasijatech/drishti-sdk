@@ -9,7 +9,7 @@ import type {
   NewsItem,
 } from "./types.js";
 
-export const ALPHA_WS_PRODUCTS = [
+export const DRISHTI_WS_PRODUCTS = [
   "news",
   "announcements",
   "earnings",
@@ -17,10 +17,10 @@ export const ALPHA_WS_PRODUCTS = [
   "alerts",
 ] as const;
 
-export type AlphaWebSocketProduct = (typeof ALPHA_WS_PRODUCTS)[number];
+export type DrishtiWebSocketProduct = (typeof DRISHTI_WS_PRODUCTS)[number];
 
 export type SubscribeOptions = Readonly<{
-  product: AlphaWebSocketProduct;
+  product: DrishtiWebSocketProduct;
   symbols?: readonly string[];
   detailed?: boolean;
 }>;
@@ -43,12 +43,12 @@ export type DataPayloadByChannel = Readonly<{
 }>;
 
 export type KnownDataEvent = {
-  [K in AlphaWebSocketProduct]: Readonly<{
+  [K in DrishtiWebSocketProduct]: Readonly<{
     kind: "data";
     channel: K;
     data: DataPayloadByChannel[K];
   }>;
-}[AlphaWebSocketProduct];
+}[DrishtiWebSocketProduct];
 
 export type UnknownDataEvent = Readonly<{
   kind: "data";

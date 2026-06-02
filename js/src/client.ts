@@ -1,5 +1,5 @@
 import { DrishtiApiError } from "./errors.js";
-import { AlphaWebSocketSession, type AlphaWebSocketSessionOptions } from "./websocket.js";
+import { DrishtiWebSocketSession, type DrishtiWebSocketSessionOptions } from "./websocket.js";
 import {
   serializeAnnouncementsQueryParams,
   serializeQueryParams,
@@ -463,9 +463,9 @@ export class DrishtiClient {
   }
 
   websocket(
-    options: Omit<AlphaWebSocketSessionOptions, "apiKey" | "baseUrl" | "headers"> = {},
-  ): AlphaWebSocketSession {
-    return new AlphaWebSocketSession({
+    options: Omit<DrishtiWebSocketSessionOptions, "apiKey" | "baseUrl" | "headers"> = {},
+  ): DrishtiWebSocketSession {
+    return new DrishtiWebSocketSession({
       apiKey: this.apiKey,
       baseUrl: this.baseUrl,
       headers: this.extraHeaders,

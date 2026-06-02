@@ -73,7 +73,7 @@ client.request_v1("GET", "news", params={"symbols": "RELIANCE"})
 
 This SDK includes websocket support for `/v1/ws`.
 
-- JavaScript: use `client.websocket()` or `AlphaWebSocketSession`.
+- JavaScript: use `client.websocket()` or `DrishtiWebSocketSession`.
 - Python: use `async with client.websocket() as ws`, then `subscribe(...)` and `events()` or `run()`.
 
 ## Validation

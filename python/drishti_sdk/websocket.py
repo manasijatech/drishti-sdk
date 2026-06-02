@@ -14,7 +14,7 @@ from drishti_sdk.exceptions import DrishtiWebSocketError
 
 _DEFAULT_BASE_URL = "https://developers.manasija.in"
 
-AlphaWebSocketProduct: TypeAlias = Literal[
+DrishtiWebSocketProduct: TypeAlias = Literal[
     "news",
     "announcements",
     "earnings",
@@ -22,7 +22,7 @@ AlphaWebSocketProduct: TypeAlias = Literal[
     "alerts",
 ]
 
-ALPHA_WS_PRODUCTS: tuple[AlphaWebSocketProduct, ...] = (
+DRISHTI_WS_PRODUCTS: tuple[DrishtiWebSocketProduct, ...] = (
     "news",
     "announcements",
     "earnings",
@@ -35,7 +35,7 @@ ReconnectAttemptHandler: TypeAlias = Callable[[int, float, str], None | Awaitabl
 LifecycleHandler: TypeAlias = Callable[[str], None | Awaitable[None]]
 
 
-class AlphaWebSocketClientSessionOptions(TypedDict, total=False):
+class DrishtiWebSocketClientSessionOptions(TypedDict, total=False):
     """Keyword options for ``DrishtiClient.websocket()`` (API key and base URL come from the HTTP client)."""
 
     ping_interval: float | None
@@ -80,7 +80,7 @@ def _normalize_symbols(symbols: Sequence[str]) -> list[str]:
 
 @dataclass(frozen=True)
 class SubscribeOptions:
-    product: AlphaWebSocketProduct
+    product: DrishtiWebSocketProduct
     symbols: Sequence[str] = ()
     detailed: bool = True
 
@@ -105,7 +105,7 @@ class SubscribedEvent:
 
 @dataclass(frozen=True)
 class DataEvent:
-    channel: AlphaWebSocketProduct | str
+    channel: DrishtiWebSocketProduct | str
     data: dict[str, Any]
     kind: Literal["data"] = "data"
 
@@ -162,7 +162,7 @@ def parse_websocket_message(raw: str) -> WebSocketEvent:
     return RawEvent(payload=payload)
 
 
-class AlphaWebSocketSession:
+class DrishtiWebSocketSession:
     """Async WebSocket client for Drishti API ``/v1/ws``."""
 
     def __init__(
@@ -190,7 +190,7 @@ class AlphaWebSocketSession:
         on_reconnect_attempt: ReconnectAttemptHandler | None = None,
     ) -> None:
         if not api_key.strip():
-            raise ValueError("AlphaWebSocketSession requires a non-empty api_key")
+            raise ValueError("DrishtiWebSocketSession requires a non-empty api_key")
         self._api_key = api_key
         self._base_url = (base_url or _DEFAULT_BASE_URL).rstrip("/")
         self._extra_headers = dict(headers) if headers else {}
@@ -208,7 +208,7 @@ class AlphaWebSocketSession:
         self._closed = False
         self._manually_closed = False
         self._handlers: dict[str, list[WebSocketHandler]] = {}
-        self._subscriptions: dict[AlphaWebSocketProduct, SubscribeOptions] = {}
+        self._subscriptions: dict[DrishtiWebSocketProduct, SubscribeOptions] = {}
         self._on_open = on_open
         self._on_close = on_close
         self._on_reconnect_attempt = on_reconnect_attempt
@@ -262,17 +262,17 @@ class AlphaWebSocketSession:
         finally:
             self._ws = None
 
-    async def __aenter__(self) -> AlphaWebSocketSession:
+    async def __aenter__(self) -> DrishtiWebSocketSession:
         await self.connect()
         return self
 
     async def __aexit__(self, *args: object) -> None:
         await self.close()
 
-    async def subscribe(self, options: SubscribeOptions | AlphaWebSocketProduct, **kwargs: Any) -> None:
+    async def subscribe(self, options: SubscribeOptions | DrishtiWebSocketProduct, **kwargs: Any) -> None:
         if isinstance(options, str):
             options = SubscribeOptions(
-                product=cast(AlphaWebSocketProduct, options),
+                product=cast(DrishtiWebSocketProduct, options),
                 symbols=kwargs.get("symbols") or (),
                 detailed=bool(kwargs.get("detailed", True)),
             )
@@ -368,13 +368,13 @@ class AlphaWebSocketSession:
 async def stream_product(
     *,
     api_key: str,
-    product: AlphaWebSocketProduct,
+    product: DrishtiWebSocketProduct,
     symbols: Sequence[str] | None = None,
     detailed: bool = True,
     base_url: str | None = None,
     headers: dict[str, str] | None = None,
 ) -> AsyncIterator[dict[str, Any]]:
-    async with AlphaWebSocketSession(api_key=api_key, base_url=base_url, headers=headers) as session:
+    async with DrishtiWebSocketSession(api_key=api_key, base_url=base_url, headers=headers) as session:
         await session.subscribe(SubscribeOptions(product=product, symbols=symbols or (), detailed=detailed))
         async for event in session.events():
             if isinstance(event, DataEvent):

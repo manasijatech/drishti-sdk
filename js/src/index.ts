@@ -15,15 +15,15 @@ export { serializeAnnouncementsQueryParams, serializeQueryParams } from "./param
 export { DrishtiApiError, DrishtiWebSocketError } from "./errors.js";
 export type { ApiErrorBody } from "./errors.js";
 export {
-  ALPHA_WS_PRODUCTS,
-  AlphaWebSocketSession,
+  DRISHTI_WS_PRODUCTS,
+  DrishtiWebSocketSession,
   buildWebSocketUrl,
   parseWebSocketMessage,
   streamProduct,
 } from "./websocket.js";
 export type {
-  AlphaWebSocketProduct,
-  AlphaWebSocketSessionOptions,
+  DrishtiWebSocketProduct,
+  DrishtiWebSocketSessionOptions,
   DataEvent,
   DataPayloadByChannel,
   ErrorEvent,

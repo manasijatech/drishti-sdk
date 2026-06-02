@@ -21,10 +21,10 @@ from drishti_sdk.params import (
 )
 from drishti_sdk import types as response_types
 from drishti_sdk.websocket import (
-    ALPHA_WS_PRODUCTS,
-    AlphaWebSocketClientSessionOptions,
-    AlphaWebSocketProduct,
-    AlphaWebSocketSession,
+    DRISHTI_WS_PRODUCTS,
+    DrishtiWebSocketClientSessionOptions,
+    DrishtiWebSocketProduct,
+    DrishtiWebSocketSession,
     DataEvent,
     ErrorEvent,
     RawEvent,
@@ -38,12 +38,12 @@ from drishti_sdk.websocket import (
 
 __all__ = [
     "DEFAULT_BASE_URL",
-    "ALPHA_WS_PRODUCTS",
+    "DRISHTI_WS_PRODUCTS",
     "AccountLedgerQueryParams",
     "AlertsQueryParams",
-    "AlphaWebSocketClientSessionOptions",
-    "AlphaWebSocketProduct",
-    "AlphaWebSocketSession",
+    "DrishtiWebSocketClientSessionOptions",
+    "DrishtiWebSocketProduct",
+    "DrishtiWebSocketSession",
     "AnnouncementsListQueryParams",
     "AnnouncementsQueryParams",
     "BatchJobsListQueryParams",
