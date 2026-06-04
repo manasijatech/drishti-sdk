@@ -145,6 +145,68 @@ async with client.websocket(
     await ws.run()
 ```
 
+### WebSocket Reference
+
+The WebSocket session is created from the HTTP client, so it inherits the same
+`api_key` and `base_url` settings. The session connects to `/v1/ws` and sends
+`X-API-Key` on connect.
+
+Supported subscription products:
+
+- `news`
+- `announcements`
+- `earnings`
+- `concalls`
+- `alerts`
+
+Useful session options:
+
+- `auto_reconnect`
+- `reconnect_initial_delay`
+- `reconnect_max_delay`
+- `reconnect_backoff_multiplier`
+- `reconnect_jitter_ratio`
+- `ping_interval`
+- `ping_timeout`
+- `open_timeout`
+- `close_timeout`
+- `max_queue`
+- `on_subscribed`
+- `on_data`
+- `on_error`
+- `on_message`
+- `on_open`
+- `on_close`
+- `on_reconnect_attempt`
+
+Subscription messages accept either `SubscribeOptions(...)` or the product name
+as a string. Symbols are normalized to uppercase and de-duplicated before the
+message is sent. When auto reconnect is enabled, the session re-subscribes after
+reconnecting.
+
+Event shapes:
+
+- `subscribed`: acknowledgement with `product`, `tier`, `full_feed`,
+  `symbols`, and `detailed`
+- `data`: payload event with `channel` and `data`
+- `error`: error event with `message` and optional `code`
+- `raw`: unclassified JSON payload
+
+Direct exports available from `drishti_sdk`:
+
+- `DRISHTI_WS_PRODUCTS`
+- `SubscribeOptions`
+- `DrishtiWebSocketSession`
+- `DrishtiWebSocketClientSessionOptions`
+- `DataEvent`
+- `ErrorEvent`
+- `RawEvent`
+- `SubscribedEvent`
+- `WebSocketEvent`
+- `build_websocket_url`
+- `parse_websocket_message`
+- `stream_product`
+
 ## Batch Jobs
 
 ```python

@@ -202,6 +202,73 @@ Direct import is also supported:
 import { DrishtiWebSocketSession } from "drishti-sdk";
 ```
 
+### WebSocket Reference
+
+The WebSocket session is created from the HTTP client, so it inherits the same
+`apiKey`, `baseUrl`, and extra headers. In Node and other environments that
+support custom WebSocket headers, the client sends `X-API-Key`. In browser-like
+constructors that do not allow headers, the SDK falls back to
+`?api_key=...` automatically.
+
+Supported subscription products:
+
+- `news`
+- `announcements`
+- `earnings`
+- `concalls`
+- `alerts`
+
+Useful session options:
+
+- `autoReconnect`
+- `reconnectInitialDelayMs`
+- `reconnectMaxDelayMs`
+- `reconnectBackoffMultiplier`
+- `reconnectJitterRatio`
+- `onSubscribed`
+- `onData`
+- `onError`
+- `onMessage`
+- `onOpen`
+- `onClose`
+- `onReconnectAttempt`
+
+Subscription messages accept an object shaped like
+`{ product, symbols?, detailed? }`. Symbols are normalized to uppercase and
+de-duplicated before the message is sent. When auto reconnect is enabled, the
+session re-subscribes after reconnecting.
+
+Event shapes:
+
+- `subscribed`: acknowledgement with `product`, `tier`, `fullFeed`,
+  `symbols`, and `detailed`
+- `data`: payload event with `channel` and `data`
+- `error`: error event with `message` and optional `code`
+- `raw`: unclassified JSON payload
+
+Direct helpers exported from the package:
+
+- `DRISHTI_WS_PRODUCTS`
+- `DrishtiWebSocketSession`
+- `buildWebSocketUrl`
+- `parseWebSocketMessage`
+- `streamProduct`
+- `SubscribeOptions`
+- `DataEvent`
+- `ErrorEvent`
+- `RawEvent`
+- `SubscribedEvent`
+- `WebSocketEvent`
+- `WebSocketHandler`
+
+`DataEvent["data"]` is typed by channel for the known products:
+
+- `news` -> `NewsItem`
+- `announcements` -> `AnnouncementDetail | AnnouncementListItem`
+- `earnings` -> `EarningsDetail | EarningsListItem`
+- `concalls` -> `Concall | ConcallListItem`
+- `alerts` -> `Alert`
+
 ## Batch Jobs
 
 Upload JSONL files for batch processing:
