@@ -1,0 +1,32 @@
+name: Publish MCP package
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'mcp/package.json'
+      - '.github/workflows/publish-mcp-npm.yml'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mcp
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      - run: npm ci
+
+      - run: npm publish

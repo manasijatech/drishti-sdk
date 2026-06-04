@@ -1,0 +1,51 @@
+{
+  "name": "drishti-mcp",
+  "version": "0.1.0",
+  "description": "CLI wizard to add the hosted Drishti MCP server to Cursor, VS Code, Zed, Codex, Claude Code, and Claude Desktop",
+  "type": "module",
+  "main": "./cli.js",
+  "bin": {
+    "drishti-mcp": "./cli.js"
+  },
+  "files": [
+    "cli.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "prepublishOnly": "node --check cli.js"
+  },
+  "keywords": [
+    "drishti",
+    "drishti-api",
+    "mcp",
+    "model-context-protocol",
+    "cursor",
+    "vscode",
+    "zed",
+    "claude",
+    "claude-code",
+    "codex",
+    "installer",
+    "setup"
+  ],
+  "author": "Manasija",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manasijatech/Market-Stack-SDK.git",
+    "directory": "mcp"
+  },
+  "homepage": "https://drishti.manasija.in/docs-md/guides/drishti-mcp",
+  "bugs": {
+    "url": "https://github.com/manasijatech/Market-Stack-SDK/issues"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.10.1",
+    "boxen": "^8.0.1",
+    "cfonts": "^3.3.1"
+  }
+}
