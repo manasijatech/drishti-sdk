@@ -75,6 +75,7 @@ class AnnouncementBatchResponse(TypedDict):
 class EarningsListItem(TypedDict, total=False):
     id: str
     symbol: str
+    scrip_code: str | None
     company_name: str | None
     image: str | None
     date: str | None

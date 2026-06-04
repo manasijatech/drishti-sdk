@@ -74,6 +74,7 @@ export type AnnouncementBatchResponse = {
 export type EarningsListItem = {
   id: string;
   symbol: string;
+  scrip_code?: string | null;
   company_name?: string | null;
   image?: string | null;
   date?: string | null;
