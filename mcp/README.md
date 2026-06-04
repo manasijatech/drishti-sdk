@@ -5,7 +5,7 @@ CLI wizard that configures supported AI clients to use the hosted [Drishti MCP](
 It writes client-specific MCP entries for `https://mcp.drishti.manasija.in` with a
 Bearer token. Shapes vary by client, for example:
 
-- **Cursor / Claude Desktop** (`mcpServers`): `{ "url", "headers" }`
+- **Cursor** (`mcpServers`): `{ "url", "headers" }`
 - **VS Code** (`servers`): `{ "type": "http", "url", "headers" }`
 - **Zed** (`context_servers`): `{ "enabled": true, "url", "headers" }`
 
@@ -35,7 +35,6 @@ files when they are present:
 - Zed: `~/Library/Application Support/Zed/settings.json`, `~/.config/zed/settings.json`, or `%APPDATA%\Zed\settings.json`
 - Codex: `~/.codex/config.toml`
 - Claude Code: `claude mcp add --transport http` (user scope, via Claude Code CLI)
-- Claude Desktop: `claude_desktop_config.json`
 
 When you run it in an interactive terminal, it shows a small picker so you can
 choose which detected clients to configure, with a Drishti banner at the top.

@@ -107,17 +107,6 @@ function renderBanner(detectedClients) {
   console.log("");
 }
 
-function claudeDesktopConfigPath() {
-  if (process.platform === "darwin") {
-    return homePath("Library", "Application Support", "Claude", "claude_desktop_config.json");
-  }
-  if (process.platform === "win32") {
-    const appData = process.env.APPDATA ?? homePath("AppData", "Roaming");
-    return path.join(appData, "Claude", "claude_desktop_config.json");
-  }
-  return homePath(".config", "Claude", "claude_desktop_config.json");
-}
-
 function vscodeConfigPath() {
   if (process.platform === "darwin") {
     return homePath("Library", "Application Support", "Code", "User", "mcp.json");
@@ -299,12 +288,6 @@ function candidateClients() {
       configPath: claudeCodeConfigLabel(),
       detected: findClaudeBinary() !== null,
     },
-    {
-      name: "Claude Desktop",
-      configPath: claudeDesktopConfigPath(),
-      containerKey: "mcpServers",
-      detected: fs.existsSync(claudeDesktopConfigPath()),
-    },
   ];
 }
 
@@ -462,7 +445,7 @@ async function main() {
   const anyUpdated = results.some((result) => result.changed);
   if (!anyUpdated) {
     console.log("No supported MCP clients were detected.");
-    console.log("Supported clients: Cursor, VS Code, Zed, Codex, Claude Code, Claude Desktop.");
+    console.log("Supported clients: Cursor, VS Code, Zed, Codex, Claude Code.");
     console.log(`If you want to preconfigure one manually, create the matching file and rerun this installer.`);
     return;
   }
