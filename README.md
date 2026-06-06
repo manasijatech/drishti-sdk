@@ -2,12 +2,13 @@
 
 Official HTTP and WebSocket client libraries for Alpha API (`/v1`) using API key authentication.
 
-| Language   | Directory | Package name      |
-|-----------|-----------|-------------------|
-| Python    | `python/` | `drishti-sdk` on PyPI (import `drishti_sdk`) |
-| TypeScript | `js/`    | `drishti-sdk` on npm |
+| Package | Directory | Package name |
+|---------|-----------|--------------|
+| Python SDK | `python/` | `drishti-sdk` on PyPI (import `drishti_sdk`) |
+| TypeScript SDK | `js/` | `drishti-sdk` on npm |
+| MCP installer | `mcp/` | `drishti-mcp` on npm |
 
-See `python/README.md` and `js/README.md` for install and usage.
+See `python/README.md`, `js/README.md`, and `mcp/README.md` for install and usage.
 
 ## MCP installer (`drishti-mcp`)
 
