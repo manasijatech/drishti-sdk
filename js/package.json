@@ -1,6 +1,6 @@
 {
   "name": "drishti-sdk",
-  "version": "0.2.10",
+  "version": "0.2.11",
   "description": "TypeScript/JavaScript client for the Drishti API (/v1)",
   "type": "module",
   "main": "./dist/index.js",
@@ -38,6 +38,6 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/manasijatech/Drishti-SDK.git"
+    "url": "git+https://github.com/manasijatech/drishti-sdk.git"
   }
 }
