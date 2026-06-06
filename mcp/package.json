@@ -1,6 +1,6 @@
 {
   "name": "drishti-mcp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "CLI wizard to add the hosted Drishti MCP server to Cursor, VS Code, Zed, Codex, and Claude Code",
   "type": "module",
   "main": "./cli.js",

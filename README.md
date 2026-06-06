@@ -14,6 +14,10 @@ See `python/README.md` and `js/README.md` for install and usage.
 The `mcp/` package is a CLI wizard that adds the hosted Drishti MCP endpoint to
 supported LLM clients (Cursor, VS Code, Zed, Codex, Claude Code).
 
+<p align="center">
+  <img src="./mcp/assets/logo-mark.svg" alt="Drishti logo" width="96" />
+</p>
+
 ```bash
 npx drishti-mcp
 ```

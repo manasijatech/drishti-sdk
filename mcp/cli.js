@@ -10,6 +10,14 @@ import cfonts from "cfonts";
 
 const SERVER_NAME = "Drishti";
 const MCP_URL = "https://mcp.drishti.manasija.in";
+const LOGO_COLOR = { r: 245, g: 158, b: 11 };
+const LOGO_ART = [
+  "⣿⣿⣿⣷⡆⢰⣾⣿⣿⣿",
+  "⢿⣿⡿⢋⣤⣤⡙⢿⣿⡟",
+  " ⣉ ⣿⣿⣿⣿ ⣉",
+  "⣾⣿⣧⣌⠛⠛⣡⣾⣿⣷",
+  "⣿⣿⣿⡿⠇⠸⢿⣿⣿⣿",
+];
 
 const HOME = os.homedir();
 
@@ -71,12 +79,63 @@ function muted(text) {
   return ansi("38;5;244", text);
 }
 
-function bold(text) {
-  return ansi("1", text);
+function logoColorPrefix() {
+  return `\u001b[38;2;${LOGO_COLOR.r};${LOGO_COLOR.g};${LOGO_COLOR.b}m`;
 }
 
-function renderBanner(detectedClients) {
-  const banner = cfonts.render("Drishti", {
+function renderLogoArt() {
+  const prefix = logoColorPrefix();
+  return LOGO_ART.map((line) => {
+    return `${prefix}${line}\u001b[0m`;
+  });
+}
+
+function stripAnsi(text) {
+  return text.replace(/\u001b\[[0-9;]*m/g, "");
+}
+
+function visibleWidth(text) {
+  return stripAnsi(text).length;
+}
+
+function padEndVisible(text, width) {
+  const currentWidth = visibleWidth(text);
+  return currentWidth >= width ? text : `${text}${" ".repeat(width - currentWidth)}`;
+}
+
+function joinColumns(leftLines, rightLines, gap = 2) {
+  const leftWidth = Math.max(0, ...leftLines.map(visibleWidth));
+  const height = Math.max(leftLines.length, rightLines.length);
+  const leftOffset = Math.floor((height - leftLines.length) / 2);
+  const rightOffset = Math.floor((height - rightLines.length) / 2);
+  const combined = [];
+  for (let row = 0; row < height; row += 1) {
+    const leftIndex = row - leftOffset;
+    const rightIndex = row - rightOffset;
+    const left =
+      leftIndex >= 0 && leftIndex < leftLines.length
+        ? padEndVisible(leftLines[leftIndex], leftWidth)
+        : " ".repeat(leftWidth);
+    const right =
+      rightIndex >= 0 && rightIndex < rightLines.length ? rightLines[rightIndex] : "";
+    combined.push(`${left}${" ".repeat(gap)}${right}`);
+  }
+  return combined;
+}
+
+function trimEmptyLines(lines) {
+  const next = [...lines];
+  while (next.length > 0 && next[0].trim() === "") {
+    next.shift();
+  }
+  while (next.length > 0 && next[next.length - 1].trim() === "") {
+    next.pop();
+  }
+  return next;
+}
+
+function renderTitleBanner() {
+  return cfonts.render(SERVER_NAME, {
     font: "chrome",
     align: "left",
     colors: ["#f59e0b"],
@@ -86,14 +145,21 @@ function renderBanner(detectedClients) {
     space: false,
     env: "node",
   });
+}
 
-  const content = [
-    banner.string.trimEnd(),
-    muted("MCP client setup for the Drishti server"),
-    "",
-    `${bold("Detected:")} ${detectedClients.length ? detectedClients.join(", ") : "none"}`,
-    muted("Choose which detected clients to configure in the next step."),
-  ].join("\n");
+function renderHeader() {
+  const logoLines = renderLogoArt();
+  const bannerLines = trimEmptyLines(
+    renderTitleBanner()
+      .string.split("\n")
+      .map((line) => line.trimEnd())
+  );
+  const headerLines =
+    logoLines && bannerLines.length > 0
+      ? joinColumns(logoLines, bannerLines)
+      : logoLines ?? bannerLines;
+
+  const content = [...headerLines, muted("MCP client setup for the Drishti server")].join("\n");
 
   console.log("");
   console.log(
@@ -105,6 +171,18 @@ function renderBanner(detectedClients) {
     })
   );
   console.log("");
+}
+
+function renderClientDetection(detectedClients) {
+  const clientList = detectedClients.length ? detectedClients.join(", ") : "none";
+  clack.note(
+    [
+      clientList,
+      "↑↓ move · Space toggle · Enter confirm",
+      "◼ selected   ◻ not selected",
+    ].join("\n"),
+    "Detected clients"
+  );
 }
 
 function vscodeConfigPath() {
@@ -390,14 +468,15 @@ function printSummary(results) {
 }
 
 async function main() {
+  renderHeader();
+  const clients = candidateClients();
   const apiKey = await resolveApiKey();
   const serverConfig = sharedMcpServerConfig(apiKey);
   const vscodeConfig = sharedVscodeServerConfig(apiKey);
   const zedConfig = sharedZedConfig(apiKey);
   const codexConfig = sharedCodexConfig(apiKey);
   const results = [];
-  const clients = candidateClients();
-  renderBanner(clients.filter((client) => client.detected).map((client) => client.name));
+  renderClientDetection(clients.filter((client) => client.detected).map((client) => client.name));
   const selectedNames = await selectDetectedClients(clients);
 
   if (selectedNames.size === 0) {

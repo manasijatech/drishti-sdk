@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./assets/logo-mark.svg" alt="Drishti logo" width="96" />
+</p>
+
 # drishti-mcp
 
 CLI wizard that configures supported AI clients to use the hosted [Drishti MCP](https://drishti.manasija.in/docs-md/guides/drishti-mcp) server. It does not run an MCP server locally; it only writes client config (or invokes `claude mcp add` for Claude Code).
