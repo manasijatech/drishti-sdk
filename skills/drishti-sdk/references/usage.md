@@ -2,7 +2,7 @@
 
 ## Repository Shape
 
-- Root README describes this as the Market-Stack SDK for Drishti Alpha API (`/v1`).
+- Root README describes this as the Drishti SDK for Drishti Alpha API (`/v1`).
 - JavaScript/TypeScript SDK lives in `js/`.
 - Python SDK lives in `python/`.
 - Default API base URL: `https://developers.manasija.in`.

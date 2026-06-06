@@ -1,6 +1,6 @@
 ---
 name: drishti-sdk
-description: Use this skill when Codex needs to integrate with or explain the Drishti Market-Stack SDK for Alpha API /v1 endpoints in JavaScript, TypeScript, or Python. Trigger for tasks involving Drishti SDK, drishti-sdk, DrishtiClient, Alpha API news, announcements, earnings, concalls, alerts, account, batch jobs, websocket streams, API key auth, request params, and response typing.
+description: Use this skill when Codex needs to integrate with or explain the Drishti Drishti SDK for Alpha API /v1 endpoints in JavaScript, TypeScript, or Python. Trigger for tasks involving Drishti SDK, drishti-sdk, DrishtiClient, Alpha API news, announcements, earnings, concalls, alerts, account, batch jobs, websocket streams, API key auth, request params, and response typing.
 ---
 
 # Drishti SDK

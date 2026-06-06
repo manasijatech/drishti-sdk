@@ -1,4 +1,4 @@
-# Market-Stack SDK
+# Drishti SDK
 
 Official HTTP and WebSocket client libraries for Alpha API (`/v1`) using API key authentication.
 
@@ -33,5 +33,5 @@ This repository includes a Drishti SDK skill for coding agents under
 Install it with:
 
 ```bash
-npx skills add manasijatech/Market-Stack-SDK
+npx skills add manasijatech/drishti-sdk
 ```
