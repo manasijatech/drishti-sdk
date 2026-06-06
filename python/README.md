@@ -68,6 +68,7 @@ with DrishtiClient(api_key="YOUR_API_KEY") as client:
     announcements = client.get_announcements(
         symbols=["RELIANCE"],
         categories=["Corporate Action"],
+        important=True,
         detailed=True,
         limit=20,
     )

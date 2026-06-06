@@ -84,6 +84,7 @@ const client = new DrishtiClient({ apiKey: process.env.DRISHTI_API_KEY! });
 // Announcements
 const announcements = await client.getAnnouncements({
   symbols: ["RELIANCE"],
+  important: true,
   detailed: true,
   limit: 20,
 });

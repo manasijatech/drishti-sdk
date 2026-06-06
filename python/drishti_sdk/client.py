@@ -246,6 +246,7 @@ class DrishtiClient:
         from_: str | None = None,
         to: str | None = None,
         detailed: bool | None = None,
+        important: bool | None = None,
         page: int | None = None,
         limit: int | None = None,
     ) -> PaginatedAnnouncementResponse:
@@ -256,6 +257,7 @@ class DrishtiClient:
             from_=from_,
             to=to,
             detailed=detailed,
+            important=important,
             page=page,
             limit=limit,
         )
