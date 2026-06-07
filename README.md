@@ -1,3 +1,5 @@
+<img src="./mcp/assets/logo-mark.svg" alt="Drishti logo" style="height: 4em; width: auto; margin: 0;" /> 
+
 # Drishti SDK
 
 Official HTTP and WebSocket client libraries for Alpha API (`/v1`) using API key authentication.
@@ -14,10 +16,6 @@ See `python/README.md`, `js/README.md`, and `mcp/README.md` for install and usag
 
 The `mcp/` package is a CLI wizard that adds the hosted Drishti MCP endpoint to
 supported LLM clients (Cursor, VS Code, Zed, Codex, Claude Code).
-
-<p align="center">
-  <img src="./mcp/assets/logo-mark.svg" alt="Drishti logo" width="96" />
-</p>
 
 ```bash
 npx drishti-mcp
