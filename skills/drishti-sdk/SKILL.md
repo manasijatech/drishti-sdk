@@ -73,8 +73,9 @@ client.request_v1("GET", "news", params={"symbols": "RELIANCE"})
 
 This SDK includes websocket support for `/v1/ws`.
 
-- JavaScript: use `client.websocket()` or `DrishtiWebSocketSession`.
-- Python: use `async with client.websocket() as ws`, then `subscribe(...)` and `events()` or callbacks.
+- JavaScript: use `client.websocket()` or `DrishtiWebSocketSession`. The session auto-connects, replays subscriptions after reconnects, and exposes `events()` plus channel callbacks such as `onAnnouncements` and `onAlerts`.
+- Python: use `async with client.websocket(...) as ws`, then `subscribe(...)` and `events()` or callbacks such as `on_announcements` and `on_data`.
+- Do not call removed lifecycle helpers like `connect()` or `run()`; call `close()` / `await ws.close()` when finished.
 
 ## Validation
 

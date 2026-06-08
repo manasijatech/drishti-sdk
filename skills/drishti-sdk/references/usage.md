@@ -95,10 +95,48 @@ except DrishtiApiError as error:
 
 ## WebSocket
 
-Websocket is supported in both SDKs at `/v1/ws`.
+Websocket is supported in both SDKs at `/v1/ws`. Sessions connect automatically, replay subscriptions after reconnects, and retry with backoff until `close()`.
 
-- JS/TS: `const ws = client.websocket(); await ws.subscribe({ product: "announcements", symbols: ["RELIANCE"] });`
-- Python: `async with client.websocket() as ws: await ws.subscribe("announcements", symbols=["RELIANCE"])`
+### JavaScript / TypeScript
+
+Callback style:
+
+```ts
+const ws = client.websocket({
+  onData: (event) => {
+    if (event.kind === "data") console.log(event.channel, event.data);
+  },
+  onAnnouncements: (announcement) => console.log("announcement", announcement),
+});
+await ws.subscribe({ product: "alerts", symbols: ["RELIANCE"] });
+```
+
+Async iterator:
+
+```ts
+const ws = client.websocket();
+await ws.subscribe({ product: "announcements", symbols: ["RELIANCE"] });
+for await (const event of ws.events()) {
+  if (event.kind === "data") console.log(event.channel, event.data);
+}
+```
+
+Channel listeners: `onNews`, `onAnnouncements`, `onEarnings`, `onConcalls`, `onAlerts`, or `ws.on("announcements", handler)`.
+
+### Python
+
+```python
+async with client.websocket(
+    on_announcements=lambda announcement: print("announcement", announcement),
+    on_data=lambda event: print(event.data) if event.kind == "data" else None,
+) as ws:
+    await ws.subscribe("announcements", symbols=["RELIANCE"])
+    async for event in ws.events():
+        if event.kind == "data":
+            print(event.channel, event.data)
+```
+
+`subscribe` accepts either `SubscribeOptions(...)` or the product name with keyword args.
 
 ## Low-Level Calls
 
