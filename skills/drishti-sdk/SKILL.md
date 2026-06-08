@@ -22,7 +22,18 @@ Use this skill to write or review code that calls Drishti Alpha API (`/v1`) thro
 
 ## JavaScript And TypeScript
 
-Use Node 18+ because the SDK relies on `fetch`, `Blob`, and `FormData`.
+Use Node 18+ or load the browser bundle from jsDelivr / unpkg. The CDN build exposes a global `DrishtiSDK` object.
+
+```bash
+npm install drishti-sdk
+```
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/drishti-sdk"></script>
+<script>
+  const { DrishtiClient } = DrishtiSDK;
+</script>
+```
 
 ```ts
 import { DrishtiClient } from "drishti-sdk";

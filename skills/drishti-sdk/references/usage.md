@@ -8,6 +8,31 @@
 - Default API base URL: `https://developers.manasija.in`.
 - Authentication: `X-API-Key` from client constructor.
 
+## Installation
+
+JavaScript / TypeScript:
+
+```bash
+npm install drishti-sdk
+```
+
+Browser bundle via CDN (global `DrishtiSDK`):
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/drishti-sdk"></script>
+<script>
+  const { DrishtiClient } = DrishtiSDK;
+</script>
+```
+
+Unpkg: `https://unpkg.com/drishti-sdk`. Pin a version in production, for example `@1.0.1`.
+
+Python:
+
+```bash
+pip install drishti-sdk
+```
+
 ## Endpoint Helper Map
 
 | API area | JavaScript/TypeScript | Python |

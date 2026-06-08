@@ -12,6 +12,19 @@ Official HTTP and WebSocket client libraries for Alpha API (`/v1`) using API key
 
 See `python/README.md`, `js/README.md`, and `mcp/README.md` for install and usage.
 
+JavaScript / TypeScript install options:
+
+```bash
+npm install drishti-sdk
+```
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/drishti-sdk"></script>
+<script>
+  const { DrishtiClient } = DrishtiSDK;
+</script>
+```
+
 ## MCP installer (`drishti-mcp`)
 
 The `mcp/` package is a CLI wizard that adds the hosted Drishti MCP endpoint to

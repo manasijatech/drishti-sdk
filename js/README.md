@@ -11,7 +11,7 @@ This SDK provides:
 
 ## Requirements
 
-- Node.js `18+`
+- Node.js `18+`, or a modern browser with `fetch` and `WebSocket`
 - A valid Drishti API key
 
 ## Installation
@@ -21,6 +21,25 @@ Install from npm:
 ```bash
 npm install drishti-sdk
 ```
+
+Or load the browser bundle from a CDN:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/drishti-sdk"></script>
+<script>
+  const { DrishtiClient } = DrishtiSDK;
+
+  const client = new DrishtiClient({ apiKey: "YOUR_API_KEY" });
+</script>
+```
+
+Unpkg works the same way:
+
+```html
+<script src="https://unpkg.com/drishti-sdk"></script>
+```
+
+Pin a version in production, for example `https://cdn.jsdelivr.net/npm/drishti-sdk@1.0.1`.
 
 If you are developing this package locally:
 
