@@ -46,6 +46,14 @@ export type EarningsQueryParams = PaginatedFeedQueryParams;
 
 export type ConcallsQueryParams = PaginatedFeedQueryParams;
 
+export type UpcomingConcallsQueryParams = {
+  symbols?: string[];
+  scrip_codes?: string[];
+  detailed?: boolean;
+  page?: number;
+  limit?: number;
+};
+
 export type AlertsQueryParams = {
   symbols?: string[];
   scrip_codes?: string[];

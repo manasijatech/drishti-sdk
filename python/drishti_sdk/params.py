@@ -73,6 +73,23 @@ class ConcallsQueryParams(PaginatedFeedQueryParams):
     """GET /v1/concalls."""
 
 
+class UpcomingConcallsQueryParams(BaseModel):
+    """GET /v1/concalls/upcoming."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    symbols: list[str] | None = None
+    scrip_codes: list[str] | None = None
+    detailed: bool | None = None
+    page: int | None = None
+    limit: int | None = None
+
+    def to_query_params(self) -> dict[str, Any] | None:
+        return _format_query_params(
+            self.model_dump(exclude_none=True, by_alias=True)
+        )
+
+
 class AlertsQueryParams(BaseModel):
     """GET /v1/alerts."""
 

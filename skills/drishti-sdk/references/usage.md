@@ -22,6 +22,7 @@
 | Earnings detail | `getEarningsDetail({ symbol?, scrip_code?, quarter, detailed? })` | `get_earnings_detail(...)` |
 | Earnings attachments | `getEarningsAttachments({ ids })` | `get_earnings_attachments(...)` |
 | Concalls list | `getConcalls(params?)` | `get_concalls(...)` |
+| Upcoming concalls | `getUpcomingConcalls(params?)` | `get_upcoming_concalls(...)` |
 | Concalls detail | `getConcallsDetail({ symbol?, scrip_code?, quarter, detailed? })` | `get_concalls_detail(...)` |
 | Concall transcript/audio URLs | `getConcallsTranscript({ symbol?, scrip_code?, quarter })` | `get_concalls_transcript(...)` |
 | Batch concall transcripts | `postConcallsTranscripts({ items })` | `post_concalls_transcripts(...)` |

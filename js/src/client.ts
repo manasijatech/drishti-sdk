@@ -8,6 +8,7 @@ import {
   type AnnouncementsQueryParams,
   type BatchJobsListQueryParams,
   type ConcallsQueryParams,
+  type UpcomingConcallsQueryParams,
   type DocumentIdsQueryParams,
   type EarningsQueryParams,
   type NewsQueryParams,
@@ -33,6 +34,7 @@ import type {
   Concall,
   ConcallArtifactUrlsResponse,
   ConcallTranscriptBatchResponse,
+  UpcomingConcall,
   JsonValue,
   LedgerListResponse,
   NewsItem,
@@ -337,6 +339,14 @@ export class DrishtiClient {
 
   getConcalls(params: ConcallsQueryParams = {}): Promise<PaginatedResponse<Concall>> {
     return this.get<PaginatedResponse<Concall>>("/v1/concalls", {
+      query: serializeQueryParams(params, ["symbols", "scrip_codes"]),
+    });
+  }
+
+  getUpcomingConcalls(
+    params: UpcomingConcallsQueryParams = {},
+  ): Promise<PaginatedResponse<UpcomingConcall>> {
+    return this.get<PaginatedResponse<UpcomingConcall>>("/v1/concalls/upcoming", {
       query: serializeQueryParams(params, ["symbols", "scrip_codes"]),
     });
   }

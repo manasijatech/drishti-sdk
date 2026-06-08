@@ -262,6 +262,7 @@ final_job = client.submit_batch_job_and_wait(
 - `get_earnings_detail`
 - `get_earnings_attachments`
 - `get_concalls`
+- `get_upcoming_concalls`
 - `get_concalls_detail`
 - `get_concalls_transcript`
 - `post_concalls_transcripts`

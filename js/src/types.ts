@@ -134,6 +134,17 @@ export type Concall = ConcallListItem & {
 
 export type ConcallDetail = Concall;
 
+export type UpcomingConcallListItem = {
+  id: string;
+  symbol: string;
+  quarter?: string | null;
+  meeting_date?: string | null;
+};
+
+export type UpcomingConcall = UpcomingConcallListItem & {
+  intimation_attachment?: string | null;
+};
+
 export type ConcallTranscriptLookupStatus =
   | "ready"
   | "not_found"

@@ -25,6 +25,7 @@ from drishti_sdk.params import (
     NewsQueryParams,
     SymbolMetadataQueryParams,
     SymbolQuarterQueryParams,
+    UpcomingConcallsQueryParams,
     coerce_query_params,
 )
 from drishti_sdk.types import (
@@ -46,12 +47,14 @@ from drishti_sdk.types import (
     PaginatedAnnouncementResponse,
     PaginatedConcallResponse,
     PaginatedEarningsResponse,
+    PaginatedUpcomingConcallResponse,
     EarningsDetail,
     EarningsListItem,
     PaginatedNewsResponse,
     StringListResponse,
     SummaryResponse,
     SymbolMetadataResponse,
+    UpcomingConcall,
 )
 
 DEFAULT_BASE_URL = "https://developers.manasija.in"
@@ -352,6 +355,24 @@ class DrishtiClient:
             limit=limit,
         )
         return self.get("/v1/concalls", params=coerce_query_params(params), path_params=None)
+
+    def get_upcoming_concalls(
+        self,
+        *,
+        symbols: list[str] | None = None,
+        scrip_codes: list[str] | None = None,
+        detailed: bool | None = None,
+        page: int | None = None,
+        limit: int | None = None,
+    ) -> PaginatedUpcomingConcallResponse:
+        params = UpcomingConcallsQueryParams(
+            symbols=symbols,
+            scrip_codes=scrip_codes,
+            detailed=detailed,
+            page=page,
+            limit=limit,
+        )
+        return self.get("/v1/concalls/upcoming", params=coerce_query_params(params), path_params=None)
 
     def get_concalls_detail(
         self,

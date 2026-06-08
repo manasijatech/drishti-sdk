@@ -135,6 +135,20 @@ class ConcallDetail(ConcallListItem, total=False):
 Concall: TypeAlias = ConcallDetail
 
 
+class UpcomingConcallListItem(TypedDict, total=False):
+    id: str
+    symbol: str
+    quarter: str | None
+    meeting_date: str | None
+
+
+class UpcomingConcallDetail(UpcomingConcallListItem, total=False):
+    intimation_attachment: str | None
+
+
+UpcomingConcall: TypeAlias = UpcomingConcallDetail
+
+
 class SymbolQuarterKey(TypedDict):
     symbol: str
     quarter: str
@@ -298,6 +312,11 @@ class PaginatedEarningsResponse(TypedDict):
 
 class PaginatedConcallResponse(TypedDict):
     data: list[Concall]
+    has_next: bool
+
+
+class PaginatedUpcomingConcallResponse(TypedDict):
+    data: list[UpcomingConcall]
     has_next: bool
 
 
