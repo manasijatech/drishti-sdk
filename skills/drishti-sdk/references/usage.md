@@ -99,7 +99,7 @@ Websocket is supported in both SDKs at `/v1/ws`. Sessions connect automatically,
 
 ### JavaScript / TypeScript
 
-Callback style:
+Event listeners:
 
 ```ts
 const ws = client.websocket({
@@ -111,6 +111,8 @@ const ws = client.websocket({
 await ws.subscribe({ product: "alerts", symbols: ["RELIANCE"] });
 ```
 
+Channel listeners: `onNews`, `onAnnouncements`, `onEarnings`, `onConcalls`, `onAlerts`, or `ws.on("announcements", handler)`.
+
 Async iterator:
 
 ```ts
@@ -121,15 +123,23 @@ for await (const event of ws.events()) {
 }
 ```
 
-Channel listeners: `onNews`, `onAnnouncements`, `onEarnings`, `onConcalls`, `onAlerts`, or `ws.on("announcements", handler)`.
-
 ### Python
+
+Event listeners:
 
 ```python
 async with client.websocket(
     on_announcements=lambda announcement: print("announcement", announcement),
     on_data=lambda event: print(event.data) if event.kind == "data" else None,
 ) as ws:
+    await ws.subscribe("alerts", symbols=["RELIANCE"])
+    await asyncio.Event().wait()
+```
+
+Async iterator:
+
+```python
+async with client.websocket() as ws:
     await ws.subscribe("announcements", symbols=["RELIANCE"])
     async for event in ws.events():
         if event.kind == "data":

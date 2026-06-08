@@ -107,44 +107,40 @@ except DrishtiApiError as exc:
 
 ## WebSocket Usage (`/v1/ws`)
 
+### Event listeners
+
 ```python
 import asyncio
-from drishti_sdk import DrishtiClient, SubscribeOptions
+from drishti_sdk import DrishtiClient
 
 
 async def main() -> None:
     client = DrishtiClient(api_key="YOUR_API_KEY")
-    async with client.websocket() as ws:
-        await ws.subscribe(
-            SubscribeOptions(
-                product="announcements",
-                symbols=["RELIANCE"],
-                detailed=False,
-            )
-        )
-        async for event in ws.events():
-            if event.kind == "subscribed":
-                print("ready", event.product, event.tier)
-            elif event.kind == "data":
-                print(event.channel, event.data)
+    async with client.websocket(
+        reconnect_initial_delay=1.0,
+        reconnect_max_delay=30.0,
+        on_reconnect_attempt=lambda attempt, delay, reason: print(attempt, delay, reason),
+        on_data=lambda event: print(event.data) if event.kind == "data" else None,
+        on_announcements=lambda announcement: print("announcement", announcement),
+        on_alerts=lambda alert: print("alert", alert),
+    ) as ws:
+        await ws.subscribe("alerts", symbols=["RELIANCE"])
+        await asyncio.Event().wait()  # listeners run in the background; Ctrl+C to stop
 
 
 asyncio.run(main())
 ```
 
-Callback style:
+### Async iterator style
 
 ```python
-async with client.websocket(
-    reconnect_initial_delay=1.0,
-    reconnect_max_delay=30.0,
-    on_reconnect_attempt=lambda attempt, delay, reason: print(attempt, delay, reason),
-    on_data=lambda event: print(event.data) if event.kind == "data" else None,
-    on_announcements=lambda announcement: print("announcement", announcement),
-    on_alerts=lambda alert: print("alert", alert),
-) as ws:
-    await ws.subscribe("alerts", symbols=["RELIANCE"])
-    await asyncio.Event().wait()  # callbacks run in the background; Ctrl+C to stop
+async with client.websocket() as ws:
+    await ws.subscribe("announcements", symbols=["RELIANCE"], detailed=False)
+    async for event in ws.events():
+        if event.kind == "subscribed":
+            print("ready", event.product, event.tier)
+        elif event.kind == "data":
+            print(event.channel, event.data)
 ```
 
 Register listeners after connect:

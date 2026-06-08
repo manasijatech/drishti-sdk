@@ -151,28 +151,7 @@ try {
 
 ## WebSocket Usage (`/v1/ws`)
 
-### Async iterator style
-
-```ts
-import { DrishtiClient } from "drishti-sdk";
-
-const client = new DrishtiClient({ apiKey: process.env.DRISHTI_API_KEY! });
-const ws = client.websocket();
-
-await ws.subscribe({ product: "announcements", symbols: ["RELIANCE"], detailed: false });
-
-for await (const event of ws.events()) {
-  if (event.kind === "subscribed") {
-    console.log("subscribed", event.product, event.tier);
-  } else if (event.kind === "data") {
-    console.log(event.channel, event.data);
-  } else if (event.kind === "error") {
-    console.error(event.message);
-  }
-}
-```
-
-### Callback style
+### Event listeners
 
 ```ts
 import { DrishtiClient } from "drishti-sdk";
@@ -197,7 +176,28 @@ const ws = client.websocket({
 });
 
 await ws.subscribe({ product: "alerts", symbols: ["RELIANCE"] });
-// callbacks fire as events arrive; the session reconnects automatically
+// listeners fire as events arrive; the session reconnects automatically
+```
+
+### Async iterator style
+
+```ts
+import { DrishtiClient } from "drishti-sdk";
+
+const client = new DrishtiClient({ apiKey: process.env.DRISHTI_API_KEY! });
+const ws = client.websocket();
+
+await ws.subscribe({ product: "announcements", symbols: ["RELIANCE"], detailed: false });
+
+for await (const event of ws.events()) {
+  if (event.kind === "subscribed") {
+    console.log("subscribed", event.product, event.tier);
+  } else if (event.kind === "data") {
+    console.log(event.channel, event.data);
+  } else if (event.kind === "error") {
+    console.error(event.message);
+  }
+}
 ```
 
 Channel-specific listeners can be registered after connect:
