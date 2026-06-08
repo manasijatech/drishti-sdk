@@ -72,3 +72,7 @@ export type RawEvent = Readonly<{
 export type WebSocketEvent = SubscribedEvent | DataEvent | ErrorEvent | RawEvent;
 
 export type WebSocketHandler = (event: WebSocketEvent) => void | Promise<void>;
+
+export type ChannelDataHandler<K extends DrishtiWebSocketProduct> = (
+  data: DataPayloadByChannel[K],
+) => void | Promise<void>;

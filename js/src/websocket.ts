@@ -4,6 +4,7 @@ import {
   DRISHTI_WS_PRODUCTS,
 } from "./websocket-types.js";
 import type {
+  ChannelDataHandler,
   DrishtiWebSocketProduct,
   DataPayloadByChannel,
   SubscribeOptions,
@@ -22,6 +23,7 @@ export {
   type SubscribeOptions,
   type SubscribedEvent,
   type UnknownDataEvent,
+  type ChannelDataHandler,
   type WebSocketEvent,
   type WebSocketHandler,
 } from "./websocket-types.js";
@@ -31,18 +33,24 @@ export type DrishtiWebSocketSessionOptions = Readonly<{
   baseUrl?: string;
   headers?: Record<string, string>;
   webSocketImpl?: typeof WebSocket;
-  autoReconnect?: boolean;
   reconnectInitialDelayMs?: number;
   reconnectMaxDelayMs?: number;
   reconnectBackoffMultiplier?: number;
   reconnectJitterRatio?: number;
+  reconnectWarnAfterAttempts?: number;
   onSubscribed?: WebSocketHandler;
   onData?: WebSocketHandler;
+  onNews?: ChannelDataHandler<"news">;
+  onAnnouncements?: ChannelDataHandler<"announcements">;
+  onEarnings?: ChannelDataHandler<"earnings">;
+  onConcalls?: ChannelDataHandler<"concalls">;
+  onAlerts?: ChannelDataHandler<"alerts">;
   onError?: WebSocketHandler;
   onMessage?: WebSocketHandler;
   onOpen?: () => void | Promise<void>;
   onClose?: (reason: string) => void | Promise<void>;
   onReconnectAttempt?: (attempt: number, delayMs: number, reason: string) => void | Promise<void>;
+  onReconnectWarning?: (attempt: number, reason: string) => void | Promise<void>;
 }>;
 
 function normalizeSymbols(symbols: readonly string[] | undefined): string[] {
@@ -146,15 +154,17 @@ export class DrishtiWebSocketSession {
   private readonly baseUrl: string;
   private readonly headers: Record<string, string>;
   private readonly webSocketImpl: typeof WebSocket;
-  private readonly autoReconnect: boolean;
   private readonly reconnectInitialDelayMs: number;
   private readonly reconnectMaxDelayMs: number;
   private readonly reconnectBackoffMultiplier: number;
   private readonly reconnectJitterRatio: number;
+  private readonly reconnectWarnAfterAttempts: number;
   private readonly onOpen?: () => void | Promise<void>;
   private readonly onClose?: (reason: string) => void | Promise<void>;
   private readonly onReconnectAttempt?: (attempt: number, delayMs: number, reason: string) => void | Promise<void>;
+  private readonly onReconnectWarning?: (attempt: number, reason: string) => void | Promise<void>;
   private readonly handlers = new Map<string, WebSocketHandler[]>();
+  private readonly channelHandlers = new Map<DrishtiWebSocketProduct, ChannelDataHandler<DrishtiWebSocketProduct>[]>();
   private readonly subscriptions = new Map<DrishtiWebSocketProduct, SubscribeOptions>();
   private socket: WebSocket | null = null;
   private readonly queue: WebSocketEvent[] = [];
@@ -162,9 +172,8 @@ export class DrishtiWebSocketSession {
     resolve: (event: WebSocketEvent) => void;
     reject: (error: Error) => void;
   }> = [];
-  private closed = false;
   private manuallyClosed = false;
-  private reconnecting = false;
+  private maintainingConnection = false;
 
   constructor(options: DrishtiWebSocketSessionOptions) {
     if (!options.apiKey || options.apiKey.trim().length === 0) {
@@ -174,19 +183,35 @@ export class DrishtiWebSocketSession {
     this.baseUrl = options.baseUrl ?? DEFAULT_BASE_URL;
     this.headers = { ...(options.headers ?? {}) };
     this.webSocketImpl = options.webSocketImpl ?? WebSocket;
-    this.autoReconnect = options.autoReconnect ?? false;
     this.reconnectInitialDelayMs = Math.max(100, options.reconnectInitialDelayMs ?? 1_000);
     this.reconnectMaxDelayMs = Math.max(this.reconnectInitialDelayMs, options.reconnectMaxDelayMs ?? 30_000);
     this.reconnectBackoffMultiplier = Math.max(1, options.reconnectBackoffMultiplier ?? 2);
     this.reconnectJitterRatio = Math.min(1, Math.max(0, options.reconnectJitterRatio ?? 0.2));
+    this.reconnectWarnAfterAttempts = Math.max(1, options.reconnectWarnAfterAttempts ?? 10);
     this.onOpen = options.onOpen;
     this.onClose = options.onClose;
     this.onReconnectAttempt = options.onReconnectAttempt;
+    this.onReconnectWarning = options.onReconnectWarning;
     if (options.onSubscribed) {
       this.on("subscribed", options.onSubscribed);
     }
     if (options.onData) {
       this.on("data", options.onData);
+    }
+    if (options.onNews) {
+      this.on("news", options.onNews);
+    }
+    if (options.onAnnouncements) {
+      this.on("announcements", options.onAnnouncements);
+    }
+    if (options.onEarnings) {
+      this.on("earnings", options.onEarnings);
+    }
+    if (options.onConcalls) {
+      this.on("concalls", options.onConcalls);
+    }
+    if (options.onAlerts) {
+      this.on("alerts", options.onAlerts);
     }
     if (options.onError) {
       this.on("error", options.onError);
@@ -194,33 +219,145 @@ export class DrishtiWebSocketSession {
     if (options.onMessage) {
       this.on("message", options.onMessage);
     }
+    this.startConnectionMaintenance("initial");
   }
 
   get connected(): boolean {
     return this.socket !== null && this.socket.readyState === this.webSocketImpl.OPEN;
   }
 
-  on(eventName: string, handler: WebSocketHandler): void {
+  on(eventName: "data" | "subscribed" | "error" | "message" | "raw", handler: WebSocketHandler): void;
+  on<K extends DrishtiWebSocketProduct>(channel: K, handler: ChannelDataHandler<K>): void;
+  on(eventName: string, handler: WebSocketHandler | ChannelDataHandler<DrishtiWebSocketProduct>): void {
+    if (isDrishtiWebSocketProduct(eventName)) {
+      this.addChannelListener(eventName, handler as ChannelDataHandler<DrishtiWebSocketProduct>);
+      return;
+    }
+    this.addEventListener(eventName, handler as WebSocketHandler);
+  }
+
+  off(eventName: "data" | "subscribed" | "error" | "message" | "raw", handler: WebSocketHandler): void;
+  off<K extends DrishtiWebSocketProduct>(channel: K, handler: ChannelDataHandler<K>): void;
+  off(eventName: string, handler: WebSocketHandler | ChannelDataHandler<DrishtiWebSocketProduct>): void {
+    if (isDrishtiWebSocketProduct(eventName)) {
+      this.removeChannelListener(eventName, handler as ChannelDataHandler<DrishtiWebSocketProduct>);
+      return;
+    }
+    this.removeEventListener(eventName, handler as WebSocketHandler);
+  }
+
+  onNews(handler: ChannelDataHandler<"news">): void {
+    this.addChannelListener("news", handler as ChannelDataHandler<DrishtiWebSocketProduct>);
+  }
+
+  onAnnouncements(handler: ChannelDataHandler<"announcements">): void {
+    this.addChannelListener("announcements", handler as ChannelDataHandler<DrishtiWebSocketProduct>);
+  }
+
+  onEarnings(handler: ChannelDataHandler<"earnings">): void {
+    this.addChannelListener("earnings", handler as ChannelDataHandler<DrishtiWebSocketProduct>);
+  }
+
+  onConcalls(handler: ChannelDataHandler<"concalls">): void {
+    this.addChannelListener("concalls", handler as ChannelDataHandler<DrishtiWebSocketProduct>);
+  }
+
+  onAlerts(handler: ChannelDataHandler<"alerts">): void {
+    this.addChannelListener("alerts", handler as ChannelDataHandler<DrishtiWebSocketProduct>);
+  }
+
+  private addEventListener(eventName: string, handler: WebSocketHandler): void {
     const existing = this.handlers.get(eventName) ?? [];
     existing.push(handler);
     this.handlers.set(eventName, existing);
   }
 
-  async connect(): Promise<void> {
-    if (this.connected) {
+  private removeEventListener(eventName: string, handler: WebSocketHandler): void {
+    const existing = this.handlers.get(eventName) ?? [];
+    const next = existing.filter((item) => item !== handler);
+    if (next.length === 0) {
+      this.handlers.delete(eventName);
       return;
     }
-    this.manuallyClosed = false;
-    this.closed = false;
-    const socket = await this.openSocket();
-    this.socket = socket;
-    await this.resubscribeAll();
-    await this.onOpen?.();
+    this.handlers.set(eventName, next);
+  }
+
+  private addChannelListener(
+    channel: DrishtiWebSocketProduct,
+    handler: ChannelDataHandler<DrishtiWebSocketProduct>,
+  ): void {
+    const existing = this.channelHandlers.get(channel) ?? [];
+    existing.push(handler);
+    this.channelHandlers.set(channel, existing);
+  }
+
+  private removeChannelListener(
+    channel: DrishtiWebSocketProduct,
+    handler: ChannelDataHandler<DrishtiWebSocketProduct>,
+  ): void {
+    const existing = this.channelHandlers.get(channel) ?? [];
+    const next = existing.filter((item) => item !== handler);
+    if (next.length === 0) {
+      this.channelHandlers.delete(channel);
+      return;
+    }
+    this.channelHandlers.set(channel, next);
+  }
+
+  private startConnectionMaintenance(reason: string): void {
+    if (this.manuallyClosed || this.maintainingConnection || this.connected) {
+      return;
+    }
+    void this.maintainConnection(reason);
+  }
+
+  private async maintainConnection(reason: string): Promise<void> {
+    if (this.manuallyClosed || this.maintainingConnection || this.connected) {
+      return;
+    }
+    this.maintainingConnection = true;
+    let attempt = 0;
+    let delay = this.reconnectInitialDelayMs;
+    while (!this.manuallyClosed && !this.connected) {
+      attempt += 1;
+      if (attempt > 1) {
+        await this.onReconnectAttempt?.(attempt - 1, delay, reason);
+        await new Promise((resolve) => setTimeout(resolve, this.withJitter(delay)));
+      }
+      try {
+        const socket = await this.openSocket();
+        this.socket = socket;
+        await this.resubscribeAll();
+        await this.onOpen?.();
+        attempt = 0;
+        delay = this.reconnectInitialDelayMs;
+        break;
+      } catch {
+        if (delay >= this.reconnectMaxDelayMs && attempt >= this.reconnectWarnAfterAttempts) {
+          await this.emitReconnectWarning(attempt, reason);
+          attempt = 0;
+        }
+        delay = Math.min(
+          Math.floor(delay * this.reconnectBackoffMultiplier),
+          this.reconnectMaxDelayMs,
+        );
+      }
+    }
+    this.maintainingConnection = false;
+  }
+
+  private async emitReconnectWarning(attempt: number, reason: string): Promise<void> {
+    if (this.onReconnectWarning) {
+      await this.onReconnectWarning(attempt, reason);
+      return;
+    }
+    console.warn(
+      `[drishti-sdk] WebSocket still unable to connect after ${attempt} attempts (${reason}); retrying`,
+    );
   }
 
   private async openSocket(): Promise<WebSocket> {
-    const url = buildWebSocketUrl(this.baseUrl);
-    const socket = this.createSocket(url);
+    const socket = this.createSocket();
     await new Promise<void>((resolve, reject) => {
       const onOpen = (): void => {
         cleanup();
@@ -230,12 +367,19 @@ export class DrishtiWebSocketSession {
         cleanup();
         reject(new DrishtiWebSocketError("WebSocket connection failed"));
       };
+      const onClose = (event: CloseEvent): void => {
+        cleanup();
+        const code = "code" in event ? event.code : 0;
+        reject(new DrishtiWebSocketError(`WebSocket closed before open (code ${code})`));
+      };
       const cleanup = (): void => {
         socket.removeEventListener("open", onOpen);
         socket.removeEventListener("error", onError);
+        socket.removeEventListener("close", onClose);
       };
       socket.addEventListener("open", onOpen);
       socket.addEventListener("error", onError);
+      socket.addEventListener("close", onClose);
     });
     this.attachSocketHandlers(socket);
     return socket;
@@ -250,20 +394,15 @@ export class DrishtiWebSocketSession {
       this.socket = null;
       void this.onClose?.("WebSocket closed");
       if (this.manuallyClosed) {
-        this.closed = true;
         this.rejectWaiters("WebSocket closed");
         return;
       }
-      if (!this.autoReconnect) {
-        this.closed = true;
-        this.rejectWaiters("WebSocket closed");
-        return;
-      }
-      void this.reconnectLoop("WebSocket closed");
+      this.startConnectionMaintenance("WebSocket closed");
     });
   }
 
-  private createSocket(url: string): WebSocket {
+  private createSocket(): WebSocket {
+    const url = buildWebSocketUrl(this.baseUrl, this.apiKey);
     const impl = this.webSocketImpl as unknown as {
       new (url: string, protocols?: string | string[], options?: { headers?: Record<string, string> }): WebSocket;
     };
@@ -271,36 +410,34 @@ export class DrishtiWebSocketSession {
     try {
       return new impl(url, undefined, { headers });
     } catch {
-      // Browser-compatible constructor does not support custom headers.
-      // Fallback to query-param auth for compatibility.
-      return new this.webSocketImpl(buildWebSocketUrl(this.baseUrl, this.apiKey));
+      return new this.webSocketImpl(url);
     }
   }
 
   async close(): Promise<void> {
     this.manuallyClosed = true;
-    this.reconnecting = false;
+    this.maintainingConnection = false;
     if (this.socket === null) {
-      this.closed = true;
       this.rejectWaiters("WebSocket closed");
       return;
     }
-    this.closed = true;
     this.socket.close();
     this.socket = null;
     this.rejectWaiters("WebSocket closed");
   }
 
   async subscribe(options: SubscribeOptions): Promise<void> {
-    this.subscriptions.set(options.product, {
+    const normalized: SubscribeOptions = {
       product: options.product,
       symbols: normalizeSymbols(options.symbols),
       detailed: options.detailed !== false,
-    });
+    };
+    this.subscriptions.set(options.product, normalized);
+    this.startConnectionMaintenance("subscribe");
     if (!this.connected || this.socket === null) {
-      throw new DrishtiWebSocketError("WebSocket is not connected; call connect() first");
+      return;
     }
-    this.socket.send(subscribeMessage(options));
+    this.socket.send(subscribeMessage(normalized));
   }
 
   private async dispatch(event: WebSocketEvent): Promise<void> {
@@ -310,6 +447,14 @@ export class DrishtiWebSocketSession {
       for (const handler of handlers) {
         await handler(event);
       }
+    }
+    if (event.kind !== "data" || !isDrishtiWebSocketProduct(event.channel)) {
+      return;
+    }
+    const channelHandlers = this.channelHandlers.get(event.channel) ?? [];
+    const payload = event.data as DataPayloadByChannel[typeof event.channel];
+    for (const handler of channelHandlers) {
+      await handler(payload);
     }
   }
 
@@ -340,35 +485,6 @@ export class DrishtiWebSocketSession {
     }
   }
 
-  private async reconnectLoop(reason: string): Promise<void> {
-    if (this.reconnecting || this.manuallyClosed) {
-      return;
-    }
-    this.reconnecting = true;
-    let attempt = 0;
-    let delay = this.reconnectInitialDelayMs;
-    while (!this.manuallyClosed) {
-      attempt += 1;
-      await this.onReconnectAttempt?.(attempt, delay, reason);
-      await new Promise((resolve) => setTimeout(resolve, this.withJitter(delay)));
-      try {
-        const socket = await this.openSocket();
-        this.socket = socket;
-        this.closed = false;
-        await this.resubscribeAll();
-        await this.onOpen?.();
-        this.reconnecting = false;
-        return;
-      } catch {
-        delay = Math.min(
-          Math.floor(delay * this.reconnectBackoffMultiplier),
-          this.reconnectMaxDelayMs,
-        );
-      }
-    }
-    this.reconnecting = false;
-  }
-
   private withJitter(delayMs: number): number {
     if (this.reconnectJitterRatio <= 0) {
       return delayMs;
@@ -383,7 +499,7 @@ export class DrishtiWebSocketSession {
     if (queued) {
       return queued;
     }
-    if (this.closed) {
+    if (this.manuallyClosed) {
       throw new DrishtiWebSocketError("WebSocket closed");
     }
     return await new Promise<WebSocketEvent>((resolve, reject) => {
@@ -392,17 +508,9 @@ export class DrishtiWebSocketSession {
   }
 
   async *events(): AsyncGenerator<WebSocketEvent> {
-    if (!this.connected) {
-      throw new DrishtiWebSocketError("WebSocket is not connected; call connect() first");
-    }
-    while (!this.closed) {
+    this.startConnectionMaintenance("events");
+    while (!this.manuallyClosed) {
       yield await this.nextEvent();
-    }
-  }
-
-  async run(): Promise<void> {
-    for await (const _event of this.events()) {
-      // Callbacks run during handleIncoming; keep the read loop alive.
     }
   }
 }
@@ -422,7 +530,6 @@ export async function* streamProduct(options: {
     headers: options.headers,
     webSocketImpl: options.webSocketImpl,
   });
-  await session.connect();
   try {
     await session.subscribe({
       product: options.product,

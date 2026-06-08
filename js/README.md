@@ -159,7 +159,6 @@ import { DrishtiClient } from "drishti-sdk";
 const client = new DrishtiClient({ apiKey: process.env.DRISHTI_API_KEY! });
 const ws = client.websocket();
 
-await ws.connect();
 await ws.subscribe({ product: "announcements", symbols: ["RELIANCE"], detailed: false });
 
 for await (const event of ws.events()) {
@@ -173,7 +172,7 @@ for await (const event of ws.events()) {
 }
 ```
 
-### Callback style with reconnect
+### Callback style
 
 ```ts
 import { DrishtiClient } from "drishti-sdk";
@@ -181,7 +180,6 @@ import { DrishtiClient } from "drishti-sdk";
 const client = new DrishtiClient({ apiKey: process.env.DRISHTI_API_KEY! });
 
 const ws = client.websocket({
-  autoReconnect: true,
   reconnectInitialDelayMs: 1000,
   reconnectMaxDelayMs: 30000,
   onReconnectAttempt: (attempt, delayMs, reason) => {
@@ -190,12 +188,31 @@ const ws = client.websocket({
   onData: (event) => {
     if (event.kind === "data") console.log(event.channel, event.data);
   },
+  onAnnouncements: (announcement) => {
+    console.log("announcement", announcement);
+  },
+  onAlerts: (alert) => {
+    console.log("alert", alert);
+  },
 });
 
-await ws.connect();
 await ws.subscribe({ product: "alerts", symbols: ["RELIANCE"] });
-await ws.run();
+// callbacks fire as events arrive; the session reconnects automatically
 ```
+
+Channel-specific listeners can be registered after connect:
+
+```ts
+const onAnnouncement = (announcement: Record<string, unknown>) => {
+  console.log("announcement", announcement);
+};
+
+ws.onAnnouncements(onAnnouncement);
+ws.off("announcements", onAnnouncement);
+```
+
+The same channels are also available via `ws.on("announcements", handler)`.
+`onData` still receives every data event across all channels.
 
 Direct import is also supported:
 
@@ -221,23 +238,34 @@ Supported subscription products:
 
 Useful session options:
 
-- `autoReconnect`
 - `reconnectInitialDelayMs`
 - `reconnectMaxDelayMs`
 - `reconnectBackoffMultiplier`
 - `reconnectJitterRatio`
+- `reconnectWarnAfterAttempts`
 - `onSubscribed`
 - `onData`
+- `onNews`
+- `onAnnouncements`
+- `onEarnings`
+- `onConcalls`
+- `onAlerts`
 - `onError`
 - `onMessage`
 - `onOpen`
 - `onClose`
 - `onReconnectAttempt`
+- `onReconnectWarning`
+
+The session connects automatically when created and keeps retrying in the
+background after disconnects. Connection failures are retried with backoff; a
+warning is logged (or `onReconnectWarning` is called) after repeated failures,
+then retries continue indefinitely until `close()` is called.
 
 Subscription messages accept an object shaped like
 `{ product, symbols?, detailed? }`. Symbols are normalized to uppercase and
-de-duplicated before the message is sent. When auto reconnect is enabled, the
-session re-subscribes after reconnecting.
+de-duplicated before the message is sent. Subscriptions are replayed after
+every reconnect.
 
 Event shapes:
 

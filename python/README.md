@@ -132,18 +132,29 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
-Reconnect/callback style:
+Callback style:
 
 ```python
 async with client.websocket(
-    auto_reconnect=True,
     reconnect_initial_delay=1.0,
     reconnect_max_delay=30.0,
     on_reconnect_attempt=lambda attempt, delay, reason: print(attempt, delay, reason),
     on_data=lambda event: print(event.data) if event.kind == "data" else None,
+    on_announcements=lambda announcement: print("announcement", announcement),
+    on_alerts=lambda alert: print("alert", alert),
 ) as ws:
     await ws.subscribe("alerts", symbols=["RELIANCE"])
-    await ws.run()
+    await asyncio.Event().wait()  # callbacks run in the background; Ctrl+C to stop
+```
+
+Register listeners after connect:
+
+```python
+def on_announcement(announcement: dict[str, object]) -> None:
+    print("announcement", announcement)
+
+ws.on_announcements(on_announcement)
+ws.off("announcements", on_announcement)
 ```
 
 ### WebSocket Reference
@@ -162,11 +173,11 @@ Supported subscription products:
 
 Useful session options:
 
-- `auto_reconnect`
 - `reconnect_initial_delay`
 - `reconnect_max_delay`
 - `reconnect_backoff_multiplier`
 - `reconnect_jitter_ratio`
+- `reconnect_warn_after_attempts`
 - `ping_interval`
 - `ping_timeout`
 - `open_timeout`
@@ -174,16 +185,25 @@ Useful session options:
 - `max_queue`
 - `on_subscribed`
 - `on_data`
+- `on_news`
+- `on_announcements`
+- `on_earnings`
+- `on_concalls`
+- `on_alerts`
 - `on_error`
 - `on_message`
 - `on_open`
 - `on_close`
 - `on_reconnect_attempt`
+- `on_reconnect_warning`
+
+The session connects automatically on the first async call (`subscribe`,
+`events`, or entering an `async with` block) and keeps retrying in the
+background after disconnects.
 
 Subscription messages accept either `SubscribeOptions(...)` or the product name
 as a string. Symbols are normalized to uppercase and de-duplicated before the
-message is sent. When auto reconnect is enabled, the session re-subscribes after
-reconnecting.
+message is sent. Subscriptions are replayed after every reconnect.
 
 Event shapes:
 

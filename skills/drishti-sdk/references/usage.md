@@ -97,7 +97,7 @@ except DrishtiApiError as error:
 
 Websocket is supported in both SDKs at `/v1/ws`.
 
-- JS/TS: `const ws = client.websocket(); await ws.connect(); await ws.subscribe({ product: "announcements", symbols: ["RELIANCE"] });`
+- JS/TS: `const ws = client.websocket(); await ws.subscribe({ product: "announcements", symbols: ["RELIANCE"] });`
 - Python: `async with client.websocket() as ws: await ws.subscribe("announcements", symbols=["RELIANCE"])`
 
 ## Low-Level Calls

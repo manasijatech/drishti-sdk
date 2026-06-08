@@ -22,6 +22,7 @@ export {
   streamProduct,
 } from "./websocket.js";
 export type {
+  ChannelDataHandler,
   DrishtiWebSocketProduct,
   DrishtiWebSocketSessionOptions,
   DataEvent,

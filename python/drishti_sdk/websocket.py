@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import inspect
 import json
+import logging
 import random
 from asyncio import sleep
 from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
@@ -11,6 +14,8 @@ from typing import Any, Literal, TypedDict, TypeAlias, cast
 import websockets
 
 from drishti_sdk.exceptions import DrishtiWebSocketError
+
+logger = logging.getLogger(__name__)
 
 _DEFAULT_BASE_URL = "https://developers.manasija.in"
 
@@ -31,7 +36,9 @@ DRISHTI_WS_PRODUCTS: tuple[DrishtiWebSocketProduct, ...] = (
 )
 
 WebSocketHandler: TypeAlias = Callable[["WebSocketEvent"], None | Awaitable[None]]
+ChannelDataHandler: TypeAlias = Callable[[dict[str, Any]], None | Awaitable[None]]
 ReconnectAttemptHandler: TypeAlias = Callable[[int, float, str], None | Awaitable[None]]
+ReconnectWarningHandler: TypeAlias = Callable[[int, str], None | Awaitable[None]]
 LifecycleHandler: TypeAlias = Callable[[str], None | Awaitable[None]]
 
 
@@ -43,18 +50,24 @@ class DrishtiWebSocketClientSessionOptions(TypedDict, total=False):
     open_timeout: float | None
     close_timeout: float | None
     max_queue: int | None
-    auto_reconnect: bool
     reconnect_initial_delay: float
     reconnect_max_delay: float
     reconnect_backoff_multiplier: float
     reconnect_jitter_ratio: float
+    reconnect_warn_after_attempts: int
     on_subscribed: WebSocketHandler | None
     on_data: WebSocketHandler | None
+    on_news: ChannelDataHandler | None
+    on_announcements: ChannelDataHandler | None
+    on_earnings: ChannelDataHandler | None
+    on_concalls: ChannelDataHandler | None
+    on_alerts: ChannelDataHandler | None
     on_error: WebSocketHandler | None
     on_message: WebSocketHandler | None
     on_open: LifecycleHandler | None
     on_close: LifecycleHandler | None
     on_reconnect_attempt: ReconnectAttemptHandler | None
+    on_reconnect_warning: ReconnectWarningHandler | None
 
 
 def build_websocket_url(base_url: str, *, include_api_key_query: bool = False, api_key: str = "") -> str:
@@ -163,7 +176,12 @@ def parse_websocket_message(raw: str) -> WebSocketEvent:
 
 
 class DrishtiWebSocketSession:
-    """Async WebSocket client for Drishti API ``/v1/ws``."""
+    """Async WebSocket client for Drishti API ``/v1/ws``.
+
+    The session connects automatically on the first async operation and keeps
+    retrying in the background when the connection drops. Call
+    :meth:`subscribe` and iterate :meth:`events` without a manual connect step.
+    """
 
     def __init__(
         self,
@@ -176,18 +194,24 @@ class DrishtiWebSocketSession:
         open_timeout: float | None = 20,
         close_timeout: float | None = 10,
         max_queue: int | None = 1000,
-        auto_reconnect: bool = False,
         reconnect_initial_delay: float = 1.0,
         reconnect_max_delay: float = 30.0,
         reconnect_backoff_multiplier: float = 2.0,
         reconnect_jitter_ratio: float = 0.2,
+        reconnect_warn_after_attempts: int = 10,
         on_subscribed: WebSocketHandler | None = None,
         on_data: WebSocketHandler | None = None,
+        on_news: ChannelDataHandler | None = None,
+        on_announcements: ChannelDataHandler | None = None,
+        on_earnings: ChannelDataHandler | None = None,
+        on_concalls: ChannelDataHandler | None = None,
+        on_alerts: ChannelDataHandler | None = None,
         on_error: WebSocketHandler | None = None,
         on_message: WebSocketHandler | None = None,
         on_open: LifecycleHandler | None = None,
         on_close: LifecycleHandler | None = None,
         on_reconnect_attempt: ReconnectAttemptHandler | None = None,
+        on_reconnect_warning: ReconnectWarningHandler | None = None,
     ) -> None:
         if not api_key.strip():
             raise ValueError("DrishtiWebSocketSession requires a non-empty api_key")
@@ -199,23 +223,36 @@ class DrishtiWebSocketSession:
         self._open_timeout = open_timeout
         self._close_timeout = close_timeout
         self._max_queue = max_queue
-        self._auto_reconnect = bool(auto_reconnect)
         self._reconnect_initial_delay = max(0.1, float(reconnect_initial_delay))
         self._reconnect_max_delay = max(self._reconnect_initial_delay, float(reconnect_max_delay))
         self._reconnect_backoff_multiplier = max(1.0, float(reconnect_backoff_multiplier))
         self._reconnect_jitter_ratio = min(1.0, max(0.0, float(reconnect_jitter_ratio)))
+        self._reconnect_warn_after_attempts = max(1, int(reconnect_warn_after_attempts))
         self._ws: Any = None
-        self._closed = False
         self._manually_closed = False
         self._handlers: dict[str, list[WebSocketHandler]] = {}
+        self._channel_handlers: dict[DrishtiWebSocketProduct, list[ChannelDataHandler]] = {}
         self._subscriptions: dict[DrishtiWebSocketProduct, SubscribeOptions] = {}
         self._on_open = on_open
         self._on_close = on_close
         self._on_reconnect_attempt = on_reconnect_attempt
+        self._on_reconnect_warning = on_reconnect_warning
+        self._connection_task: asyncio.Task[None] | None = None
+        self._event_queue: asyncio.Queue[WebSocketEvent] = asyncio.Queue()
         if on_subscribed is not None:
             self.on("subscribed", on_subscribed)
         if on_data is not None:
             self.on("data", on_data)
+        if on_news is not None:
+            self.on("news", on_news)
+        if on_announcements is not None:
+            self.on("announcements", on_announcements)
+        if on_earnings is not None:
+            self.on("earnings", on_earnings)
+        if on_concalls is not None:
+            self.on("concalls", on_concalls)
+        if on_alerts is not None:
+            self.on("alerts", on_alerts)
         if on_error is not None:
             self.on("error", on_error)
         if on_message is not None:
@@ -225,19 +262,113 @@ class DrishtiWebSocketSession:
     def connected(self) -> bool:
         return self._ws is not None
 
-    def on(self, event_name: str, handler: WebSocketHandler) -> None:
+    def on(
+        self,
+        event_name: str,
+        handler: WebSocketHandler | ChannelDataHandler,
+    ) -> None:
+        if event_name in DRISHTI_WS_PRODUCTS:
+            channel = cast(DrishtiWebSocketProduct, event_name)
+            self._add_channel_listener(channel, cast(ChannelDataHandler, handler))
+            return
+        self._add_event_listener(event_name, cast(WebSocketHandler, handler))
+
+    def off(
+        self,
+        event_name: str,
+        handler: WebSocketHandler | ChannelDataHandler,
+    ) -> None:
+        if event_name in DRISHTI_WS_PRODUCTS:
+            channel = cast(DrishtiWebSocketProduct, event_name)
+            self._remove_channel_listener(channel, cast(ChannelDataHandler, handler))
+            return
+        self._remove_event_listener(event_name, cast(WebSocketHandler, handler))
+
+    def on_news(self, handler: ChannelDataHandler) -> None:
+        self._add_channel_listener("news", handler)
+
+    def on_announcements(self, handler: ChannelDataHandler) -> None:
+        self._add_channel_listener("announcements", handler)
+
+    def on_earnings(self, handler: ChannelDataHandler) -> None:
+        self._add_channel_listener("earnings", handler)
+
+    def on_concalls(self, handler: ChannelDataHandler) -> None:
+        self._add_channel_listener("concalls", handler)
+
+    def on_alerts(self, handler: ChannelDataHandler) -> None:
+        self._add_channel_listener("alerts", handler)
+
+    def _add_event_listener(self, event_name: str, handler: WebSocketHandler) -> None:
         self._handlers.setdefault(event_name, []).append(handler)
+
+    def _remove_event_listener(self, event_name: str, handler: WebSocketHandler) -> None:
+        handlers = self._handlers.get(event_name, [])
+        next_handlers = [item for item in handlers if item != handler]
+        if next_handlers:
+            self._handlers[event_name] = next_handlers
+            return
+        self._handlers.pop(event_name, None)
+
+    def _add_channel_listener(
+        self,
+        channel: DrishtiWebSocketProduct,
+        handler: ChannelDataHandler,
+    ) -> None:
+        self._channel_handlers.setdefault(channel, []).append(handler)
+
+    def _remove_channel_listener(
+        self,
+        channel: DrishtiWebSocketProduct,
+        handler: ChannelDataHandler,
+    ) -> None:
+        handlers = self._channel_handlers.get(channel, [])
+        next_handlers = [item for item in handlers if item != handler]
+        if next_handlers:
+            self._channel_handlers[channel] = next_handlers
+            return
+        self._channel_handlers.pop(channel, None)
 
     def _merge_headers(self) -> dict[str, str]:
         headers = dict(self._extra_headers)
         headers["X-API-Key"] = self._api_key
         return headers
 
-    async def connect(self) -> None:
-        if self.connected:
+    def _start_connection_maintenance(self, reason: str) -> None:
+        if self._manually_closed:
             return
-        self._manually_closed = False
-        self._closed = False
+        if self._connection_task is not None and not self._connection_task.done():
+            return
+        self._connection_task = asyncio.create_task(
+            self._maintain_connection(reason),
+            name="drishti-ws-connection",
+        )
+
+    async def _maintain_connection(self, reason: str) -> None:
+        attempt = 0
+        delay = self._reconnect_initial_delay
+        while not self._manually_closed:
+            if self.connected:
+                await self._receive_until_closed()
+                reason = "connection closed"
+                continue
+            attempt += 1
+            if attempt > 1:
+                await self._emit_reconnect_attempt(attempt - 1, delay, reason)
+                await sleep(self._jitter(delay))
+            try:
+                await self._open_connection()
+                attempt = 0
+                delay = self._reconnect_initial_delay
+            except Exception as exc:
+                if delay >= self._reconnect_max_delay and attempt >= self._reconnect_warn_after_attempts:
+                    await self._emit_reconnect_warning(attempt, reason, exc)
+                    attempt = 0
+                delay = min(delay * self._reconnect_backoff_multiplier, self._reconnect_max_delay)
+
+    async def _open_connection(self) -> None:
+        if self._ws is not None:
+            return
         url = build_websocket_url(self._base_url)
         self._ws = await websockets.connect(
             url,
@@ -251,19 +382,38 @@ class DrishtiWebSocketSession:
         await self._resubscribe_all()
         await self._emit_lifecycle(self._on_open, "connected")
 
-    async def close(self) -> None:
-        self._manually_closed = True
-        self._closed = True
+    async def _receive_until_closed(self) -> None:
         if self._ws is None:
             return
         try:
-            await self._ws.close()
-            await self._emit_lifecycle(self._on_close, "closed")
+            while not self._manually_closed:
+                raw = await self._ws.recv()
+                if not isinstance(raw, str):
+                    raw = raw.decode() if isinstance(raw, bytes) else str(raw)
+                event = parse_websocket_message(raw)
+                await self._dispatch(event)
+                await self._event_queue.put(event)
+        except websockets.exceptions.ConnectionClosed as exc:
+            await self._emit_lifecycle(self._on_close, f"closed: {exc}")
         finally:
             self._ws = None
 
+    async def close(self) -> None:
+        self._manually_closed = True
+        if self._ws is not None:
+            try:
+                await self._ws.close()
+                await self._emit_lifecycle(self._on_close, "closed")
+            finally:
+                self._ws = None
+        if self._connection_task is not None and not self._connection_task.done():
+            self._connection_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._connection_task
+            self._connection_task = None
+
     async def __aenter__(self) -> DrishtiWebSocketSession:
-        await self.connect()
+        self._start_connection_maintenance("context")
         return self
 
     async def __aexit__(self, *args: object) -> None:
@@ -276,14 +426,16 @@ class DrishtiWebSocketSession:
                 symbols=kwargs.get("symbols") or (),
                 detailed=bool(kwargs.get("detailed", True)),
             )
-        self._subscriptions[options.product] = SubscribeOptions(
+        normalized = SubscribeOptions(
             product=options.product,
             symbols=_normalize_symbols(options.symbols),
             detailed=bool(options.detailed),
         )
-        if not self.connected or self._ws is None:
-            raise DrishtiWebSocketError("WebSocket is not connected; call connect() first")
-        await self._ws.send(json.dumps(options.to_message()))
+        self._subscriptions[normalized.product] = normalized
+        self._start_connection_maintenance("subscribe")
+        if self._ws is None:
+            return
+        await self._ws.send(json.dumps(normalized.to_message()))
 
     async def _dispatch(self, event: WebSocketEvent) -> None:
         names = [event.kind, "message"]
@@ -292,56 +444,30 @@ class DrishtiWebSocketSession:
                 result = handler(event)
                 if inspect.isawaitable(result):
                     await result
+        if not isinstance(event, DataEvent):
+            return
+        channel = event.channel
+        if channel not in DRISHTI_WS_PRODUCTS:
+            return
+        for handler in self._channel_handlers.get(cast(DrishtiWebSocketProduct, channel), []):
+            result = handler(event.data)
+            if inspect.isawaitable(result):
+                await result
 
     async def events(self) -> AsyncIterator[WebSocketEvent]:
-        if not self.connected:
-            raise DrishtiWebSocketError("WebSocket is not connected; call connect() first")
-        while not self._closed:
-            if self._ws is None:
-                if not self._auto_reconnect:
-                    raise DrishtiWebSocketError("WebSocket closed")
-                await self._reconnect("WebSocket closed")
-                continue
+        self._start_connection_maintenance("events")
+        while not self._manually_closed:
             try:
-                raw = await self._ws.recv()
-                if not isinstance(raw, str):
-                    raw = raw.decode() if isinstance(raw, bytes) else str(raw)
-                event = parse_websocket_message(raw)
-                await self._dispatch(event)
-                yield event
-            except websockets.exceptions.ConnectionClosed as exc:
-                await self._emit_lifecycle(self._on_close, f"closed: {exc}")
-                self._ws = None
-                if self._manually_closed:
-                    self._closed = True
-                    break
-                if not self._auto_reconnect:
-                    raise DrishtiWebSocketError(f"WebSocket closed: {exc}") from exc
-                await self._reconnect(str(exc))
-
-    async def run(self) -> None:
-        async for _event in self.events():
-            pass
+                event = await asyncio.wait_for(self._event_queue.get(), timeout=0.5)
+            except asyncio.TimeoutError:
+                continue
+            yield event
 
     async def _resubscribe_all(self) -> None:
-        if not self.connected or self._ws is None:
+        if self._ws is None:
             return
         for options in self._subscriptions.values():
             await self._ws.send(json.dumps(options.to_message()))
-
-    async def _reconnect(self, reason: str) -> None:
-        attempt = 0
-        delay = self._reconnect_initial_delay
-        while not self._manually_closed:
-            attempt += 1
-            await self._emit_reconnect_attempt(attempt, delay, reason)
-            await sleep(self._jitter(delay))
-            try:
-                await self.connect()
-                return
-            except Exception:
-                delay = min(delay * self._reconnect_backoff_multiplier, self._reconnect_max_delay)
-        self._closed = True
 
     async def _emit_reconnect_attempt(self, attempt: int, delay: float, reason: str) -> None:
         handler = self._on_reconnect_attempt
@@ -350,6 +476,20 @@ class DrishtiWebSocketSession:
         result = handler(attempt, delay, reason)
         if inspect.isawaitable(result):
             await result
+
+    async def _emit_reconnect_warning(self, attempt: int, reason: str, exc: Exception) -> None:
+        handler = self._on_reconnect_warning
+        if handler is not None:
+            result = handler(attempt, reason)
+            if inspect.isawaitable(result):
+                await result
+            return
+        logger.warning(
+            "Drishti WebSocket still unable to connect after %s attempts (%s): %s",
+            attempt,
+            reason,
+            exc,
+        )
 
     async def _emit_lifecycle(self, handler: LifecycleHandler | None, reason: str) -> None:
         if handler is None:
@@ -374,8 +514,11 @@ async def stream_product(
     base_url: str | None = None,
     headers: dict[str, str] | None = None,
 ) -> AsyncIterator[dict[str, Any]]:
-    async with DrishtiWebSocketSession(api_key=api_key, base_url=base_url, headers=headers) as session:
+    session = DrishtiWebSocketSession(api_key=api_key, base_url=base_url, headers=headers)
+    try:
         await session.subscribe(SubscribeOptions(product=product, symbols=symbols or (), detailed=detailed))
         async for event in session.events():
             if isinstance(event, DataEvent):
                 yield event.data
+    finally:
+        await session.close()
