@@ -22,7 +22,7 @@ Install from npm:
 npm install drishti-sdk
 ```
 
-Or load the browser bundle from a CDN:
+Or load the browser bundle from a CDN (demos and prototypes only — see warning below):
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/drishti-sdk"></script>
@@ -33,13 +33,15 @@ Or load the browser bundle from a CDN:
 </script>
 ```
 
+> **Warning:** Any API key used in the browser is visible in page source and network requests. Use the CDN bundle only for demos, prototypes, or internal tools where users supply their own key. For production apps, install with npm on the server or proxy Drishti calls through your backend.
+
 Unpkg works the same way:
 
 ```html
 <script src="https://unpkg.com/drishti-sdk"></script>
 ```
 
-Pin a version in production, for example `https://cdn.jsdelivr.net/npm/drishti-sdk@1.0.1`.
+Pin a package version in the URL when you ship a prototype, for example `https://cdn.jsdelivr.net/npm/drishti-sdk@1.0.1`.
 
 If you are developing this package locally:
 

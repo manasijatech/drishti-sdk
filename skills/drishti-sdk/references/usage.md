@@ -16,7 +16,7 @@ JavaScript / TypeScript:
 npm install drishti-sdk
 ```
 
-Browser bundle via CDN (global `DrishtiSDK`):
+Browser bundle via CDN (global `DrishtiSDK`) — demos and prototypes only:
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/drishti-sdk"></script>
@@ -25,7 +25,9 @@ Browser bundle via CDN (global `DrishtiSDK`):
 </script>
 ```
 
-Unpkg: `https://unpkg.com/drishti-sdk`. Pin a version in production, for example `@1.0.1`.
+> **Warning:** API keys in the browser are visible to users. Prefer `npm install drishti-sdk` on the server for production, or proxy Drishti through your backend.
+
+Unpkg: `https://unpkg.com/drishti-sdk`. Pin a package version in the URL for prototypes, for example `@1.0.1`.
 
 Python:
 

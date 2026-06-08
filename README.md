@@ -18,12 +18,16 @@ JavaScript / TypeScript install options:
 npm install drishti-sdk
 ```
 
+Browser bundle via CDN (demos and prototypes only):
+
 ```html
 <script src="https://cdn.jsdelivr.net/npm/drishti-sdk"></script>
 <script>
   const { DrishtiClient } = DrishtiSDK;
 </script>
 ```
+
+> **Warning:** API keys in the browser are visible to users. Prefer npm on the server for production, or proxy Drishti through your backend.
 
 ## MCP installer (`drishti-mcp`)
 

@@ -22,7 +22,7 @@ Use this skill to write or review code that calls Drishti Alpha API (`/v1`) thro
 
 ## JavaScript And TypeScript
 
-Use Node 18+ or load the browser bundle from jsDelivr / unpkg. The CDN build exposes a global `DrishtiSDK` object.
+Use Node 18+ for server-side apps. For browser pages, the CDN build exposes a global `DrishtiSDK` object — use that only for demos, prototypes, or internal tools (see warning).
 
 ```bash
 npm install drishti-sdk
@@ -34,6 +34,8 @@ npm install drishti-sdk
   const { DrishtiClient } = DrishtiSDK;
 </script>
 ```
+
+> **Warning:** Browser usage exposes API keys in source and network traffic. Do not embed platform keys in public pages. For production, use npm on the server or proxy Drishti through your backend.
 
 ```ts
 import { DrishtiClient } from "drishti-sdk";
