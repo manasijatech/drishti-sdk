@@ -8,12 +8,15 @@ import {
   type AnnouncementsQueryParams,
   type BatchJobsListQueryParams,
   type ConcallsQueryParams,
+  type ContentRetentionHeader,
   type UpcomingConcallsQueryParams,
   type DocumentIdsQueryParams,
   type EarningsQueryParams,
+  type IndexQueryParams,
   type NewsQueryParams,
   type SymbolMetadataQueryParams,
   type SymbolQuarterQueryParams,
+  type SymbolQuarterTranscriptQueryParams,
   type ConcallTranscriptBatchParams,
   type BatchJobIdParams,
   type DailySummaryParams,
@@ -37,6 +40,7 @@ import type {
   UpcomingConcall,
   JsonValue,
   LedgerListResponse,
+  LightweightIndexItem,
   NewsItem,
   PaginatedResponse,
   StringListResponse,
@@ -96,6 +100,15 @@ function joinUrl(base: string, path: string): string {
   const b = base.replace(/\/+$/, "");
   const p = path.replace(/^\/+/, "");
   return `${b}/${p}`;
+}
+
+function contentRetentionHeaders(
+  contentRetention: ContentRetentionHeader | undefined,
+): Record<string, string> | undefined {
+  if (contentRetention === undefined) {
+    return undefined;
+  }
+  return { "X-Alpha-Content-Retention": contentRetention };
 }
 
 async function parseResponse<TResponse extends JsonValue | string | null>(response: Response): Promise<TResponse> {
@@ -307,7 +320,16 @@ export class DrishtiClient {
   }
 
   postDailySummary(params: DailySummaryParams): Promise<SummaryResponse> {
-    return this.post<SummaryResponse>("/v1/daily-summary", { body: params.body });
+    return this.post<SummaryResponse>("/v1/daily-summary", {
+      body: params.body,
+      headers: contentRetentionHeaders(params.contentRetention),
+    });
+  }
+
+  getEarningsIndex(params: IndexQueryParams = {}): Promise<PaginatedResponse<LightweightIndexItem>> {
+    return this.get<PaginatedResponse<LightweightIndexItem>>("/v1/earnings/index", {
+      query: serializeQueryParams(params, ["symbols", "scrip_codes"]),
+    });
   }
 
   getEarnings(
@@ -343,6 +365,12 @@ export class DrishtiClient {
     });
   }
 
+  getConcallsIndex(params: IndexQueryParams = {}): Promise<PaginatedResponse<LightweightIndexItem>> {
+    return this.get<PaginatedResponse<LightweightIndexItem>>("/v1/concalls/index", {
+      query: serializeQueryParams(params, ["symbols", "scrip_codes"]),
+    });
+  }
+
   getUpcomingConcalls(
     params: UpcomingConcallsQueryParams = {},
   ): Promise<PaginatedResponse<UpcomingConcall>> {
@@ -355,7 +383,7 @@ export class DrishtiClient {
     return this.get<Concall>("/v1/concalls/detail", { query: serializeQueryParams(params) });
   }
 
-  getConcallsTranscript(params: SymbolQuarterQueryParams): Promise<ConcallArtifactUrlsResponse> {
+  getConcallsTranscript(params: SymbolQuarterTranscriptQueryParams): Promise<ConcallArtifactUrlsResponse> {
     return this.get<ConcallArtifactUrlsResponse>("/v1/concalls/transcript", {
       query: serializeQueryParams(params),
     });
@@ -392,6 +420,7 @@ export class DrishtiClient {
     filename?: string;
     display_name?: string;
     metadata?: string;
+    contentRetention?: ContentRetentionHeader;
   }): Promise<BatchJobResponse> {
     return this.postBatchJobsFile(params);
   }
@@ -401,6 +430,7 @@ export class DrishtiClient {
     filename?: string;
     display_name?: string;
     metadata?: string;
+    contentRetention?: ContentRetentionHeader;
   }): Promise<BatchJobResponse> {
     const form = new FormData();
     form.append("file", params.file, params.filename ?? "batch.jsonl");
@@ -410,7 +440,10 @@ export class DrishtiClient {
     if (params.metadata !== undefined) {
       form.append("metadata", params.metadata);
     }
-    return this.post<BatchJobResponse>("/v1/batch/jobs", { body: form });
+    return this.post<BatchJobResponse>("/v1/batch/jobs", {
+      body: form,
+      headers: contentRetentionHeaders(params.contentRetention),
+    });
   }
 
   getBatchJobs(params: BatchJobsListQueryParams = {}): Promise<BatchJobListResponse> {
@@ -456,6 +489,7 @@ export class DrishtiClient {
       filename?: string;
       display_name?: string;
       metadata?: string;
+      contentRetention?: ContentRetentionHeader;
     } & BatchWaitOptions
   ): Promise<BatchJobResponse> {
     const job = await this.postBatchJobsFile({
@@ -463,6 +497,7 @@ export class DrishtiClient {
       filename: params.filename,
       display_name: params.display_name,
       metadata: params.metadata,
+      contentRetention: params.contentRetention,
     });
     return this.waitForBatchJobCompletion({
       job_id: job.id,

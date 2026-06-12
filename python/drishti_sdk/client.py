@@ -18,13 +18,16 @@ from drishti_sdk.params import (
     AnnouncementsListQueryParams,
     BatchJobsListQueryParams,
     ConcallsQueryParams,
+    ContentRetentionHeader,
     DailySummaryRequest,
     DocumentIdsQueryParams,
-    NewsSentiment,
     EarningsQueryParams,
+    IndexQueryParams,
     NewsQueryParams,
+    NewsSentiment,
     SymbolMetadataQueryParams,
     SymbolQuarterQueryParams,
+    SymbolQuarterTranscriptQueryParams,
     UpcomingConcallsQueryParams,
     coerce_query_params,
 )
@@ -47,6 +50,7 @@ from drishti_sdk.types import (
     PaginatedAnnouncementResponse,
     PaginatedConcallResponse,
     PaginatedEarningsResponse,
+    PaginatedLightweightIndexResponse,
     PaginatedUpcomingConcallResponse,
     EarningsDetail,
     EarningsListItem,
@@ -112,6 +116,14 @@ class DrishtiClient:
         out = dict(self._extra_headers)
         out["X-API-Key"] = self._api_key
         return out
+
+    @staticmethod
+    def _content_retention_headers(
+        content_retention: ContentRetentionHeader | None,
+    ) -> dict[str, str] | None:
+        if content_retention is None:
+            return None
+        return {"X-Alpha-Content-Retention": content_retention}
 
     def _build_path(self, path: str, path_params: Mapping[str, Any] | None = None) -> str:
         if not path_params:
@@ -278,9 +290,36 @@ class DrishtiClient:
         self,
         *,
         portfolio: list[Mapping[str, Any]],
+        content_retention: ContentRetentionHeader | None = None,
     ) -> SummaryResponse:
         request_body = DailySummaryRequest(portfolio=portfolio).to_request_body()
-        return self.post("/v1/daily-summary", body=request_body, path_params=None)
+        headers = self._content_retention_headers(content_retention)
+        return self.post(
+            "/v1/daily-summary",
+            body=request_body,
+            path_params=None,
+            headers=headers,
+        )
+
+    def get_earnings_index(
+        self,
+        *,
+        symbols: list[str] | None = None,
+        scrip_codes: list[str] | None = None,
+        from_: str | None = None,
+        to: str | None = None,
+        page: int | None = None,
+        limit: int | None = None,
+    ) -> PaginatedLightweightIndexResponse:
+        params = IndexQueryParams(
+            symbols=symbols,
+            scrip_codes=scrip_codes,
+            from_=from_,
+            to=to,
+            page=page,
+            limit=limit,
+        )
+        return self.get("/v1/earnings/index", params=coerce_query_params(params), path_params=None)
 
     def get_earnings(
         self,
@@ -356,6 +395,26 @@ class DrishtiClient:
         )
         return self.get("/v1/concalls", params=coerce_query_params(params), path_params=None)
 
+    def get_concalls_index(
+        self,
+        *,
+        symbols: list[str] | None = None,
+        scrip_codes: list[str] | None = None,
+        from_: str | None = None,
+        to: str | None = None,
+        page: int | None = None,
+        limit: int | None = None,
+    ) -> PaginatedLightweightIndexResponse:
+        params = IndexQueryParams(
+            symbols=symbols,
+            scrip_codes=scrip_codes,
+            from_=from_,
+            to=to,
+            page=page,
+            limit=limit,
+        )
+        return self.get("/v1/concalls/index", params=coerce_query_params(params), path_params=None)
+
     def get_upcoming_concalls(
         self,
         *,
@@ -396,13 +455,11 @@ class DrishtiClient:
         quarter: str,
         symbol: str | None = None,
         scrip_code: str | None = None,
-        detailed: bool | None = None,
     ) -> ConcallArtifactUrlsResponse:
-        params = SymbolQuarterQueryParams(
+        params = SymbolQuarterTranscriptQueryParams(
             symbol=symbol,
             scrip_code=scrip_code,
             quarter=quarter,
-            detailed=detailed,
         )
         return self.get("/v1/concalls/transcript", params=coerce_query_params(params), path_params=None)
 
@@ -465,12 +522,14 @@ class DrishtiClient:
         file_bytes: bytes,
         display_name: str | None = None,
         metadata: str | None = None,
+        content_retention: ContentRetentionHeader | None = None,
     ) -> BatchJobResponse:
         return self.post_batch_jobs_file(
             file_name=file_name,
             file_bytes=file_bytes,
             display_name=display_name,
             metadata=metadata,
+            content_retention=content_retention,
         )
 
     def post_batch_jobs_file(
@@ -480,6 +539,7 @@ class DrishtiClient:
         file_bytes: bytes,
         display_name: str | None = None,
         metadata: str | None = None,
+        content_retention: ContentRetentionHeader | None = None,
     ) -> BatchJobResponse:
         form_data: dict[str, str] = {}
         if display_name is not None:
@@ -497,6 +557,7 @@ class DrishtiClient:
                     "application/jsonl",
                 )
             },
+            headers=self._content_retention_headers(content_retention),
         )
 
     def get_batch_jobs(
@@ -542,6 +603,7 @@ class DrishtiClient:
         file_bytes: bytes,
         display_name: str | None = None,
         metadata: str | None = None,
+        content_retention: ContentRetentionHeader | None = None,
         poll_interval: float = 2.0,
         timeout: float = 300.0,
         terminal_statuses: tuple[str, ...] = ("succeeded", "partial", "failed", "cancelled", "completed"),
@@ -551,6 +613,7 @@ class DrishtiClient:
             file_bytes=file_bytes,
             display_name=display_name,
             metadata=metadata,
+            content_retention=content_retention,
         )
         return self.wait_for_batch_job_completion(
             job_id=job["id"],

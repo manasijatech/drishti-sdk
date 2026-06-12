@@ -65,6 +65,24 @@ class AnnouncementsListQueryParams(PaginatedFeedQueryParams):
     important: bool | None = None
 
 
+class IndexQueryParams(BaseModel):
+    """GET /v1/earnings/index and GET /v1/concalls/index."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    symbols: list[str] | None = None
+    scrip_codes: list[str] | None = None
+    from_: str | None = Field(default=None, alias="from")
+    to: str | None = None
+    page: int | None = None
+    limit: int | None = None
+
+    def to_query_params(self) -> dict[str, Any] | None:
+        return _format_query_params(
+            self.model_dump(exclude_none=True, by_alias=True)
+        )
+
+
 class EarningsQueryParams(PaginatedFeedQueryParams):
     """GET /v1/earnings."""
 
@@ -139,11 +157,25 @@ class SymbolQuarterDetailQueryParams(BaseModel):
 
 
 class SymbolQuarterQueryParams(SymbolQuarterDetailQueryParams):
-    """GET /v1/earnings/detail, GET /v1/concalls/detail, GET /v1/concalls/transcript."""
+    """GET /v1/earnings/detail and GET /v1/concalls/detail."""
 
     symbol: str | None = None
     scrip_code: str | None = None
     quarter: str
+
+
+class SymbolQuarterTranscriptQueryParams(BaseModel):
+    """GET /v1/concalls/transcript."""
+
+    symbol: str | None = None
+    scrip_code: str | None = None
+    quarter: str
+
+    def to_query_params(self) -> dict[str, Any] | None:
+        return _format_query_params(self.model_dump(exclude_none=True))
+
+
+ContentRetentionHeader = Literal["none"]
 
 
 class BatchJobIdParams(BaseModel):

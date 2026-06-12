@@ -305,6 +305,17 @@ class PaginatedAnnouncementResponse(TypedDict):
     missing_ids: list[str]
 
 
+class LightweightIndexItem(TypedDict, total=False):
+    id: str
+    symbol: str
+    date: str | None
+
+
+class PaginatedLightweightIndexResponse(TypedDict):
+    data: list[LightweightIndexItem]
+    has_next: bool
+
+
 class PaginatedEarningsResponse(TypedDict):
     data: list[EarningsListItem | EarningsDetail]
     has_next: bool

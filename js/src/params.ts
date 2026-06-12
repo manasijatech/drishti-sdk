@@ -33,6 +33,16 @@ export type PaginatedFeedQueryParams = {
   limit?: number;
 };
 
+/** GET /v1/earnings/index and GET /v1/concalls/index */
+export type IndexQueryParams = {
+  symbols?: string[];
+  scrip_codes?: string[];
+  from?: IsoDateTimeParam;
+  to?: IsoDateTimeParam;
+  page?: number;
+  limit?: number;
+};
+
 /** GET /v1/announcements list filter. */
 export type AnnouncementsListQueryParams = PaginatedFeedQueryParams & {
   categories?: string[];
@@ -82,12 +92,22 @@ export type SymbolQuarterDetailQueryParams = {
   detailed?: boolean;
 };
 
-/** GET /v1/earnings/detail, GET /v1/concalls/detail, GET /v1/concalls/transcript */
+/** GET /v1/earnings/detail and GET /v1/concalls/detail */
 export type SymbolQuarterQueryParams = SymbolQuarterDetailQueryParams & {
   symbol?: string;
   scrip_code?: string;
   quarter: string;
 };
+
+/** GET /v1/concalls/transcript */
+export type SymbolQuarterTranscriptQueryParams = {
+  symbol?: string;
+  scrip_code?: string;
+  quarter: string;
+};
+
+/** Optional `X-Alpha-Content-Retention` header for AI content routes. */
+export type ContentRetentionHeader = "none";
 
 export type ConcallTranscriptBatchParams = {
   items: SymbolQuarterKey[];
@@ -99,6 +119,7 @@ export type BatchJobIdParams = {
 
 export type DailySummaryParams = {
   body: DailySummaryRequestBody;
+  contentRetention?: ContentRetentionHeader;
 };
 
 /** GET /v1/account/ledger */

@@ -71,6 +71,12 @@ export type AnnouncementBatchResponse = {
   missing_ids: string[];
 };
 
+export type LightweightIndexItem = {
+  id: string;
+  symbol: string;
+  date?: string | null;
+};
+
 export type EarningsListItem = {
   id: string;
   symbol: string;

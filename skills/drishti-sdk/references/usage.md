@@ -44,10 +44,12 @@ pip install drishti-sdk
 | Announcement categories | `getAnnouncementsCategories()` | `get_announcements_categories()` |
 | Announcements list/detail rows | `getAnnouncements(params?)` | `get_announcements(...)` |
 | Announcement attachments | `getAnnouncementsAttachments({ ids })` | `get_announcements_attachments(...)` |
-| Daily summary | `postDailySummary({ body })` | `post_daily_summary(...)` |
+| Daily summary | `postDailySummary({ body, contentRetention? })` | `post_daily_summary(..., content_retention=...)` |
+| Earnings index | `getEarningsIndex(params?)` | `get_earnings_index(...)` |
 | Earnings list/detail rows | `getEarnings(params?)` | `get_earnings(...)` |
 | Earnings detail | `getEarningsDetail({ symbol?, scrip_code?, quarter, detailed? })` | `get_earnings_detail(...)` |
 | Earnings attachments | `getEarningsAttachments({ ids })` | `get_earnings_attachments(...)` |
+| Concalls index | `getConcallsIndex(params?)` | `get_concalls_index(...)` |
 | Concalls list | `getConcalls(params?)` | `get_concalls(...)` |
 | Upcoming concalls | `getUpcomingConcalls(params?)` | `get_upcoming_concalls(...)` |
 | Concalls detail | `getConcallsDetail({ symbol?, scrip_code?, quarter, detailed? })` | `get_concalls_detail(...)` |
@@ -58,7 +60,7 @@ pip install drishti-sdk
 | Account limits | `getAccountLimits()` | `get_account_limits()` |
 | Account usage | `getAccountUsage()` | `get_account_usage()` |
 | Account ledger | `getAccountLedger(params?)` | `get_account_ledger(...)` |
-| Create batch job | `postBatchJobsFile(params)` or `postBatchJobs(params)` | `post_batch_jobs_file(...)` or `post_batch_jobs(...)` |
+| Create batch job | `postBatchJobsFile(params)` or `postBatchJobs(params)` (`contentRetention?`) | `post_batch_jobs_file(...)` or `post_batch_jobs(...)` (`content_retention=...`) |
 | List batch jobs | `getBatchJobs(params?)` | `get_batch_jobs(...)` |
 | Get batch job | `getBatchJobsJobId({ job_id })` | `get_batch_jobs_job_id(...)` |
 | Cancel batch job | `deleteBatchJobsJobId({ job_id })` | `delete_batch_jobs_job_id(...)` |
@@ -69,8 +71,10 @@ pip install drishti-sdk
 - `symbols`, `scrip_codes` for instruments.
 - `from`/`from_`, `to`, `page`, `limit` for feeds.
 - `detailed` when detail expansion is supported.
+- `contentRetention` / `content_retention: "none"` sends `X-Alpha-Content-Retention` on daily summary and batch upload routes.
 - Announcements support `categories`.
 - Alerts support `type`, `important`.
+- Earnings and concalls index routes support `symbols`, `scrip_codes`, `from`, `to`, `page`, `limit`.
 
 Use either `symbol` or `scrip_code` with required `quarter` for earnings/concall detail APIs.
 
