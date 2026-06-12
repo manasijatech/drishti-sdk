@@ -211,6 +211,10 @@ function codexConfigPath() {
   return homePath(".codex", "config.toml");
 }
 
+function antigravityCliMcpConfigPath() {
+  return homePath(".gemini", "antigravity-cli", "mcp_config.json");
+}
+
 function findClaudeBinary() {
   const possiblePaths = [
     homePath(".claude", "local", "claude"),
@@ -223,6 +227,23 @@ function findClaudeBinary() {
   for (const claudePath of possiblePaths) {
     if (fs.existsSync(claudePath)) {
       return claudePath;
+    }
+  }
+  return null;
+}
+
+function findAntigravityBinary() {
+  const possiblePaths = [
+    homePath(".local", "bin", "agy"),
+    "/usr/local/bin/agy",
+    "/opt/homebrew/bin/agy",
+  ];
+  if (commandExists("agy")) {
+    return "agy";
+  }
+  for (const agyPath of possiblePaths) {
+    if (fs.existsSync(agyPath)) {
+      return agyPath;
     }
   }
   return null;
@@ -275,6 +296,13 @@ function mcpAuthHeaders(apiKey) {
 function sharedMcpServerConfig(apiKey) {
   return {
     url: MCP_URL,
+    headers: mcpAuthHeaders(apiKey),
+  };
+}
+
+function sharedAntigravityMcpServerConfig(apiKey) {
+  return {
+    serverUrl: MCP_URL,
     headers: mcpAuthHeaders(apiKey),
   };
 }
@@ -365,6 +393,15 @@ function candidateClients() {
       name: "Claude Code",
       configPath: claudeCodeConfigLabel(),
       detected: findClaudeBinary() !== null,
+    },
+    {
+      name: "Antigravity CLI",
+      configPath: antigravityCliMcpConfigPath(),
+      containerKey: "mcpServers",
+      detected:
+        findAntigravityBinary() !== null ||
+        fs.existsSync(antigravityCliMcpConfigPath()) ||
+        fs.existsSync(homePath(".gemini", "antigravity-cli")),
     },
   ];
 }
@@ -472,6 +509,7 @@ async function main() {
   const clients = candidateClients();
   const apiKey = await resolveApiKey();
   const serverConfig = sharedMcpServerConfig(apiKey);
+  const antigravityConfig = sharedAntigravityMcpServerConfig(apiKey);
   const vscodeConfig = sharedVscodeServerConfig(apiKey);
   const zedConfig = sharedZedConfig(apiKey);
   const codexConfig = sharedCodexConfig(apiKey);
@@ -507,6 +545,8 @@ async function main() {
       writeTomlMcpServer(client.configPath, SERVER_NAME, codexConfig);
     } else if (client.name === "Claude Code") {
       configureClaudeCodeMcp(apiKey);
+    } else if (client.name === "Antigravity CLI") {
+      mergeServerConfig(client.containerKey, client.configPath, antigravityConfig);
     } else if (client.name === "VS Code") {
       mergeServerConfig(client.containerKey, client.configPath, vscodeConfig);
     } else if (client.name === "Zed") {
@@ -524,7 +564,9 @@ async function main() {
   const anyUpdated = results.some((result) => result.changed);
   if (!anyUpdated) {
     console.log("No supported MCP clients were detected.");
-    console.log("Supported clients: Cursor, VS Code, Zed, Codex, Claude Code.");
+    console.log(
+      "Supported clients: Cursor, VS Code, Zed, Codex, Claude Code, Antigravity CLI."
+    );
     console.log(`If you want to preconfigure one manually, create the matching file and rerun this installer.`);
     return;
   }

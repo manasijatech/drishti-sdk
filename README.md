@@ -32,7 +32,7 @@ Browser bundle via CDN (demos and prototypes only):
 ## MCP installer (`drishti-mcp`)
 
 The `mcp/` package is a CLI wizard that adds the hosted Drishti MCP endpoint to
-supported LLM clients (Cursor, VS Code, Zed, Codex, Claude Code).
+supported LLM clients (Cursor, VS Code, Zed, Codex, Claude Code, Antigravity CLI).
 
 ```bash
 npx drishti-mcp

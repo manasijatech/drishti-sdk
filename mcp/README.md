@@ -12,6 +12,7 @@ Bearer token. Shapes vary by client, for example:
 - **Cursor** (`mcpServers`): `{ "url", "headers" }`
 - **VS Code** (`servers`): `{ "type": "http", "url", "headers" }`
 - **Zed** (`context_servers`): `{ "enabled": true, "url", "headers" }`
+- **Antigravity CLI** (`mcpServers`): `{ "serverUrl", "headers" }`
 
 The API key is entered during setup and written directly into the client
 config. The MCP URL is baked into the installer so the supported clients get a
@@ -39,6 +40,7 @@ files when they are present:
 - Zed: `~/Library/Application Support/Zed/settings.json`, `~/.config/zed/settings.json`, or `%APPDATA%\Zed\settings.json`
 - Codex: `~/.codex/config.toml`
 - Claude Code: `claude mcp add --transport http` (user scope, via Claude Code CLI)
+- Antigravity CLI: `~/.gemini/antigravity-cli/mcp_config.json` (verify with `/mcp` inside `agy`)
 
 When you run it in an interactive terminal, it shows a small picker so you can
 choose which detected clients to configure, with a Drishti banner at the top.
