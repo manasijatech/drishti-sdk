@@ -1,6 +1,6 @@
 /** Query parameter models aligned with drishti-api /v1 route definitions. */
 
-import type { SymbolQuarterKey } from "./types.js";
+import type { AlertType, SymbolQuarterKey } from "./types.js";
 
 export type NewsSentiment = "positive" | "negative" | "neutral";
 
@@ -51,8 +51,15 @@ export type AnnouncementsListQueryParams = PaginatedFeedQueryParams & {
 
 export type AnnouncementsQueryParams = AnnouncementsListQueryParams;
 
+/** GET /v1/earnings/index */
+export type EarningsIndexQueryParams = IndexQueryParams & {
+  quarter?: FiscalQuarterParam;
+};
+
 /** GET /v1/earnings — same filters as announcements except categories. */
-export type EarningsQueryParams = PaginatedFeedQueryParams;
+export type EarningsQueryParams = PaginatedFeedQueryParams & {
+  quarter?: FiscalQuarterParam;
+};
 
 export type ConcallsQueryParams = PaginatedFeedQueryParams;
 
@@ -68,7 +75,7 @@ export type AlertsQueryParams = {
   symbols?: string[];
   scrip_codes?: string[];
   /** Alert type filter. Query key: `type`. */
-  type?: string[];
+  type?: AlertType[];
   from?: IsoDateTimeParam;
   to?: IsoDateTimeParam;
   important?: boolean;

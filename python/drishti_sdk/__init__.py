@@ -12,6 +12,7 @@ from drishti_sdk.params import (
     DailySummaryPortfolioItem,
     DailySummaryRequest,
     DocumentIdsQueryParams,
+    EarningsIndexQueryParams,
     EarningsQueryParams,
     FeedQueryParams,
     IndexQueryParams,
@@ -23,6 +24,7 @@ from drishti_sdk.params import (
     coerce_query_params,
 )
 from drishti_sdk import types as response_types
+from drishti_sdk.types import ALERT_TYPES, AlertType, KnownAlertType
 from drishti_sdk.websocket import (
     DRISHTI_WS_PRODUCTS,
     DrishtiWebSocketClientSessionOptions,
@@ -42,6 +44,9 @@ from drishti_sdk.websocket import (
 __all__ = [
     "DEFAULT_BASE_URL",
     "DRISHTI_WS_PRODUCTS",
+    "ALERT_TYPES",
+    "AlertType",
+    "KnownAlertType",
     "AccountLedgerQueryParams",
     "AlertsQueryParams",
     "DrishtiWebSocketClientSessionOptions",
@@ -56,6 +61,7 @@ __all__ = [
     "DailySummaryRequest",
     "DataEvent",
     "DocumentIdsQueryParams",
+    "EarningsIndexQueryParams",
     "EarningsQueryParams",
     "ErrorEvent",
     "FeedQueryParams",

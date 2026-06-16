@@ -22,8 +22,13 @@ export type BatchAttachmentLookupResponse = {
   data: AttachmentLookupItem[];
 };
 
-export type StringListResponse = {
-  data: string[];
+export type AnnouncementCategoriesData = {
+  important: string[];
+  not_important: string[];
+};
+
+export type AnnouncementCategoriesResponse = {
+  data: AnnouncementCategoriesData;
 };
 
 export type SymbolMetadata = {
@@ -53,6 +58,9 @@ export type AnnouncementListItem = {
   title?: string | null;
   summary?: string | null;
   category?: string | null;
+};
+
+export type AnnouncementWebSocketItem = AnnouncementListItem & {
   attachment_url?: string | null;
 };
 
@@ -61,6 +69,10 @@ export type AnnouncementDetail = AnnouncementListItem & {
   related_categories?: string[];
   descriptor?: string | null;
   important?: boolean;
+};
+
+export type AnnouncementWebSocketDetail = AnnouncementDetail & {
+  attachment_url?: string | null;
 };
 
 /** Alias matching drishti-api `AnnouncementSummary` (detail rows with `detailed=true`). */
@@ -74,6 +86,7 @@ export type AnnouncementBatchResponse = {
 export type LightweightIndexItem = {
   id: string;
   symbol: string;
+  quarter?: string | null;
   date?: string | null;
 };
 
@@ -83,14 +96,22 @@ export type EarningsListItem = {
   scrip_code?: string | null;
   company_name?: string | null;
   image?: string | null;
+  quarter?: string | null;
   date?: string | null;
   summary?: string | null;
+};
+
+export type EarningsWebSocketItem = EarningsListItem & {
   attachment_url?: string | null;
 };
 
 export type EarningsDetail = EarningsListItem & {
   earnings_significant?: boolean;
   earnings_table?: JsonObject | null;
+};
+
+export type EarningsWebSocketDetail = EarningsDetail & {
+  attachment_url?: string | null;
 };
 
 export type NewsItem = {
@@ -109,6 +130,22 @@ export type NewsItem = {
   link?: string | null;
 };
 
+/** Known public alert types returned by Drishti alerts routes. */
+export const ALERT_TYPES = [
+  "52w_high",
+  "52w_low",
+  "earnings",
+  "high_growth_concalls",
+  "price_alert",
+  "rvol_alert",
+  "volume_alert",
+] as const;
+
+export type KnownAlertType = (typeof ALERT_TYPES)[number];
+
+/** Public alert type with forward-compatible string fallback. */
+export type AlertType = KnownAlertType | (string & {});
+
 export type AlertMeta = {
   primary_drivers: string[];
 };
@@ -116,7 +153,7 @@ export type AlertMeta = {
 export type Alert = {
   id: string;
   symbol: string;
-  type?: string | null;
+  type?: AlertType | null;
   reason?: string | null;
   timestamp?: string | null;
   meta: AlertMeta;

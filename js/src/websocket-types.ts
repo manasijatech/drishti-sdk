@@ -1,11 +1,11 @@
 import type {
   Alert,
-  AnnouncementDetail,
-  AnnouncementListItem,
+  AnnouncementWebSocketDetail,
+  AnnouncementWebSocketItem,
   Concall,
   ConcallListItem,
-  EarningsDetail,
-  EarningsListItem,
+  EarningsWebSocketDetail,
+  EarningsWebSocketItem,
   NewsItem,
 } from "./types.js";
 
@@ -36,8 +36,8 @@ export type SubscribedEvent = Readonly<{
 
 export type DataPayloadByChannel = Readonly<{
   news: NewsItem;
-  announcements: AnnouncementDetail | AnnouncementListItem;
-  earnings: EarningsDetail | EarningsListItem;
+  announcements: AnnouncementWebSocketDetail | AnnouncementWebSocketItem;
+  earnings: EarningsWebSocketDetail | EarningsWebSocketItem;
   concalls: Concall | ConcallListItem;
   alerts: Alert;
 }>;

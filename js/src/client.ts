@@ -11,6 +11,7 @@ import {
   type ContentRetentionHeader,
   type UpcomingConcallsQueryParams,
   type DocumentIdsQueryParams,
+  type EarningsIndexQueryParams,
   type EarningsQueryParams,
   type IndexQueryParams,
   type NewsQueryParams,
@@ -43,7 +44,7 @@ import type {
   LightweightIndexItem,
   NewsItem,
   PaginatedResponse,
-  StringListResponse,
+  AnnouncementCategoriesResponse,
   SummaryResponse,
   SymbolMetadataResponse,
 } from "./types.js";
@@ -301,8 +302,8 @@ export class DrishtiClient {
     });
   }
 
-  getAnnouncementsCategories(): Promise<StringListResponse> {
-    return this.get<StringListResponse>("/v1/announcements/categories");
+  getAnnouncementsCategories(): Promise<AnnouncementCategoriesResponse> {
+    return this.get<AnnouncementCategoriesResponse>("/v1/announcements/categories");
   }
 
   getAnnouncements(
@@ -326,7 +327,7 @@ export class DrishtiClient {
     });
   }
 
-  getEarningsIndex(params: IndexQueryParams = {}): Promise<PaginatedResponse<LightweightIndexItem>> {
+  getEarningsIndex(params: EarningsIndexQueryParams = {}): Promise<PaginatedResponse<LightweightIndexItem>> {
     return this.get<PaginatedResponse<LightweightIndexItem>>("/v1/earnings/index", {
       query: serializeQueryParams(params, ["symbols", "scrip_codes"]),
     });

@@ -21,6 +21,7 @@ from drishti_sdk.params import (
     ContentRetentionHeader,
     DailySummaryRequest,
     DocumentIdsQueryParams,
+    EarningsIndexQueryParams,
     EarningsQueryParams,
     IndexQueryParams,
     NewsQueryParams,
@@ -55,7 +56,7 @@ from drishti_sdk.types import (
     EarningsDetail,
     EarningsListItem,
     PaginatedNewsResponse,
-    StringListResponse,
+    AnnouncementCategoriesResponse,
     SummaryResponse,
     SymbolMetadataResponse,
     UpcomingConcall,
@@ -249,7 +250,7 @@ class DrishtiClient:
         params = SymbolMetadataQueryParams(symbols=symbols, scrip_codes=scrip_codes)
         return self.get("/v1/symbols/metadata", params=coerce_query_params(params), path_params=None)
 
-    def get_announcements_categories(self) -> StringListResponse:
+    def get_announcements_categories(self) -> AnnouncementCategoriesResponse:
         return self.get("/v1/announcements/categories", path_params=None)
 
     def get_announcements(
@@ -308,14 +309,16 @@ class DrishtiClient:
         scrip_codes: list[str] | None = None,
         from_: str | None = None,
         to: str | None = None,
+        quarter: str | None = None,
         page: int | None = None,
         limit: int | None = None,
     ) -> PaginatedLightweightIndexResponse:
-        params = IndexQueryParams(
+        params = EarningsIndexQueryParams(
             symbols=symbols,
             scrip_codes=scrip_codes,
             from_=from_,
             to=to,
+            quarter=quarter,
             page=page,
             limit=limit,
         )
@@ -328,6 +331,7 @@ class DrishtiClient:
         scrip_codes: list[str] | None = None,
         from_: str | None = None,
         to: str | None = None,
+        quarter: str | None = None,
         detailed: bool | None = None,
         page: int | None = None,
         limit: int | None = None,
@@ -337,6 +341,7 @@ class DrishtiClient:
             scrip_codes=scrip_codes,
             from_=from_,
             to=to,
+            quarter=quarter,
             detailed=detailed,
             page=page,
             limit=limit,

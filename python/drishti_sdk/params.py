@@ -6,6 +6,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from drishti_sdk.types import AlertType
+
 NewsSentiment = Literal["positive", "negative", "neutral"]
 
 def _format_query_params(raw: dict[str, Any]) -> dict[str, Any] | None:
@@ -83,8 +85,16 @@ class IndexQueryParams(BaseModel):
         )
 
 
+class EarningsIndexQueryParams(IndexQueryParams):
+    """GET /v1/earnings/index."""
+
+    quarter: str | None = None
+
+
 class EarningsQueryParams(PaginatedFeedQueryParams):
     """GET /v1/earnings."""
+
+    quarter: str | None = None
 
 
 class ConcallsQueryParams(PaginatedFeedQueryParams):
@@ -115,7 +125,7 @@ class AlertsQueryParams(BaseModel):
 
     symbols: list[str] | None = None
     scrip_codes: list[str] | None = None
-    type: list[str] | None = None
+    type: list[AlertType] | None = None
     from_: str | None = Field(default=None, alias="from")
     to: str | None = None
     important: bool | None = None

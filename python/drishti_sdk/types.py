@@ -5,6 +5,28 @@ from typing import Any, Literal, TypedDict, TypeAlias
 JsonPrimitive: TypeAlias = str | int | float | bool | None
 JsonValue: TypeAlias = JsonPrimitive | dict[str, "JsonValue"] | list["JsonValue"]
 
+ALERT_TYPES: tuple[str, ...] = (
+    "52w_high",
+    "52w_low",
+    "earnings",
+    "high_growth_concalls",
+    "price_alert",
+    "rvol_alert",
+    "volume_alert",
+)
+
+KnownAlertType: TypeAlias = Literal[
+    "52w_high",
+    "52w_low",
+    "earnings",
+    "high_growth_concalls",
+    "price_alert",
+    "rvol_alert",
+    "volume_alert",
+]
+
+AlertType: TypeAlias = KnownAlertType | str
+
 
 AttachmentLookupStatus: TypeAlias = Literal[
     "ready", "not_found", "invalid_id", "no_attachment", "no_transcript"
@@ -23,8 +45,13 @@ class BatchAttachmentLookupResponse(TypedDict):
     data: list[AttachmentLookupItem]
 
 
-class StringListResponse(TypedDict):
-    data: list[str]
+class AnnouncementCategoriesData(TypedDict):
+    important: list[str]
+    not_important: list[str]
+
+
+class AnnouncementCategoriesResponse(TypedDict):
+    data: AnnouncementCategoriesData
 
 
 class SymbolMetadata(TypedDict, total=False):
@@ -54,6 +81,9 @@ class AnnouncementListItem(TypedDict, total=False):
     title: str | None
     summary: str | None
     category: str | None
+
+
+class AnnouncementWebSocketItem(AnnouncementListItem, total=False):
     attachment_url: str | None
 
 
@@ -62,6 +92,10 @@ class AnnouncementDetail(AnnouncementListItem, total=False):
     related_categories: list[str]
     descriptor: str | None
     important: bool
+
+
+class AnnouncementWebSocketDetail(AnnouncementDetail, total=False):
+    attachment_url: str | None
 
 
 AnnouncementSummary: TypeAlias = AnnouncementDetail
@@ -78,14 +112,22 @@ class EarningsListItem(TypedDict, total=False):
     scrip_code: str | None
     company_name: str | None
     image: str | None
+    quarter: str | None
     date: str | None
     summary: str | None
+
+
+class EarningsWebSocketItem(EarningsListItem, total=False):
     attachment_url: str | None
 
 
 class EarningsDetail(EarningsListItem, total=False):
     earnings_significant: bool
     earnings_table: dict[str, object] | None
+
+
+class EarningsWebSocketDetail(EarningsDetail, total=False):
+    attachment_url: str | None
 
 
 class NewsItem(TypedDict, total=False):
@@ -111,7 +153,7 @@ class AlertMeta(TypedDict):
 class Alert(TypedDict, total=False):
     id: str
     symbol: str
-    type: str | None
+    type: AlertType | None
     reason: str | None
     timestamp: str | None
     meta: AlertMeta
@@ -308,6 +350,7 @@ class PaginatedAnnouncementResponse(TypedDict):
 class LightweightIndexItem(TypedDict, total=False):
     id: str
     symbol: str
+    quarter: str | None
     date: str | None
 
 
