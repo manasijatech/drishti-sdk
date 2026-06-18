@@ -17,13 +17,13 @@ from drishti_sdk.params import (
     AlertsQueryParams,
     AnnouncementsListQueryParams,
     BatchJobsListQueryParams,
+    ConcallsIndexQueryParams,
     ConcallsQueryParams,
     ContentRetentionHeader,
     DailySummaryRequest,
     DocumentIdsQueryParams,
     EarningsIndexQueryParams,
     EarningsQueryParams,
-    IndexQueryParams,
     NewsQueryParams,
     NewsSentiment,
     SymbolMetadataQueryParams,
@@ -407,14 +407,16 @@ class DrishtiClient:
         scrip_codes: list[str] | None = None,
         from_: str | None = None,
         to: str | None = None,
+        quarter: str | None = None,
         page: int | None = None,
         limit: int | None = None,
     ) -> PaginatedLightweightIndexResponse:
-        params = IndexQueryParams(
+        params = ConcallsIndexQueryParams(
             symbols=symbols,
             scrip_codes=scrip_codes,
             from_=from_,
             to=to,
+            quarter=quarter,
             page=page,
             limit=limit,
         )

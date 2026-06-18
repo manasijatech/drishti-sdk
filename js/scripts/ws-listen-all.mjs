@@ -49,6 +49,23 @@ Options:
 `);
 }
 
+function formatLogTimestamp() {
+  return new Date().toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+}
+
+function log(...parts) {
+  console.log(`${formatLogTimestamp()}`, ...parts);
+}
+
 function parseSymbols(raw) {
   const seen = new Set();
   const symbols = [];
@@ -78,7 +95,7 @@ function preview(data) {
 
 function channelLogger(channel) {
   return (data) => {
-    console.log(`[${channel}] ${preview(data)}`);
+    log(`[${channel}] ${preview(data)}`);
   };
 }
 
@@ -93,13 +110,13 @@ const client = new DrishtiClient({ apiKey: options.apiKey, baseUrl: options.base
 
 const ws = client.websocket({
   webSocketImpl: WebSocket,
-  onOpen: () => console.log("[lifecycle] connected"),
-  onClose: (reason) => console.log(`[lifecycle] closed: ${reason}`),
+  onOpen: () => log("[lifecycle] connected"),
+  onClose: (reason) => log(`[lifecycle] closed: ${reason}`),
   onReconnectAttempt: (attempt, delayMs, reason) => {
-    console.log(`[lifecycle] reconnect attempt=${attempt} delay=${delayMs}ms reason=${reason}`);
+    log(`[lifecycle] reconnect attempt=${attempt} delay=${delayMs}ms reason=${reason}`);
   },
   onReconnectWarning: (attempt, reason) => {
-    console.log(`[lifecycle] reconnect warning after ${attempt} attempts (${reason})`);
+    log(`[lifecycle] reconnect warning after ${attempt} attempts (${reason})`);
   },
   onNews: channelLogger("news"),
   onAnnouncements: channelLogger("announcements"),
@@ -108,30 +125,30 @@ const ws = client.websocket({
   onAlerts: channelLogger("alerts"),
   onError: (event) => {
     if (event.kind === "error") {
-      console.log(`[error] ${event.message}${event.code ? ` (${event.code})` : ""}`);
+      log(`[error] ${event.message}${event.code ? ` (${event.code})` : ""}`);
     }
   },
 });
 
 for (const product of DRISHTI_WS_PRODUCTS) {
   await ws.subscribe({ product, symbols, detailed: options.detailed });
-  console.log(`[subscribe] queued ${product} symbols=${symbols.length ? symbols.join(",") : "[]"}`);
+  log(`[subscribe] queued ${product} symbols=${symbols.length ? symbols.join(",") : "[]"}`);
 }
 
-console.log("Listening on all channels. Press Ctrl+C to stop.");
+log("Listening on all channels. Press Ctrl+C to stop.");
 
 process.on("SIGINT", async () => {
-  console.log("\nStopping...");
+  log("Stopping...");
   await ws.close();
   process.exit(0);
 });
 
 for await (const event of ws.events()) {
   if (event.kind === "subscribed") {
-    console.log(
+    log(
       `[subscribed] product=${event.product} tier=${event.tier} full_feed=${event.fullFeed} symbols=${event.symbols.join(",")}`,
     );
   } else if (event.kind === "raw") {
-    console.log("[raw]", event.payload);
+    log("[raw]", event.payload);
   }
 }

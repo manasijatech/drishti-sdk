@@ -91,6 +91,12 @@ class EarningsIndexQueryParams(IndexQueryParams):
     quarter: str | None = None
 
 
+class ConcallsIndexQueryParams(IndexQueryParams):
+    """GET /v1/concalls/index."""
+
+    quarter: str | None = None
+
+
 class EarningsQueryParams(PaginatedFeedQueryParams):
     """GET /v1/earnings."""
 

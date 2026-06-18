@@ -103,7 +103,6 @@ AnnouncementSummary: TypeAlias = AnnouncementDetail
 
 class AnnouncementBatchResponse(TypedDict):
     data: list[AnnouncementListItem | AnnouncementDetail]
-    missing_ids: list[str]
 
 
 class EarningsListItem(TypedDict, total=False):
@@ -159,13 +158,26 @@ class Alert(TypedDict, total=False):
     meta: AlertMeta
 
 
+class ConcallSentimentKeyIndicators(TypedDict, total=False):
+    positive: list[str]
+    negative: list[str]
+
+
+class ConcallSentiment(TypedDict, total=False):
+    key_indicators: ConcallSentimentKeyIndicators
+
+
+class ConcallSentimentAnalysis(TypedDict, total=False):
+    sentiment: ConcallSentiment
+
+
 class ConcallListItem(TypedDict, total=False):
     id: str
     symbol: str
     short_analysis: JsonValue
     transcript_url: str | None
     audio_url: str | None
-    sentiment_analysis: JsonValue
+    sentiment_analysis: ConcallSentimentAnalysis
     quarter: str | None
     date: str | None
 
@@ -344,7 +356,6 @@ class BatchJobCancelResponse(TypedDict):
 class PaginatedAnnouncementResponse(TypedDict):
     data: list[AnnouncementListItem | AnnouncementDetail]
     has_next: bool
-    missing_ids: list[str]
 
 
 class LightweightIndexItem(TypedDict, total=False):

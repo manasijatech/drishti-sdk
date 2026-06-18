@@ -7,13 +7,13 @@ import {
   type AlertsQueryParams,
   type AnnouncementsQueryParams,
   type BatchJobsListQueryParams,
+  type ConcallsIndexQueryParams,
   type ConcallsQueryParams,
   type ContentRetentionHeader,
   type UpcomingConcallsQueryParams,
   type DocumentIdsQueryParams,
   type EarningsIndexQueryParams,
   type EarningsQueryParams,
-  type IndexQueryParams,
   type NewsQueryParams,
   type SymbolMetadataQueryParams,
   type SymbolQuarterQueryParams,
@@ -366,7 +366,7 @@ export class DrishtiClient {
     });
   }
 
-  getConcallsIndex(params: IndexQueryParams = {}): Promise<PaginatedResponse<LightweightIndexItem>> {
+  getConcallsIndex(params: ConcallsIndexQueryParams = {}): Promise<PaginatedResponse<LightweightIndexItem>> {
     return this.get<PaginatedResponse<LightweightIndexItem>>("/v1/concalls/index", {
       query: serializeQueryParams(params, ["symbols", "scrip_codes"]),
     });

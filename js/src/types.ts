@@ -5,7 +5,6 @@ export type JsonObject = { [key: string]: JsonValue };
 export type PaginatedResponse<TItem> = {
   data: TItem[];
   has_next: boolean;
-  missing_ids?: string[];
 };
 
 export type AttachmentLookupStatus = "ready" | "not_found" | "invalid_id" | "no_attachment" | "no_transcript";
@@ -80,7 +79,6 @@ export type AnnouncementSummary = AnnouncementDetail;
 
 export type AnnouncementBatchResponse = {
   data: Array<AnnouncementListItem | AnnouncementDetail>;
-  missing_ids: string[];
 };
 
 export type LightweightIndexItem = {
@@ -159,13 +157,26 @@ export type Alert = {
   meta: AlertMeta;
 };
 
+export type ConcallSentimentKeyIndicators = {
+  positive?: string[];
+  negative?: string[];
+};
+
+export type ConcallSentiment = {
+  key_indicators?: ConcallSentimentKeyIndicators;
+};
+
+export type ConcallSentimentAnalysis = {
+  sentiment?: ConcallSentiment;
+};
+
 export type ConcallListItem = {
   id: string;
   symbol: string;
   short_analysis?: JsonValue;
   transcript_url?: string | null;
   audio_url?: string | null;
-  sentiment_analysis?: JsonValue;
+  sentiment_analysis?: ConcallSentimentAnalysis;
   quarter?: string | null;
   date?: string | null;
 };

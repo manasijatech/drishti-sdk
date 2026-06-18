@@ -74,7 +74,7 @@ pip install drishti-sdk
 - `contentRetention` / `content_retention: "none"` sends `X-Alpha-Content-Retention` on daily summary and batch upload routes.
 - Announcements support `categories`.
 - Alerts support `type`, `important`.
-- Earnings list and index routes support `symbols`, `scrip_codes`, `quarter`, `from`, `to`, `page`, `limit`. `GET /v1/earnings` also supports `detailed`.
+- Earnings and concalls list/index routes support `symbols`, `scrip_codes`, `quarter`, `from`, `to`, `page`, `limit`. `GET /v1/earnings` and `GET /v1/concalls` also support `detailed`.
 
 Use either `symbol` or `scrip_code` with required `quarter` for earnings/concall detail APIs.
 
