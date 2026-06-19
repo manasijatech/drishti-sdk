@@ -30,6 +30,7 @@ from drishti_sdk.params import (
     SymbolQuarterQueryParams,
     SymbolQuarterTranscriptQueryParams,
     UpcomingConcallsQueryParams,
+    UpcomingEarningsQueryParams,
     coerce_query_params,
 )
 from drishti_sdk.types import (
@@ -53,6 +54,7 @@ from drishti_sdk.types import (
     PaginatedEarningsResponse,
     PaginatedLightweightIndexResponse,
     PaginatedUpcomingConcallResponse,
+    PaginatedUpcomingEarningsResponse,
     EarningsDetail,
     EarningsListItem,
     PaginatedNewsResponse,
@@ -60,6 +62,7 @@ from drishti_sdk.types import (
     SummaryResponse,
     SymbolMetadataResponse,
     UpcomingConcall,
+    UpcomingEarningsListItem,
 )
 
 DEFAULT_BASE_URL = "https://developers.manasija.in"
@@ -377,6 +380,22 @@ class DrishtiClient:
     ) -> BatchAttachmentLookupResponse:
         params = DocumentIdsQueryParams(ids=ids)
         return self.get("/v1/earnings/attachments", params=coerce_query_params(params), path_params=None)
+
+    def get_upcoming_earnings(
+        self,
+        *,
+        symbols: list[str] | None = None,
+        scrip_codes: list[str] | None = None,
+        page: int | None = None,
+        limit: int | None = None,
+    ) -> PaginatedUpcomingEarningsResponse:
+        params = UpcomingEarningsQueryParams(
+            symbols=symbols,
+            scrip_codes=scrip_codes,
+            page=page,
+            limit=limit,
+        )
+        return self.get("/v1/earnings/upcoming", params=coerce_query_params(params), path_params=None)
 
     def get_concalls(
         self,

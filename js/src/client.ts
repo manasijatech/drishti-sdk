@@ -11,6 +11,7 @@ import {
   type ConcallsQueryParams,
   type ContentRetentionHeader,
   type UpcomingConcallsQueryParams,
+  type UpcomingEarningsQueryParams,
   type DocumentIdsQueryParams,
   type EarningsIndexQueryParams,
   type EarningsQueryParams,
@@ -39,6 +40,7 @@ import type {
   ConcallArtifactUrlsResponse,
   ConcallTranscriptBatchResponse,
   UpcomingConcall,
+  UpcomingEarningsListItem,
   JsonValue,
   LedgerListResponse,
   LightweightIndexItem,
@@ -357,6 +359,14 @@ export class DrishtiClient {
   getEarningsAttachments(params: DocumentIdsQueryParams): Promise<BatchAttachmentLookupResponse> {
     return this.get<BatchAttachmentLookupResponse>("/v1/earnings/attachments", {
       query: serializeQueryParams(params, ["ids"]),
+    });
+  }
+
+  getUpcomingEarnings(
+    params: UpcomingEarningsQueryParams = {},
+  ): Promise<PaginatedResponse<UpcomingEarningsListItem>> {
+    return this.get<PaginatedResponse<UpcomingEarningsListItem>>("/v1/earnings/upcoming", {
+      query: serializeQueryParams(params, ["symbols", "scrip_codes"]),
     });
   }
 

@@ -377,6 +377,7 @@ const finalJob = await client.submitBatchJobAndWait({
 - `getEarnings`
 - `getEarningsDetail`
 - `getEarningsAttachments`
+- `getUpcomingEarnings`
 - `getConcalls`
 - `getUpcomingConcalls`
 - `getConcallsDetail`

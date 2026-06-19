@@ -129,6 +129,19 @@ class EarningsWebSocketDetail(EarningsDetail, total=False):
     attachment_url: str | None
 
 
+class UpcomingEarningsListItem(TypedDict, total=False):
+    id: str
+    event_id: str | None
+    bm_desc: str | None
+    body: str | None
+    company: str | None
+    date: str | None
+    purpose: str | None
+    symbol: str
+    title: str | None
+    quarter: str | None
+
+
 class NewsItem(TypedDict, total=False):
     id: str
     title: str | None
@@ -372,6 +385,11 @@ class PaginatedLightweightIndexResponse(TypedDict):
 
 class PaginatedEarningsResponse(TypedDict):
     data: list[EarningsListItem | EarningsDetail]
+    has_next: bool
+
+
+class PaginatedUpcomingEarningsResponse(TypedDict):
+    data: list[UpcomingEarningsListItem]
     has_next: bool
 
 

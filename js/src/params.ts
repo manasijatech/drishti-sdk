@@ -66,6 +66,13 @@ export type EarningsQueryParams = PaginatedFeedQueryParams & {
   quarter?: FiscalQuarterParam;
 };
 
+export type UpcomingEarningsQueryParams = {
+  symbols?: string[];
+  scrip_codes?: string[];
+  page?: number;
+  limit?: number;
+};
+
 export type ConcallsQueryParams = PaginatedFeedQueryParams;
 
 export type UpcomingConcallsQueryParams = {

@@ -49,6 +49,7 @@ pip install drishti-sdk
 | Earnings list/detail rows | `getEarnings(params?)` | `get_earnings(...)` |
 | Earnings detail | `getEarningsDetail({ symbol?, scrip_code?, quarter, detailed? })` | `get_earnings_detail(...)` |
 | Earnings attachments | `getEarningsAttachments({ ids })` | `get_earnings_attachments(...)` |
+| Upcoming earnings | `getUpcomingEarnings(params?)` | `get_upcoming_earnings(...)` |
 | Concalls index | `getConcallsIndex(params?)` | `get_concalls_index(...)` |
 | Concalls list | `getConcalls(params?)` | `get_concalls(...)` |
 | Upcoming concalls | `getUpcomingConcalls(params?)` | `get_upcoming_concalls(...)` |

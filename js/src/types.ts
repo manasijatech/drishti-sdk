@@ -112,6 +112,19 @@ export type EarningsWebSocketDetail = EarningsDetail & {
   attachment_url?: string | null;
 };
 
+export type UpcomingEarningsListItem = {
+  id: string;
+  event_id?: string | null;
+  bm_desc?: string | null;
+  body?: string | null;
+  company?: string | null;
+  date?: string | null;
+  purpose?: string | null;
+  symbol: string;
+  title?: string | null;
+  quarter?: string | null;
+};
+
 export type NewsItem = {
   id: string;
   title?: string | null;

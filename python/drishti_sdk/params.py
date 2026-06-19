@@ -103,6 +103,22 @@ class EarningsQueryParams(PaginatedFeedQueryParams):
     quarter: str | None = None
 
 
+class UpcomingEarningsQueryParams(BaseModel):
+    """GET /v1/earnings/upcoming."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    symbols: list[str] | None = None
+    scrip_codes: list[str] | None = None
+    page: int | None = None
+    limit: int | None = None
+
+    def to_query_params(self) -> dict[str, Any] | None:
+        return _format_query_params(
+            self.model_dump(exclude_none=True, by_alias=True)
+        )
+
+
 class ConcallsQueryParams(PaginatedFeedQueryParams):
     """GET /v1/concalls."""
 
