@@ -8,6 +8,7 @@ import type {
   DrishtiWebSocketProduct,
   DataPayloadByChannel,
   SubscribeOptions,
+  SubscribedEvent,
   WebSocketEvent,
   WebSocketHandler,
 } from "./websocket-types.js";
@@ -18,6 +19,7 @@ export {
   type DataEvent,
   type DataPayloadByChannel,
   type ErrorEvent,
+  type HeartbeatEvent,
   type KnownDataEvent,
   type RawEvent,
   type SubscribeOptions,
@@ -38,6 +40,12 @@ export type DrishtiWebSocketSessionOptions = Readonly<{
   reconnectBackoffMultiplier?: number;
   reconnectJitterRatio?: number;
   reconnectWarnAfterAttempts?: number;
+  subscribeAckTimeoutMs?: number;
+  subscribeMaxAttempts?: number;
+  subscribeRetryInitialDelayMs?: number;
+  subscribeRetryMaxDelayMs?: number;
+  subscribeRetryBackoffMultiplier?: number;
+  enableLifecycleLogging?: boolean;
   onSubscribed?: WebSocketHandler;
   onData?: WebSocketHandler;
   onNews?: ChannelDataHandler<"news">;
@@ -83,6 +91,12 @@ export function parseWebSocketMessage(raw: string): WebSocketEvent {
     return { kind: "error", message: "Expected a JSON object" };
   }
   const record = payload as Record<string, unknown>;
+  if (record.type === "heartbeat") {
+    return {
+      kind: "heartbeat",
+      sentAt: String(record.sent_at ?? ""),
+    };
+  }
   if (record.status === "subscribed") {
     const symbols = Array.isArray(record.symbols)
       ? record.symbols.map((item) => String(item))
@@ -149,6 +163,17 @@ function subscribeMessage(options: SubscribeOptions): string {
   });
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+type PendingSubscribe = Readonly<{
+  product: string;
+  resolve: (event: SubscribedEvent) => void;
+  reject: (error: DrishtiWebSocketError) => void;
+  timeoutId: ReturnType<typeof setTimeout>;
+}>;
+
 export class DrishtiWebSocketSession {
   private readonly apiKey: string;
   private readonly baseUrl: string;
@@ -159,6 +184,12 @@ export class DrishtiWebSocketSession {
   private readonly reconnectBackoffMultiplier: number;
   private readonly reconnectJitterRatio: number;
   private readonly reconnectWarnAfterAttempts: number;
+  private readonly subscribeAckTimeoutMs: number;
+  private readonly subscribeMaxAttempts: number;
+  private readonly subscribeRetryInitialDelayMs: number;
+  private readonly subscribeRetryMaxDelayMs: number;
+  private readonly subscribeRetryBackoffMultiplier: number;
+  private readonly enableLifecycleLogging: boolean;
   private readonly onOpen?: () => void | Promise<void>;
   private readonly onClose?: (reason: string) => void | Promise<void>;
   private readonly onReconnectAttempt?: (attempt: number, delayMs: number, reason: string) => void | Promise<void>;
@@ -174,6 +205,9 @@ export class DrishtiWebSocketSession {
   }> = [];
   private manuallyClosed = false;
   private maintainingConnection = false;
+  private pendingSubscribe: PendingSubscribe | null = null;
+  private subscribeChain: Promise<void> = Promise.resolve();
+  private lastHeartbeatAt: number | null = null;
 
   constructor(options: DrishtiWebSocketSessionOptions) {
     if (!options.apiKey || options.apiKey.trim().length === 0) {
@@ -188,6 +222,15 @@ export class DrishtiWebSocketSession {
     this.reconnectBackoffMultiplier = Math.max(1, options.reconnectBackoffMultiplier ?? 2);
     this.reconnectJitterRatio = Math.min(1, Math.max(0, options.reconnectJitterRatio ?? 0.2));
     this.reconnectWarnAfterAttempts = Math.max(1, options.reconnectWarnAfterAttempts ?? 10);
+    this.subscribeAckTimeoutMs = Math.max(1_000, options.subscribeAckTimeoutMs ?? 10_000);
+    this.subscribeMaxAttempts = Math.max(1, options.subscribeMaxAttempts ?? 10);
+    this.subscribeRetryInitialDelayMs = Math.max(100, options.subscribeRetryInitialDelayMs ?? 1_000);
+    this.subscribeRetryMaxDelayMs = Math.max(
+      this.subscribeRetryInitialDelayMs,
+      options.subscribeRetryMaxDelayMs ?? 30_000,
+    );
+    this.subscribeRetryBackoffMultiplier = Math.max(1, options.subscribeRetryBackoffMultiplier ?? 2);
+    this.enableLifecycleLogging = options.enableLifecycleLogging !== false;
     this.onOpen = options.onOpen;
     this.onClose = options.onClose;
     this.onReconnectAttempt = options.onReconnectAttempt;
@@ -226,7 +269,11 @@ export class DrishtiWebSocketSession {
     return this.socket !== null && this.socket.readyState === this.webSocketImpl.OPEN;
   }
 
-  on(eventName: "data" | "subscribed" | "error" | "message" | "raw", handler: WebSocketHandler): void;
+  get lastHeartbeatReceivedAt(): number | null {
+    return this.lastHeartbeatAt;
+  }
+
+  on(eventName: "data" | "subscribed" | "error" | "heartbeat" | "message" | "raw", handler: WebSocketHandler): void;
   on<K extends DrishtiWebSocketProduct>(channel: K, handler: ChannelDataHandler<K>): void;
   on(eventName: string, handler: WebSocketHandler | ChannelDataHandler<DrishtiWebSocketProduct>): void {
     if (isDrishtiWebSocketProduct(eventName)) {
@@ -236,7 +283,7 @@ export class DrishtiWebSocketSession {
     this.addEventListener(eventName, handler as WebSocketHandler);
   }
 
-  off(eventName: "data" | "subscribed" | "error" | "message" | "raw", handler: WebSocketHandler): void;
+  off(eventName: "data" | "subscribed" | "error" | "heartbeat" | "message" | "raw", handler: WebSocketHandler): void;
   off<K extends DrishtiWebSocketProduct>(channel: K, handler: ChannelDataHandler<K>): void;
   off(eventName: string, handler: WebSocketHandler | ChannelDataHandler<DrishtiWebSocketProduct>): void {
     if (isDrishtiWebSocketProduct(eventName)) {
@@ -323,16 +370,29 @@ export class DrishtiWebSocketSession {
       if (attempt > 1) {
         await this.onReconnectAttempt?.(attempt - 1, delay, reason);
         await new Promise((resolve) => setTimeout(resolve, this.withJitter(delay)));
+      } else if (reason !== "initial" && reason !== "subscribe" && reason !== "events") {
+        this.logLifecycle(`reconnecting (${reason})`);
       }
       try {
         const socket = await this.openSocket();
         this.socket = socket;
+        this.logLifecycle(`connected; resubscribing ${this.subscriptions.size} product(s)`);
         await this.resubscribeAll();
         await this.onOpen?.();
         attempt = 0;
         delay = this.reconnectInitialDelayMs;
         break;
-      } catch {
+      } catch (error) {
+        if (this.socket !== null) {
+          try {
+            this.socket.close();
+          } catch {
+            /* ignore */
+          }
+          this.socket = null;
+        }
+        const message = error instanceof Error ? error.message : String(error);
+        this.logLifecycle(`connection setup failed: ${message}`);
         if (delay >= this.reconnectMaxDelayMs && attempt >= this.reconnectWarnAfterAttempts) {
           await this.emitReconnectWarning(attempt, reason);
           attempt = 0;
@@ -392,6 +452,7 @@ export class DrishtiWebSocketSession {
     });
     socket.addEventListener("close", () => {
       this.socket = null;
+      this.clearPendingSubscribe();
       void this.onClose?.("WebSocket closed");
       if (this.manuallyClosed) {
         this.rejectWaiters("WebSocket closed");
@@ -417,6 +478,7 @@ export class DrishtiWebSocketSession {
   async close(): Promise<void> {
     this.manuallyClosed = true;
     this.maintainingConnection = false;
+    this.clearPendingSubscribe();
     if (this.socket === null) {
       this.rejectWaiters("WebSocket closed");
       return;
@@ -437,7 +499,121 @@ export class DrishtiWebSocketSession {
     if (!this.connected || this.socket === null) {
       return;
     }
-    this.socket.send(subscribeMessage(normalized));
+    await this.enqueueSubscribeWork(() =>
+      this.sendSubscribeWithRetry(normalized, "subscribe"),
+    );
+  }
+
+  private enqueueSubscribeWork(work: () => Promise<void>): Promise<void> {
+    const next = this.subscribeChain.then(work);
+    this.subscribeChain = next.catch(() => undefined);
+    return next;
+  }
+
+  private logLifecycle(message: string): void {
+    if (!this.enableLifecycleLogging) {
+      return;
+    }
+    console.info(`[drishti-sdk] ${message}`);
+  }
+
+  private clearPendingSubscribe(): void {
+    if (this.pendingSubscribe === null) {
+      return;
+    }
+    clearTimeout(this.pendingSubscribe.timeoutId);
+    this.pendingSubscribe = null;
+  }
+
+  private async sendSubscribeWithRetry(
+    options: SubscribeOptions,
+    reason: "subscribe" | "reconnect",
+  ): Promise<void> {
+    let attempt = 0;
+    let delay = this.subscribeRetryInitialDelayMs;
+    while (attempt < this.subscribeMaxAttempts) {
+      if (!this.connected || this.socket === null) {
+        throw new DrishtiWebSocketError("WebSocket is not connected");
+      }
+      attempt += 1;
+      try {
+        const ack = await this.sendSubscribeAndWaitForAck(options);
+        this.logLifecycle(
+          `subscribed ${options.product} tier=${ack.tier} full_feed=${ack.fullFeed} (${reason}, attempt ${attempt})`,
+        );
+        return;
+      } catch (error) {
+        const wsError = error instanceof DrishtiWebSocketError
+          ? error
+          : new DrishtiWebSocketError(error instanceof Error ? error.message : String(error));
+        this.logLifecycle(
+          `subscribe failed product=${options.product} attempt=${attempt}/${this.subscribeMaxAttempts} (${reason}): ${wsError.message}${wsError.code ? ` [${wsError.code}]` : ""}`,
+        );
+        if (!this.connected || this.socket === null) {
+          throw wsError;
+        }
+        if (attempt >= this.subscribeMaxAttempts) {
+          throw wsError;
+        }
+        await sleep(this.withJitter(delay));
+        delay = Math.min(
+          Math.floor(delay * this.subscribeRetryBackoffMultiplier),
+          this.subscribeRetryMaxDelayMs,
+        );
+      }
+    }
+  }
+
+  private async sendSubscribeAndWaitForAck(options: SubscribeOptions): Promise<SubscribedEvent> {
+    if (!this.connected || this.socket === null) {
+      throw new DrishtiWebSocketError("WebSocket is not connected");
+    }
+    this.clearPendingSubscribe();
+    return await new Promise<SubscribedEvent>((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        if (this.pendingSubscribe?.product === options.product) {
+          this.clearPendingSubscribe();
+          reject(new DrishtiWebSocketError(`Subscribe acknowledgement timed out for ${options.product}`));
+        }
+      }, this.subscribeAckTimeoutMs);
+      this.pendingSubscribe = {
+        product: options.product,
+        timeoutId,
+        resolve: (event) => {
+          this.clearPendingSubscribe();
+          resolve(event);
+        },
+        reject: (error) => {
+          this.clearPendingSubscribe();
+          reject(error);
+        },
+      };
+      this.socket!.send(subscribeMessage(options));
+    });
+  }
+
+  private async resubscribeAll(): Promise<void> {
+    if (!this.connected || this.socket === null || this.subscriptions.size === 0) {
+      return;
+    }
+    for (const options of this.subscriptions.values()) {
+      await this.sendSubscribeWithRetry(options, "reconnect");
+    }
+  }
+
+  private resolvePendingSubscribe(event: WebSocketEvent): boolean {
+    if (this.pendingSubscribe === null) {
+      return false;
+    }
+    if (event.kind === "subscribed" && event.product === this.pendingSubscribe.product) {
+      this.pendingSubscribe.resolve(event);
+      return true;
+    }
+    if (event.kind === "error") {
+      this.pendingSubscribe.reject(new DrishtiWebSocketError(event.message, event.code));
+      return true;
+    }
+    return false;
   }
 
   private async dispatch(event: WebSocketEvent): Promise<void> {
@@ -460,7 +636,22 @@ export class DrishtiWebSocketSession {
 
   private async handleIncoming(raw: string): Promise<void> {
     const event = parseWebSocketMessage(raw);
-    await this.dispatch(event);
+    if (event.kind === "heartbeat") {
+      this.lastHeartbeatAt = Date.now();
+      await this.dispatch(event);
+      return;
+    }
+    const resolvedPending = this.resolvePendingSubscribe(event);
+    if (!resolvedPending) {
+      await this.dispatch(event);
+    } else if (event.kind === "subscribed") {
+      await this.dispatch(event);
+    } else if (event.kind === "error") {
+      await this.dispatch(event);
+    }
+    if (resolvedPending) {
+      return;
+    }
     const waiter = this.waiters.shift();
     if (waiter) {
       waiter.resolve(event);
@@ -471,17 +662,9 @@ export class DrishtiWebSocketSession {
 
   private rejectWaiters(message: string): void {
     const error = new DrishtiWebSocketError(message);
+    this.clearPendingSubscribe();
     while (this.waiters.length > 0) {
       this.waiters.shift()?.reject(error);
-    }
-  }
-
-  private async resubscribeAll(): Promise<void> {
-    if (!this.connected || this.socket === null) {
-      return;
-    }
-    for (const options of this.subscriptions.values()) {
-      this.socket.send(subscribeMessage(options));
     }
   }
 

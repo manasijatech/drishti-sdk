@@ -26,6 +26,14 @@ def test_parse_data_event() -> None:
     assert event.data["symbol"] == "INFY"
 
 
+def test_parse_heartbeat_event() -> None:
+    event = parse_websocket_message(
+        '{"type":"heartbeat","sent_at":"2026-06-24T11:22:03.342193+00:00"}'
+    )
+    assert event.kind == "heartbeat"
+    assert event.sent_at == "2026-06-24T11:22:03.342193+00:00"
+
+
 def test_parse_subscribe_error() -> None:
     event = parse_websocket_message(
         '{"error":"WebSocket addon \'news\' is not enabled for this key","code":"forbidden"}'

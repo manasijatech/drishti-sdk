@@ -1,9 +1,12 @@
 export type ApiErrorBody = unknown;
 
 export class DrishtiWebSocketError extends Error {
-  constructor(message: string) {
+  readonly code?: string;
+
+  constructor(message: string, code?: string) {
     super(message);
     this.name = "DrishtiWebSocketError";
+    this.code = code;
   }
 }
 

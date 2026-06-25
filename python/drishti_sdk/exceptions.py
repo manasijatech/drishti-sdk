@@ -14,3 +14,7 @@ class DrishtiApiError(Exception):
 
 class DrishtiWebSocketError(Exception):
     """Raised when the WebSocket connection fails or closes unexpectedly."""
+
+    def __init__(self, message: str, code: str | None = None) -> None:
+        self.code = code
+        super().__init__(message)

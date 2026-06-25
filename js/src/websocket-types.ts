@@ -69,7 +69,12 @@ export type RawEvent = Readonly<{
   payload: Record<string, unknown>;
 }>;
 
-export type WebSocketEvent = SubscribedEvent | DataEvent | ErrorEvent | RawEvent;
+export type HeartbeatEvent = Readonly<{
+  kind: "heartbeat";
+  sentAt: string;
+}>;
+
+export type WebSocketEvent = SubscribedEvent | DataEvent | ErrorEvent | HeartbeatEvent | RawEvent;
 
 export type WebSocketHandler = (event: WebSocketEvent) => void | Promise<void>;
 

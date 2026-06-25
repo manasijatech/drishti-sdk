@@ -29,6 +29,7 @@ export type {
   DataEvent,
   DataPayloadByChannel,
   ErrorEvent,
+  HeartbeatEvent,
   KnownDataEvent,
   RawEvent,
   SubscribeOptions,
