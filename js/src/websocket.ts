@@ -40,6 +40,8 @@ export type DrishtiWebSocketSessionOptions = Readonly<{
   reconnectBackoffMultiplier?: number;
   reconnectJitterRatio?: number;
   reconnectWarnAfterAttempts?: number;
+  heartbeatTimeoutMs?: number;
+  heartbeatCheckIntervalMs?: number;
   subscribeAckTimeoutMs?: number;
   subscribeMaxAttempts?: number;
   subscribeRetryInitialDelayMs?: number;
@@ -184,6 +186,8 @@ export class DrishtiWebSocketSession {
   private readonly reconnectBackoffMultiplier: number;
   private readonly reconnectJitterRatio: number;
   private readonly reconnectWarnAfterAttempts: number;
+  private readonly heartbeatTimeoutMs: number;
+  private readonly heartbeatCheckIntervalMs: number;
   private readonly subscribeAckTimeoutMs: number;
   private readonly subscribeMaxAttempts: number;
   private readonly subscribeRetryInitialDelayMs: number;
@@ -208,6 +212,8 @@ export class DrishtiWebSocketSession {
   private pendingSubscribe: PendingSubscribe | null = null;
   private subscribeChain: Promise<void> = Promise.resolve();
   private lastHeartbeatAt: number | null = null;
+  private lastMessageAt: number | null = null;
+  private heartbeatWatchdog: ReturnType<typeof setInterval> | null = null;
 
   constructor(options: DrishtiWebSocketSessionOptions) {
     if (!options.apiKey || options.apiKey.trim().length === 0) {
@@ -222,6 +228,8 @@ export class DrishtiWebSocketSession {
     this.reconnectBackoffMultiplier = Math.max(1, options.reconnectBackoffMultiplier ?? 2);
     this.reconnectJitterRatio = Math.min(1, Math.max(0, options.reconnectJitterRatio ?? 0.2));
     this.reconnectWarnAfterAttempts = Math.max(1, options.reconnectWarnAfterAttempts ?? 10);
+    this.heartbeatTimeoutMs = Math.max(0, options.heartbeatTimeoutMs ?? 90_000);
+    this.heartbeatCheckIntervalMs = Math.max(1_000, options.heartbeatCheckIntervalMs ?? 15_000);
     this.subscribeAckTimeoutMs = Math.max(1_000, options.subscribeAckTimeoutMs ?? 10_000);
     this.subscribeMaxAttempts = Math.max(1, options.subscribeMaxAttempts ?? 10);
     this.subscribeRetryInitialDelayMs = Math.max(100, options.subscribeRetryInitialDelayMs ?? 1_000);
@@ -262,6 +270,7 @@ export class DrishtiWebSocketSession {
     if (options.onMessage) {
       this.on("message", options.onMessage);
     }
+    this.startHeartbeatWatchdog();
     this.startConnectionMaintenance("initial");
   }
 
@@ -271,6 +280,10 @@ export class DrishtiWebSocketSession {
 
   get lastHeartbeatReceivedAt(): number | null {
     return this.lastHeartbeatAt;
+  }
+
+  get lastMessageReceivedAt(): number | null {
+    return this.lastMessageAt;
   }
 
   on(eventName: "data" | "subscribed" | "error" | "heartbeat" | "message" | "raw", handler: WebSocketHandler): void;
@@ -376,6 +389,7 @@ export class DrishtiWebSocketSession {
       try {
         const socket = await this.openSocket();
         this.socket = socket;
+        this.lastMessageAt = Date.now();
         this.logLifecycle(`connected; resubscribing ${this.subscriptions.size} product(s)`);
         await this.resubscribeAll();
         await this.onOpen?.();
@@ -447,12 +461,23 @@ export class DrishtiWebSocketSession {
 
   private attachSocketHandlers(socket: WebSocket): void {
     socket.addEventListener("message", (messageEvent) => {
+      this.lastMessageAt = Date.now();
       const raw = typeof messageEvent.data === "string" ? messageEvent.data : String(messageEvent.data);
       void this.handleIncoming(raw);
     });
+    socket.addEventListener("error", () => {
+      if (this.socket !== socket || this.manuallyClosed) {
+        return;
+      }
+      void this.forceReconnect("WebSocket error");
+    });
     socket.addEventListener("close", () => {
+      if (this.socket !== socket) {
+        return;
+      }
       this.socket = null;
       this.clearPendingSubscribe();
+      this.lastMessageAt = null;
       void this.onClose?.("WebSocket closed");
       if (this.manuallyClosed) {
         this.rejectWaiters("WebSocket closed");
@@ -478,6 +503,7 @@ export class DrishtiWebSocketSession {
   async close(): Promise<void> {
     this.manuallyClosed = true;
     this.maintainingConnection = false;
+    this.stopHeartbeatWatchdog();
     this.clearPendingSubscribe();
     if (this.socket === null) {
       this.rejectWaiters("WebSocket closed");
@@ -695,6 +721,53 @@ export class DrishtiWebSocketSession {
     while (!this.manuallyClosed) {
       yield await this.nextEvent();
     }
+  }
+
+  private startHeartbeatWatchdog(): void {
+    if (this.heartbeatTimeoutMs <= 0 || this.heartbeatWatchdog !== null) {
+      return;
+    }
+    this.heartbeatWatchdog = setInterval(() => {
+      if (this.manuallyClosed || !this.connected || this.socket === null || this.lastMessageAt === null) {
+        return;
+      }
+      const silentForMs = Date.now() - this.lastMessageAt;
+      if (silentForMs < this.heartbeatTimeoutMs) {
+        return;
+      }
+      void this.forceReconnect(`heartbeat timeout after ${silentForMs}ms`);
+    }, this.heartbeatCheckIntervalMs);
+  }
+
+  private stopHeartbeatWatchdog(): void {
+    if (this.heartbeatWatchdog === null) {
+      return;
+    }
+    clearInterval(this.heartbeatWatchdog);
+    this.heartbeatWatchdog = null;
+  }
+
+  private async forceReconnect(reason: string): Promise<void> {
+    if (this.manuallyClosed || this.socket === null) {
+      return;
+    }
+    const staleSocket = this.socket;
+    this.socket = null;
+    this.lastMessageAt = null;
+    this.clearPendingSubscribe();
+    this.logLifecycle(`forcing reconnect (${reason})`);
+    await this.onClose?.(reason);
+    try {
+      const terminable = staleSocket as WebSocket & { terminate?: () => void };
+      if (typeof terminable.terminate === "function") {
+        terminable.terminate();
+      } else {
+        staleSocket.close();
+      }
+    } catch {
+      /* ignore */
+    }
+    this.startConnectionMaintenance(reason);
   }
 }
 
