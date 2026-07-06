@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+import json
+from typing import Any, Literal, cast
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from drishti_sdk.types import AlertType
+from drishti_sdk.types import AlertType, BatchResultLine, SummaryMode
 
 NewsSentiment = Literal["positive", "negative", "neutral"]
 
@@ -243,20 +244,72 @@ class DailySummaryPortfolioItem(BaseModel):
 
     symbol: str
     exposure: float = 0.0
+    label: str | None = None
+
+
+class DailySummaryItem(BaseModel):
+    """Canonical symbol input with optional exposure and label."""
+
+    symbol: str
+    exposure: float | None = None
+    label: str | None = None
+
 
 
 class DailySummaryRequest(BaseModel):
     """JSON body for POST /v1/daily-summary."""
 
-    portfolio: list[DailySummaryPortfolioItem]
+    mode: SummaryMode | None = None
+    portfolio: list[DailySummaryPortfolioItem] | None = None
+    symbols: list[str] | None = None
+    items: list[DailySummaryItem] | None = None
 
     def to_request_body(self) -> dict[str, Any]:
-        return {
-            "portfolio": [
-                {"symbol": item.symbol, "exposure": item.exposure}
+        body: dict[str, Any] = {}
+        if self.mode is not None:
+            body["mode"] = self.mode
+        if self.portfolio is not None:
+            body["portfolio"] = [
+                item.model_dump(exclude_none=True)
                 for item in self.portfolio
             ]
-        }
+        if self.symbols is not None:
+            body["symbols"] = self.symbols
+        if self.items is not None:
+            body["items"] = [
+                item.model_dump(exclude_none=True)
+                for item in self.items
+            ]
+        return body
+
+
+class BatchSummaryInputLine(DailySummaryRequest):
+    """One JSONL line for POST /v1/batch/jobs."""
+
+    custom_id: str
+
+    def to_jsonl_line(self) -> str:
+        return self.model_dump_json(exclude_none=True)
+
+
+def build_batch_input_jsonl(lines: list[BatchSummaryInputLine]) -> bytes:
+    """Serialize batch summary input lines to JSONL bytes."""
+    if not lines:
+        raise ValueError("At least one batch input line is required")
+    payload = "\n".join(line.to_jsonl_line() for line in lines)
+    return f"{payload}\n".encode("utf-8")
+
+
+def parse_batch_result_jsonl(content: str) -> list[BatchResultLine]:
+    """Parse JSONL text from GET /v1/batch/jobs/{job_id}/results."""
+    lines: list[BatchResultLine] = []
+    for raw_line in content.splitlines():
+        if not raw_line.strip():
+            continue
+        parsed = json.loads(raw_line)
+        if isinstance(parsed, dict):
+            lines.append(cast(BatchResultLine, parsed))
+    return lines
 
 
 def coerce_query_params(

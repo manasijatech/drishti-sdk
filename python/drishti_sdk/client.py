@@ -20,6 +20,7 @@ from drishti_sdk.params import (
     ConcallsIndexQueryParams,
     ConcallsQueryParams,
     ContentRetentionHeader,
+    DailySummaryPortfolioItem,
     DailySummaryRequest,
     DocumentIdsQueryParams,
     EarningsIndexQueryParams,
@@ -32,6 +33,7 @@ from drishti_sdk.params import (
     UpcomingConcallsQueryParams,
     UpcomingEarningsQueryParams,
     coerce_query_params,
+    parse_batch_result_jsonl,
 )
 from drishti_sdk.types import (
     AccountDetailResponse,
@@ -39,10 +41,12 @@ from drishti_sdk.types import (
     AccountUsageEnvelope,
     Alert,
     AnnouncementDetail,
+    BATCH_JOB_TERMINAL_STATUSES,
     BatchAttachmentLookupResponse,
     BatchJobCancelResponse,
     BatchJobListResponse,
     BatchJobResponse,
+    BatchResultLine,
     Concall,
     ConcallArtifactUrlsResponse,
     ConcallTranscriptBatchResponse,
@@ -293,17 +297,37 @@ class DrishtiClient:
     def post_daily_summary(
         self,
         *,
-        portfolio: list[Mapping[str, Any]],
+        request: DailySummaryRequest | Mapping[str, Any] | None = None,
+        portfolio: list[Mapping[str, Any]] | None = None,
         content_retention: ContentRetentionHeader | None = None,
     ) -> SummaryResponse:
-        request_body = DailySummaryRequest(portfolio=portfolio).to_request_body()
+        resolved_request = self._resolve_daily_summary_request(request=request, portfolio=portfolio)
         headers = self._content_retention_headers(content_retention)
-        return self.post(
-            "/v1/daily-summary",
-            body=request_body,
-            path_params=None,
+        return self.request(
+            "POST",
+            "/v1/daily-summary/",
+            body=resolved_request.to_request_body(),
             headers=headers,
         )
+
+    @staticmethod
+    def _resolve_daily_summary_request(
+        *,
+        request: DailySummaryRequest | Mapping[str, Any] | None,
+        portfolio: list[Mapping[str, Any]] | None,
+    ) -> DailySummaryRequest:
+        if request is not None:
+            if isinstance(request, DailySummaryRequest):
+                return request
+            return DailySummaryRequest.model_validate(dict(request))
+        if portfolio is not None:
+            return DailySummaryRequest(
+                portfolio=[
+                    DailySummaryPortfolioItem.model_validate(dict(item))
+                    for item in portfolio
+                ]
+            )
+        raise ValueError("Either request or portfolio must be provided")
 
     def get_earnings_index(
         self,
@@ -603,13 +627,19 @@ class DrishtiClient:
     def get_batch_jobs_job_id_results(self, *, job_id: str | int) -> str:
         return self.get("/v1/batch/jobs/{job_id}/results", path_params={"job_id": job_id})
 
+    def get_batch_jobs_job_id_results_parsed(self, *, job_id: str | int) -> list[BatchResultLine]:
+        content = self.get_batch_jobs_job_id_results(job_id=job_id)
+        if not isinstance(content, str):
+            raise TypeError("Expected batch job results to be JSONL text")
+        return parse_batch_result_jsonl(content)
+
     def wait_for_batch_job_completion(
         self,
         *,
         job_id: str | int,
         poll_interval: float = 2.0,
         timeout: float = 300.0,
-        terminal_statuses: tuple[str, ...] = ("succeeded", "partial", "failed", "cancelled", "completed"),
+        terminal_statuses: tuple[str, ...] = BATCH_JOB_TERMINAL_STATUSES,
     ) -> BatchJobResponse:
         started = time.monotonic()
         terminal = {status.lower() for status in terminal_statuses}
@@ -632,7 +662,7 @@ class DrishtiClient:
         content_retention: ContentRetentionHeader | None = None,
         poll_interval: float = 2.0,
         timeout: float = 300.0,
-        terminal_statuses: tuple[str, ...] = ("succeeded", "partial", "failed", "cancelled", "completed"),
+        terminal_statuses: tuple[str, ...] = BATCH_JOB_TERMINAL_STATUSES,
     ) -> BatchJobResponse:
         job = self.post_batch_jobs_file(
             file_name=file_name,

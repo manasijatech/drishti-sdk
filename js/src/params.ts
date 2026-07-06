@@ -1,6 +1,6 @@
 /** Query parameter models aligned with drishti-api /v1 route definitions. */
 
-import type { AlertType, SymbolQuarterKey } from "./types.js";
+import type { AlertType, BatchResultLine, SummaryMode, SymbolQuarterKey } from "./types.js";
 
 export type NewsSentiment = "positive" | "negative" | "neutral";
 
@@ -153,12 +153,45 @@ export type BatchJobsListQueryParams = {
 
 export type DailySummaryPortfolioItem = {
   symbol: string;
-  exposure: number;
+  exposure?: number;
+  label?: string;
 };
 
-export type DailySummaryRequestBody = {
-  portfolio: DailySummaryPortfolioItem[];
+export type DailySummaryItem = {
+  symbol: string;
+  exposure?: number;
+  label?: string;
 };
+
+
+export type DailySummaryRequestBody = {
+  mode?: SummaryMode;
+  portfolio?: DailySummaryPortfolioItem[];
+  symbols?: string[];
+  items?: DailySummaryItem[];
+};
+
+export type BatchSummaryInputLine = DailySummaryRequestBody & {
+  custom_id: string;
+};
+
+export function buildBatchInputJsonl(lines: BatchSummaryInputLine[]): string {
+  if (lines.length === 0) {
+    throw new Error("At least one batch input line is required");
+  }
+  return `${lines.map((line) => JSON.stringify(line)).join("\n")}\n`;
+}
+
+export function parseBatchResultJsonl(content: string): BatchResultLine[] {
+  const results: BatchResultLine[] = [];
+  for (const rawLine of content.split("\n")) {
+    if (!rawLine.trim()) {
+      continue;
+    }
+    results.push(JSON.parse(rawLine) as BatchResultLine);
+  }
+  return results;
+}
 
 export type QueryPrimitive = string | number | boolean;
 

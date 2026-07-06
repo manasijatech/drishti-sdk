@@ -27,9 +27,33 @@ KnownAlertType: TypeAlias = Literal[
 
 AlertType: TypeAlias = KnownAlertType | str
 
+BATCH_JOB_STATUSES: tuple[str, ...] = (
+    "pending",
+    "running",
+    "succeeded",
+    "partial",
+    "failed",
+    "cancelled",
+)
+BATCH_JOB_TERMINAL_STATUSES: tuple[str, ...] = (
+    "succeeded",
+    "partial",
+    "failed",
+    "cancelled",
+)
+BatchJobStatus: TypeAlias = Literal[
+    "pending",
+    "running",
+    "succeeded",
+    "partial",
+    "failed",
+    "cancelled",
+]
+BatchJobTerminalStatus: TypeAlias = Literal["succeeded", "partial", "failed", "cancelled"]
+
 
 AttachmentLookupStatus: TypeAlias = Literal[
-    "ready", "not_found", "invalid_id", "no_attachment", "no_transcript"
+    "ready", "not_found", "invalid_id", "no_attachment"
 ]
 
 
@@ -92,6 +116,7 @@ class AnnouncementDetail(AnnouncementListItem, total=False):
     related_categories: list[str]
     descriptor: str | None
     important: bool
+    extracted_information: JsonValue
 
 
 class AnnouncementWebSocketDetail(AnnouncementDetail, total=False):
@@ -199,7 +224,7 @@ class ConcallDetail(ConcallListItem, total=False):
     expanded_analysis: JsonValue
 
 
-Concall: TypeAlias = ConcallDetail
+Concall: TypeAlias = ConcallListItem | ConcallDetail
 
 
 class UpcomingConcallListItem(TypedDict, total=False):
@@ -213,7 +238,7 @@ class UpcomingConcallDetail(UpcomingConcallListItem, total=False):
     intimation_attachment: str | None
 
 
-UpcomingConcall: TypeAlias = UpcomingConcallDetail
+UpcomingConcall: TypeAlias = UpcomingConcallListItem | UpcomingConcallDetail
 
 
 class SymbolQuarterKey(TypedDict):
@@ -250,14 +275,26 @@ class PresignedUrlResponse(TypedDict):
     expires_in: int | None
 
 
-class SummaryDetails(TypedDict):
+SummaryStatus: TypeAlias = Literal[
+    "success", "success_no_news", "success_no_signal", "error"
+]
+
+SummaryInputType: TypeAlias = Literal["portfolio", "watchlist"]
+
+SummaryMode: TypeAlias = Literal["exposure", "intraday_movements", "news_context"]
+
+
+class SummaryDetails(TypedDict, total=False):
     portfolio_size: int
+    submitted_symbol_count: int
     symbols_processed: int
     request_id: str
+    mode: SummaryMode
+    input_type: SummaryInputType
 
 
 class SummaryResponse(TypedDict, total=False):
-    status: str
+    status: SummaryStatus
     summary: str | None
     details: SummaryDetails | None
     error: str | None
@@ -284,6 +321,7 @@ class AccountResponse(TypedDict, total=False):
     products: list[ProductEntitlement]
     websocket_addons: list[WebsocketAddonEntitlement]
     live_entitlement: dict[str, Any]
+    retention_policy: dict[str, Any]
     metadata: dict[str, Any]
     created_at: str | None
     updated_at: str | None
@@ -325,6 +363,7 @@ class LedgerListResponse(TypedDict):
 
 class AccountLimitsResponse(TypedDict):
     rest: dict[str, dict[str, int]]
+    account: dict[str, dict[str, int]]
     websocket: dict[str, Any]
 
 
@@ -334,11 +373,20 @@ class RequestCounts(TypedDict):
     failed: int
 
 
+class BatchBillingSummary(TypedDict, total=False):
+    submit_credits_charged: int
+    item_credits_charged: int
+    total_credits_charged: int
+    billable_items: int
+    free_items: int
+    failed_items: int
+
+
 class BatchJobResponse(TypedDict, total=False):
     id: str
     object: str
     display_name: str | None
-    status: str
+    status: BatchJobStatus
     created_at: int
     in_progress_at: int | None
     completed_at: int | None
@@ -346,13 +394,14 @@ class BatchJobResponse(TypedDict, total=False):
     cancelled_at: int | None
     request_counts: RequestCounts
     metadata: dict[str, Any] | None
+    billing: BatchBillingSummary | None
 
 
 class BatchJobListItem(TypedDict, total=False):
     id: str
     object: str
     display_name: str | None
-    status: str
+    status: BatchJobStatus
     created_at: int
 
 
@@ -363,7 +412,7 @@ class BatchJobListResponse(TypedDict):
 
 class BatchJobCancelResponse(TypedDict):
     id: str
-    status: str
+    status: Literal["cancelled"]
 
 
 class PaginatedAnnouncementResponse(TypedDict):
@@ -399,8 +448,29 @@ class PaginatedConcallResponse(TypedDict):
 
 
 class PaginatedUpcomingConcallResponse(TypedDict):
-    data: list[UpcomingConcall]
+    data: list[UpcomingConcallListItem | UpcomingConcallDetail]
     has_next: bool
+
+
+BatchResultLineStatus: TypeAlias = SummaryStatus
+
+
+class BatchResultResponseBody(TypedDict, total=False):
+    summary: str | None
+    details: SummaryDetails | None
+
+
+class BatchResultResponse(TypedDict, total=False):
+    status_code: int
+    body: BatchResultResponseBody | None
+
+
+class BatchResultLine(TypedDict, total=False):
+    id: str
+    custom_id: str
+    status: BatchResultLineStatus
+    response: BatchResultResponse | None
+    error: str | None
 
 
 class PaginatedAlertResponse(TypedDict):

@@ -23,6 +23,8 @@ import {
   type BatchJobIdParams,
   type DailySummaryParams,
 } from "./params.js";
+import { parseBatchResultJsonl } from "./params.js";
+import { BATCH_JOB_TERMINAL_STATUSES } from "./types.js";
 import type {
   AccountDetailResponse,
   AccountLimitsResponse,
@@ -36,10 +38,12 @@ import type {
   BatchJobCancelResponse,
   BatchJobListResponse,
   BatchJobResponse,
+  BatchResultLine,
   Concall,
   ConcallArtifactUrlsResponse,
   ConcallTranscriptBatchResponse,
-  UpcomingConcall,
+  UpcomingConcallDetail,
+  UpcomingConcallListItem,
   UpcomingEarningsListItem,
   JsonValue,
   LedgerListResponse,
@@ -323,7 +327,7 @@ export class DrishtiClient {
   }
 
   postDailySummary(params: DailySummaryParams): Promise<SummaryResponse> {
-    return this.post<SummaryResponse>("/v1/daily-summary", {
+    return this.post<SummaryResponse>("/v1/daily-summary/", {
       body: params.body,
       headers: contentRetentionHeaders(params.contentRetention),
     });
@@ -384,8 +388,8 @@ export class DrishtiClient {
 
   getUpcomingConcalls(
     params: UpcomingConcallsQueryParams = {},
-  ): Promise<PaginatedResponse<UpcomingConcall>> {
-    return this.get<PaginatedResponse<UpcomingConcall>>("/v1/concalls/upcoming", {
+  ): Promise<PaginatedResponse<UpcomingConcallListItem | UpcomingConcallDetail>> {
+    return this.get<PaginatedResponse<UpcomingConcallListItem | UpcomingConcallDetail>>("/v1/concalls/upcoming", {
       query: serializeQueryParams(params, ["symbols", "scrip_codes"]),
     });
   }
@@ -473,13 +477,19 @@ export class DrishtiClient {
     return this.get<string>("/v1/batch/jobs/{job_id}/results", { pathParams: { job_id: params.job_id } });
   }
 
+  async getBatchJobsJobIdResultsParsed(params: BatchJobIdParams): Promise<BatchResultLine[]> {
+    const content = await this.getBatchJobsJobIdResults(params);
+    return parseBatchResultJsonl(content);
+  }
+
+
   async waitForBatchJobCompletion(
     params: BatchJobIdParams & BatchWaitOptions
   ): Promise<BatchJobResponse> {
     const pollIntervalMs = params.pollIntervalMs ?? 2000;
     const timeoutMs = params.timeoutMs ?? 5 * 60 * 1000;
     const terminalStatuses = new Set(
-      (params.terminalStatuses ?? ["succeeded", "partial", "failed", "cancelled", "completed"]).map((s) => s.toLowerCase())
+      (params.terminalStatuses ?? [...BATCH_JOB_TERMINAL_STATUSES]).map((s) => s.toLowerCase())
     );
     const startedAt = Date.now();
     while (true) {

@@ -7,7 +7,7 @@ export type PaginatedResponse<TItem> = {
   has_next: boolean;
 };
 
-export type AttachmentLookupStatus = "ready" | "not_found" | "invalid_id" | "no_attachment" | "no_transcript";
+export type AttachmentLookupStatus = "ready" | "not_found" | "invalid_id" | "no_attachment";
 
 export type AttachmentLookupItem = {
   id: string;
@@ -68,6 +68,7 @@ export type AnnouncementDetail = AnnouncementListItem & {
   related_categories?: string[];
   descriptor?: string | null;
   important?: boolean;
+  extracted_information?: JsonValue;
 };
 
 export type AnnouncementWebSocketDetail = AnnouncementDetail & {
@@ -208,9 +209,11 @@ export type UpcomingConcallListItem = {
   meeting_date?: string | null;
 };
 
-export type UpcomingConcall = UpcomingConcallListItem & {
+export type UpcomingConcallDetail = UpcomingConcallListItem & {
   intimation_attachment?: string | null;
 };
+
+export type UpcomingConcall = UpcomingConcallListItem | UpcomingConcallDetail;
 
 export type ConcallTranscriptLookupStatus =
   | "ready"
@@ -248,14 +251,23 @@ export type PresignedUrlResponse = {
   expires_in?: number | null;
 };
 
+export type SummaryStatus = "success" | "success_no_news" | "success_no_signal" | "error";
+
+export type SummaryInputType = "portfolio" | "watchlist";
+
+export type SummaryMode = "exposure" | "intraday_movements" | "news_context";
+
 export type SummaryDetails = {
   portfolio_size: number;
+  submitted_symbol_count?: number;
   symbols_processed: number;
   request_id: string;
+  mode?: SummaryMode;
+  input_type?: SummaryInputType;
 };
 
 export type SummaryResponse = {
-  status: string;
+  status: SummaryStatus;
   summary?: string | null;
   details?: SummaryDetails | null;
   error?: string | null;
@@ -272,6 +284,7 @@ export type AccountResponse = {
   products: ProductEntitlement[];
   websocket_addons: WebsocketAddonEntitlement[];
   live_entitlement: Record<string, JsonValue>;
+  retention_policy?: Record<string, JsonValue>;
   metadata: Record<string, JsonValue>;
   created_at?: string | null;
   updated_at?: string | null;
@@ -304,15 +317,47 @@ export type AccountUsageEnvelope = { data: AccountUsageResponse };
 export type LedgerListResponse = { data: LedgerEntry[] };
 export type AccountLimitsResponse = {
   rest: Record<string, Record<string, number>>;
+  account: Record<string, Record<string, number>>;
   websocket: Record<string, JsonValue>;
 };
 
 export type RequestCounts = { total: number; completed: number; failed: number };
+
+/** Batch job statuses returned by GET /v1/batch/jobs/{job_id}. */
+export const BATCH_JOB_STATUSES = [
+  "pending",
+  "running",
+  "succeeded",
+  "partial",
+  "failed",
+  "cancelled",
+] as const;
+
+/** Terminal batch job statuses — polling should stop when status is one of these. */
+export const BATCH_JOB_TERMINAL_STATUSES = [
+  "succeeded",
+  "partial",
+  "failed",
+  "cancelled",
+] as const;
+
+export type BatchJobStatus = (typeof BATCH_JOB_STATUSES)[number];
+export type BatchJobTerminalStatus = (typeof BATCH_JOB_TERMINAL_STATUSES)[number];
+
+export type BatchBillingSummary = {
+  submit_credits_charged?: number;
+  item_credits_charged?: number;
+  total_credits_charged?: number;
+  billable_items?: number;
+  free_items?: number;
+  failed_items?: number;
+};
+
 export type BatchJobResponse = {
   id: string;
   object: string;
   display_name?: string | null;
-  status: string;
+  status: BatchJobStatus;
   created_at: number;
   in_progress_at?: number | null;
   completed_at?: number | null;
@@ -320,15 +365,36 @@ export type BatchJobResponse = {
   cancelled_at?: number | null;
   request_counts: RequestCounts;
   metadata?: Record<string, JsonValue> | null;
+  billing?: BatchBillingSummary | null;
 };
 
 export type BatchJobListItem = {
   id: string;
   object: string;
   display_name?: string | null;
-  status: string;
+  status: BatchJobStatus;
   created_at: number;
 };
 
 export type BatchJobListResponse = { object: string; data: BatchJobListItem[] };
-export type BatchJobCancelResponse = { id: string; status: string };
+export type BatchJobCancelResponse = { id: string; status: "cancelled" };
+
+export type BatchResultLineStatus = SummaryStatus;
+
+export type BatchResultResponseBody = {
+  summary?: string | null;
+  details?: SummaryDetails | null;
+};
+
+export type BatchResultResponse = {
+  status_code: number;
+  body?: BatchResultResponseBody | null;
+};
+
+export type BatchResultLine = {
+  id: string;
+  custom_id: string;
+  status: BatchResultLineStatus;
+  response?: BatchResultResponse | null;
+  error?: string | null;
+};

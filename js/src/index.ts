@@ -9,10 +9,10 @@ export type {
   RetryOptions,
   RequestOptions,
 } from "./client.js";
-export { ALERT_TYPES } from "./types.js";
+export { ALERT_TYPES, BATCH_JOB_STATUSES, BATCH_JOB_TERMINAL_STATUSES } from "./types.js";
 export type * from "./types.js";
 export type * from "./params.js";
-export { serializeAnnouncementsQueryParams, serializeQueryParams } from "./params.js";
+export { buildBatchInputJsonl, parseBatchResultJsonl, serializeAnnouncementsQueryParams, serializeQueryParams } from "./params.js";
 export { DrishtiApiError, DrishtiWebSocketError } from "./errors.js";
 export type { ApiErrorBody } from "./errors.js";
 export {
