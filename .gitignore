@@ -12,3 +12,5 @@ python/dist/
 python/*.egg-info/
 js/node_modules/
 js/dist/
+*.log
+*.sqlite*
