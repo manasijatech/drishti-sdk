@@ -117,6 +117,12 @@ const earnings = await client.getEarningsDetail({
   detailed: true,
 });
 
+// Earnings list by record id
+const earningsRows = await client.getEarnings({
+  ids: ["67c2f8a1b2c3d4e5f6a7b8d0"],
+  limit: 5,
+});
+
 // Concall transcript URLs
 const transcript = await client.getConcallsTranscript({
   symbol: "TCS",

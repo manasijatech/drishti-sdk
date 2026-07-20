@@ -63,6 +63,7 @@ export type ConcallsIndexQueryParams = IndexQueryParams & {
 
 /** GET /v1/earnings — same filters as announcements except categories. */
 export type EarningsQueryParams = PaginatedFeedQueryParams & {
+  ids?: string[];
   quarter?: FiscalQuarterParam;
 };
 

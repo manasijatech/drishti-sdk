@@ -354,6 +354,7 @@ class DrishtiClient:
     def get_earnings(
         self,
         *,
+        ids: list[str] | None = None,
         symbols: list[str] | None = None,
         scrip_codes: list[str] | None = None,
         from_: str | None = None,
@@ -364,6 +365,7 @@ class DrishtiClient:
         limit: int | None = None,
     ) -> PaginatedEarningsResponse:
         params = EarningsQueryParams(
+            ids=ids,
             symbols=symbols,
             scrip_codes=scrip_codes,
             from_=from_,

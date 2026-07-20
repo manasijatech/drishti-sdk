@@ -79,6 +79,11 @@ with DrishtiClient(api_key="YOUR_API_KEY") as client:
         detailed=True,
     )
 
+    earnings_rows = client.get_earnings(
+        ids=["67c2f8a1b2c3d4e5f6a7b8d0"],
+        limit=5,
+    )
+
     transcript = client.get_concalls_transcript(
         symbol="TCS",
         quarter="q4_26",

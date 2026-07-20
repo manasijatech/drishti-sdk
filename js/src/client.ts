@@ -343,7 +343,7 @@ export class DrishtiClient {
     params: EarningsQueryParams = {}
   ): Promise<PaginatedResponse<EarningsListItem | EarningsDetail>> {
     return this.get<PaginatedResponse<EarningsListItem | EarningsDetail>>("/v1/earnings", {
-      query: serializeQueryParams(params, ["symbols", "scrip_codes"]),
+      query: serializeQueryParams(params, ["ids", "symbols", "scrip_codes"]),
     }).then((response) => {
       response.data = response.data.map(
         (item) => normalizeEarningsItemPayload(item) as EarningsListItem | EarningsDetail

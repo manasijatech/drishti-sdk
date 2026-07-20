@@ -101,6 +101,7 @@ class ConcallsIndexQueryParams(IndexQueryParams):
 class EarningsQueryParams(PaginatedFeedQueryParams):
     """GET /v1/earnings."""
 
+    ids: list[str] | None = None
     quarter: str | None = None
 
 
