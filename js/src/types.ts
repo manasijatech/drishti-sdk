@@ -173,6 +173,8 @@ export type Alert = {
   id: string;
   symbol: string;
   type?: AlertType | null;
+  /** WebSocket compatibility alias for `type`; REST responses use `type`. */
+  alert_type?: AlertType | null;
   reason?: string | null;
   timestamp?: string | null;
   price?: AlertPrice | null;

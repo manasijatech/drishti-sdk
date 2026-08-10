@@ -197,6 +197,7 @@ class Alert(TypedDict, total=False):
     id: str
     symbol: str
     type: AlertType | None
+    alert_type: AlertType | None
     reason: str | None
     timestamp: str | None
     price: AlertPrice | None
