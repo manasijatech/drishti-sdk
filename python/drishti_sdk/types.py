@@ -187,12 +187,19 @@ class AlertMeta(TypedDict):
     primary_drivers: list[str]
 
 
+class AlertPrice(TypedDict):
+    value: float
+    change_percent: float
+    as_of: str
+
+
 class Alert(TypedDict, total=False):
     id: str
     symbol: str
     type: AlertType | None
     reason: str | None
     timestamp: str | None
+    price: AlertPrice | None
     meta: AlertMeta
 
 

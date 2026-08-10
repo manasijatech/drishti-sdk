@@ -278,12 +278,16 @@ final_job = client.submit_batch_job_and_wait(
 - `get_announcements_categories`
 - `get_announcements`
 - `get_announcements_attachments`
+- `get_announcement_citation_pdf`
 - `post_daily_summary`
 - `get_earnings`
 - `get_earnings_detail`
 - `get_earnings_attachments`
+- `get_earnings_citation_pdf`
+- `get_earnings_citation_page`
 - `get_upcoming_earnings`
 - `get_concalls`
+- `get_concall_citation_pdf`
 - `get_upcoming_concalls`
 - `get_concalls_detail`
 - `get_concalls_transcript`

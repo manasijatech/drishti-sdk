@@ -294,6 +294,12 @@ class DrishtiClient:
         params = DocumentIdsQueryParams(ids=ids)
         return self.get("/v1/announcements/attachments", params=coerce_query_params(params), path_params=None)
 
+    def get_announcement_citation_pdf(self, announcement_id: str) -> str:
+        return self.get(
+            "/v1/announcements/citations/{announcement_id}/pdf",
+            path_params={"announcement_id": announcement_id},
+        )
+
     def post_daily_summary(
         self,
         *,
@@ -407,6 +413,19 @@ class DrishtiClient:
         params = DocumentIdsQueryParams(ids=ids)
         return self.get("/v1/earnings/attachments", params=coerce_query_params(params), path_params=None)
 
+    def get_earnings_citation_pdf(self, earnings_id: str, *, page: int | None = None) -> str:
+        return self.get(
+            "/v1/earnings/citations/{earnings_id}/pdf",
+            params={"page": page} if page is not None else None,
+            path_params={"earnings_id": earnings_id},
+        )
+
+    def get_earnings_citation_page(self, earnings_id: str, page: int) -> str:
+        return self.get(
+            "/v1/earnings/citations/{earnings_id}/page/{page}",
+            path_params={"earnings_id": earnings_id, "page": page},
+        )
+
     def get_upcoming_earnings(
         self,
         *,
@@ -444,6 +463,12 @@ class DrishtiClient:
             limit=limit,
         )
         return self.get("/v1/concalls", params=coerce_query_params(params), path_params=None)
+
+    def get_concall_citation_pdf(self, concall_id: str) -> str:
+        return self.get(
+            "/v1/concalls/citations/{concall_id}/pdf",
+            path_params={"concall_id": concall_id},
+        )
 
     def get_concalls_index(
         self,

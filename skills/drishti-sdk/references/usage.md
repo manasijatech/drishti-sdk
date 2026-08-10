@@ -44,14 +44,18 @@ pip install drishti-sdk
 | Announcement categories | `getAnnouncementsCategories()` | `get_announcements_categories()` |
 | Announcements list/detail rows | `getAnnouncements(params?)` | `get_announcements(...)` |
 | Announcement attachments | `getAnnouncementsAttachments({ ids })` | `get_announcements_attachments(...)` |
+| Announcement PDF citation | `getAnnouncementCitationPdf(id)` | `get_announcement_citation_pdf(id)` |
 | Daily summary | `postDailySummary({ body, contentRetention? })` | `post_daily_summary(..., content_retention=...)` |
 | Earnings index | `getEarningsIndex(params?)` | `get_earnings_index(...)` |
 | Earnings list/detail rows | `getEarnings(params?)` | `get_earnings(...)` |
 | Earnings detail | `getEarningsDetail({ symbol?, scrip_code?, quarter, detailed? })` | `get_earnings_detail(...)` |
 | Earnings attachments | `getEarningsAttachments({ ids })` | `get_earnings_attachments(...)` |
+| Earnings PDF citation | `getEarningsCitationPdf(id, page?)` | `get_earnings_citation_pdf(id, page=...)` |
+| Earnings PDF page citation | `getEarningsCitationPage(id, page)` | `get_earnings_citation_page(id, page)` |
 | Upcoming earnings | `getUpcomingEarnings(params?)` | `get_upcoming_earnings(...)` |
 | Concalls index | `getConcallsIndex(params?)` | `get_concalls_index(...)` |
 | Concalls list | `getConcalls(params?)` | `get_concalls(...)` |
+| Concall PDF citation | `getConcallCitationPdf(id)` | `get_concall_citation_pdf(id)` |
 | Upcoming concalls | `getUpcomingConcalls(params?)` | `get_upcoming_concalls(...)` |
 | Concalls detail | `getConcallsDetail({ symbol?, scrip_code?, quarter, detailed? })` | `get_concalls_detail(...)` |
 | Concall transcript/audio URLs | `getConcallsTranscript({ symbol?, scrip_code?, quarter })` | `get_concalls_transcript(...)` |

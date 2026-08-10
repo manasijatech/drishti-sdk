@@ -162,12 +162,20 @@ export type AlertMeta = {
   primary_drivers: string[];
 };
 
+/** Delayed market-price context included with price alerts. */
+export type AlertPrice = {
+  value: number;
+  change_percent: number;
+  as_of: string;
+};
+
 export type Alert = {
   id: string;
   symbol: string;
   type?: AlertType | null;
   reason?: string | null;
   timestamp?: string | null;
+  price?: AlertPrice | null;
   meta: AlertMeta;
 };
 

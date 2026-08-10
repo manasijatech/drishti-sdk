@@ -326,6 +326,12 @@ export class DrishtiClient {
     });
   }
 
+  getAnnouncementCitationPdf(announcementId: string): Promise<string> {
+    return this.get<string>("/v1/announcements/citations/{announcement_id}/pdf", {
+      pathParams: { announcement_id: announcementId },
+    });
+  }
+
   postDailySummary(params: DailySummaryParams): Promise<SummaryResponse> {
     return this.post<SummaryResponse>("/v1/daily-summary/", {
       body: params.body,
@@ -366,6 +372,19 @@ export class DrishtiClient {
     });
   }
 
+  getEarningsCitationPdf(earningsId: string, page?: number): Promise<string> {
+    return this.get<string>("/v1/earnings/citations/{earnings_id}/pdf", {
+      pathParams: { earnings_id: earningsId },
+      query: page === undefined ? undefined : { page },
+    });
+  }
+
+  getEarningsCitationPage(earningsId: string, page: number): Promise<string> {
+    return this.get<string>("/v1/earnings/citations/{earnings_id}/page/{page}", {
+      pathParams: { earnings_id: earningsId, page },
+    });
+  }
+
   getUpcomingEarnings(
     params: UpcomingEarningsQueryParams = {},
   ): Promise<PaginatedResponse<UpcomingEarningsListItem>> {
@@ -377,6 +396,12 @@ export class DrishtiClient {
   getConcalls(params: ConcallsQueryParams = {}): Promise<PaginatedResponse<Concall>> {
     return this.get<PaginatedResponse<Concall>>("/v1/concalls", {
       query: serializeQueryParams(params, ["symbols", "scrip_codes"]),
+    });
+  }
+
+  getConcallCitationPdf(concallId: string): Promise<string> {
+    return this.get<string>("/v1/concalls/citations/{concall_id}/pdf", {
+      pathParams: { concall_id: concallId },
     });
   }
 
