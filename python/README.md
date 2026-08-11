@@ -30,6 +30,9 @@ with DrishtiClient(api_key="YOUR_API_KEY") as client:
         symbols=["RELIANCE", "TCS"],
         limit=10,
     )
+    block_deals = client.get_block_deals(
+        symbols=["RECLTD", "NAUKRI"], exchange="NSE", limit=20
+    )  # 1 credit per REST request at present
     print(len(news["data"]))
 ```
 
@@ -167,6 +170,7 @@ The WebSocket session is created from the HTTP client, so it inherits the same
 Supported subscription products:
 
 - `news`
+- `block_deals`
 - `announcements`
 - `earnings`
 - `concalls`
@@ -187,6 +191,7 @@ Useful session options:
 - `on_subscribed`
 - `on_data`
 - `on_news`
+- `on_block_deals`
 - `on_announcements`
 - `on_earnings`
 - `on_concalls`
@@ -274,6 +279,7 @@ final_job = client.submit_batch_job_and_wait(
 ### REST helper methods
 
 - `get_news`
+- `get_block_deals` (1 credit per REST request at present)
 - `get_symbols_metadata`
 - `get_announcements_categories`
 - `get_announcements`

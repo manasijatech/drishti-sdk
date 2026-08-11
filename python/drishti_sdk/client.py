@@ -17,6 +17,7 @@ from drishti_sdk.params import (
     AlertsQueryParams,
     AnnouncementsListQueryParams,
     BatchJobsListQueryParams,
+    BlockDealsQueryParams,
     ConcallsIndexQueryParams,
     ConcallsQueryParams,
     ContentRetentionHeader,
@@ -53,6 +54,7 @@ from drishti_sdk.types import (
     JsonValue,
     LedgerListResponse,
     PaginatedAlertResponse,
+    PaginatedBlockDealResponse,
     PaginatedAnnouncementResponse,
     PaginatedConcallResponse,
     PaginatedEarningsResponse,
@@ -247,6 +249,26 @@ class DrishtiClient:
             limit=limit,
         )
         return self.get("/v1/news", params=coerce_query_params(params), path_params=None)
+
+    def get_block_deals(
+        self,
+        *,
+        symbols: list[str] | None = None,
+        exchange: str | None = None,
+        from_: str | None = None,
+        to: str | None = None,
+        page: int | None = None,
+        limit: int | None = None,
+    ) -> PaginatedBlockDealResponse:
+        params = BlockDealsQueryParams(
+            symbols=symbols,
+            exchange=exchange,
+            from_=from_,
+            to=to,
+            page=page,
+            limit=limit,
+        )
+        return self.get("/v1/block-deals", params=coerce_query_params(params), path_params=None)
 
     def get_symbols_metadata(
         self,

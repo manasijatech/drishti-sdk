@@ -21,6 +21,7 @@ _DEFAULT_BASE_URL = "https://developers.manasija.in"
 
 DrishtiWebSocketProduct: TypeAlias = Literal[
     "news",
+    "block_deals",
     "announcements",
     "earnings",
     "concalls",
@@ -29,6 +30,7 @@ DrishtiWebSocketProduct: TypeAlias = Literal[
 
 DRISHTI_WS_PRODUCTS: tuple[DrishtiWebSocketProduct, ...] = (
     "news",
+    "block_deals",
     "announcements",
     "earnings",
     "concalls",
@@ -64,6 +66,7 @@ class DrishtiWebSocketClientSessionOptions(TypedDict, total=False):
     on_subscribed: WebSocketHandler | None
     on_data: WebSocketHandler | None
     on_news: ChannelDataHandler | None
+    on_block_deals: ChannelDataHandler | None
     on_announcements: ChannelDataHandler | None
     on_earnings: ChannelDataHandler | None
     on_concalls: ChannelDataHandler | None
@@ -222,6 +225,7 @@ class DrishtiWebSocketSession:
         on_subscribed: WebSocketHandler | None = None,
         on_data: WebSocketHandler | None = None,
         on_news: ChannelDataHandler | None = None,
+        on_block_deals: ChannelDataHandler | None = None,
         on_announcements: ChannelDataHandler | None = None,
         on_earnings: ChannelDataHandler | None = None,
         on_concalls: ChannelDataHandler | None = None,
@@ -286,6 +290,8 @@ class DrishtiWebSocketSession:
             self.on("concalls", on_concalls)
         if on_alerts is not None:
             self.on("alerts", on_alerts)
+        if on_block_deals is not None:
+            self.on("block_deals", on_block_deals)
         if on_error is not None:
             self.on("error", on_error)
         if on_message is not None:
@@ -335,6 +341,9 @@ class DrishtiWebSocketSession:
 
     def on_alerts(self, handler: ChannelDataHandler) -> None:
         self._add_channel_listener("alerts", handler)
+
+    def on_block_deals(self, handler: ChannelDataHandler) -> None:
+        self._add_channel_listener("block_deals", handler)
 
     def _add_event_listener(self, event_name: str, handler: WebSocketHandler) -> None:
         self._handlers.setdefault(event_name, []).append(handler)

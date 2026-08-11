@@ -16,6 +16,7 @@ import {
   type EarningsIndexQueryParams,
   type EarningsQueryParams,
   type NewsQueryParams,
+  type BlockDealsQueryParams,
   type SymbolMetadataQueryParams,
   type SymbolQuarterQueryParams,
   type SymbolQuarterTranscriptQueryParams,
@@ -49,6 +50,7 @@ import type {
   LedgerListResponse,
   LightweightIndexItem,
   NewsItem,
+  BlockDealItem,
   PaginatedResponse,
   AnnouncementCategoriesResponse,
   SummaryResponse,
@@ -299,6 +301,12 @@ export class DrishtiClient {
   getNews(params: NewsQueryParams = {}): Promise<PaginatedResponse<NewsItem>> {
     return this.get<PaginatedResponse<NewsItem>>("/v1/news", {
       query: serializeQueryParams(params, ["symbols", "scrip_codes"]),
+    });
+  }
+
+  getBlockDeals(params: BlockDealsQueryParams = {}): Promise<PaginatedResponse<BlockDealItem>> {
+    return this.get<PaginatedResponse<BlockDealItem>>("/v1/block-deals", {
+      query: serializeQueryParams(params, ["symbols"]),
     });
   }
 

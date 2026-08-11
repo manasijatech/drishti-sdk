@@ -42,6 +42,22 @@ class NewsQueryParams(BaseModel):
         )
 
 
+class BlockDealsQueryParams(BaseModel):
+    """GET /v1/block-deals."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    symbols: list[str] | None = None
+    exchange: str | None = None
+    from_: str | None = Field(default=None, alias="from")
+    to: str | None = None
+    page: int | None = None
+    limit: int | None = None
+
+    def to_query_params(self) -> dict[str, Any] | None:
+        return _format_query_params(self.model_dump(exclude_none=True, by_alias=True))
+
+
 class PaginatedFeedQueryParams(BaseModel):
     """Shared list filters for paginated product feeds."""
 

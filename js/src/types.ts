@@ -142,6 +142,17 @@ export type NewsItem = {
   link?: string | null;
 };
 
+export type BlockDealItem = {
+  id: string;
+  symbol?: string | null;
+  company?: string | null;
+  exchange?: string | null;
+  trade_value_cr?: number | null;
+  shares?: number | null;
+  price?: number | null;
+  date?: string | null;
+};
+
 /** Known public alert types returned by Drishti alerts routes. */
 export const ALERT_TYPES = [
   "52w_high",

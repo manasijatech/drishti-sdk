@@ -51,6 +51,7 @@ export type DrishtiWebSocketSessionOptions = Readonly<{
   onSubscribed?: WebSocketHandler;
   onData?: WebSocketHandler;
   onNews?: ChannelDataHandler<"news">;
+  onBlockDeals?: ChannelDataHandler<"block_deals">;
   onAnnouncements?: ChannelDataHandler<"announcements">;
   onEarnings?: ChannelDataHandler<"earnings">;
   onConcalls?: ChannelDataHandler<"concalls">;
@@ -264,6 +265,9 @@ export class DrishtiWebSocketSession {
     if (options.onAlerts) {
       this.on("alerts", options.onAlerts);
     }
+    if (options.onBlockDeals) {
+      this.on("block_deals", options.onBlockDeals);
+    }
     if (options.onError) {
       this.on("error", options.onError);
     }
@@ -324,6 +328,10 @@ export class DrishtiWebSocketSession {
 
   onAlerts(handler: ChannelDataHandler<"alerts">): void {
     this.addChannelListener("alerts", handler as ChannelDataHandler<DrishtiWebSocketProduct>);
+  }
+
+  onBlockDeals(handler: ChannelDataHandler<"block_deals">): void {
+    this.addChannelListener("block_deals", handler as ChannelDataHandler<DrishtiWebSocketProduct>);
   }
 
   private addEventListener(eventName: string, handler: WebSocketHandler): void {

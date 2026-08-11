@@ -7,10 +7,12 @@ import type {
   EarningsWebSocketDetail,
   EarningsWebSocketItem,
   NewsItem,
+  BlockDealItem,
 } from "./types.js";
 
 export const DRISHTI_WS_PRODUCTS = [
   "news",
+  "block_deals",
   "announcements",
   "earnings",
   "concalls",
@@ -36,6 +38,7 @@ export type SubscribedEvent = Readonly<{
 
 export type DataPayloadByChannel = Readonly<{
   news: NewsItem;
+  block_deals: BlockDealItem;
   announcements: AnnouncementWebSocketDetail | AnnouncementWebSocketItem;
   earnings: EarningsWebSocketDetail | EarningsWebSocketItem;
   concalls: Concall | ConcallListItem;

@@ -136,6 +136,13 @@ const alerts = await client.getAlerts({
   limit: 25,
 });
 
+// Block deals (1 credit per REST request at present)
+const blockDeals = await client.getBlockDeals({
+  symbols: ["RECLTD", "NAUKRI"],
+  exchange: "NSE",
+  limit: 20,
+});
+
 // Account usage
 const usage = await client.getAccountUsage();
 ```
@@ -200,9 +207,13 @@ const ws = client.websocket({
   onAlerts: (alert) => {
     console.log("alert", alert);
   },
+  onBlockDeals: (deal) => {
+    console.log("block deal", deal);
+  },
 });
 
 await ws.subscribe({ product: "alerts", symbols: ["RELIANCE"] });
+await ws.subscribe({ product: "block_deals", symbols: ["RECLTD"] });
 // listeners fire as events arrive; the session reconnects automatically
 ```
 
@@ -258,6 +269,7 @@ constructors that do not allow headers, the SDK falls back to
 Supported subscription products:
 
 - `news`
+- `block_deals`
 - `announcements`
 - `earnings`
 - `concalls`
@@ -273,6 +285,7 @@ Useful session options:
 - `onSubscribed`
 - `onData`
 - `onNews`
+- `onBlockDeals`
 - `onAnnouncements`
 - `onEarnings`
 - `onConcalls`

@@ -183,6 +183,17 @@ class NewsItem(TypedDict, total=False):
     link: str | None
 
 
+class BlockDealItem(TypedDict, total=False):
+    id: str
+    symbol: str | None
+    company: str | None
+    exchange: str | None
+    trade_value_cr: float | None
+    shares: int | None
+    price: float | None
+    date: str | None
+
+
 class AlertMeta(TypedDict):
     primary_drivers: list[str]
 
@@ -488,4 +499,9 @@ class PaginatedAlertResponse(TypedDict):
 
 class PaginatedNewsResponse(TypedDict):
     data: list[NewsItem]
+    has_next: bool
+
+
+class PaginatedBlockDealResponse(TypedDict):
+    data: list[BlockDealItem]
     has_next: bool

@@ -23,6 +23,16 @@ export type NewsQueryParams = {
   limit?: number;
 };
 
+/** GET /v1/block-deals. */
+export type BlockDealsQueryParams = {
+  symbols?: string[];
+  exchange?: string;
+  from?: IsoDateTimeParam;
+  to?: IsoDateTimeParam;
+  page?: number;
+  limit?: number;
+};
+
 export type PaginatedFeedQueryParams = {
   symbols?: string[];
   scrip_codes?: string[];
