@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Any, Mapping, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Literal, Mapping, TypeVar, cast
 
 if TYPE_CHECKING:
     from drishti_sdk.websocket import (
@@ -29,6 +29,7 @@ from drishti_sdk.params import (
     NewsQueryParams,
     NewsSentiment,
     SymbolMetadataQueryParams,
+    SymbolUniverseQueryParams,
     SymbolQuarterQueryParams,
     SymbolQuarterTranscriptQueryParams,
     UpcomingConcallsQueryParams,
@@ -278,6 +279,14 @@ class DrishtiClient:
     ) -> SymbolMetadataResponse:
         params = SymbolMetadataQueryParams(symbols=symbols, scrip_codes=scrip_codes)
         return self.get("/v1/symbols/metadata", params=coerce_query_params(params), path_params=None)
+
+    def get_symbols(
+        self,
+        *,
+        format: Literal["csv", "json"] = "csv",
+    ) -> str | SymbolMetadataResponse:
+        params = SymbolUniverseQueryParams(format=format)
+        return self.get("/v1/symbols", params=coerce_query_params(params), path_params=None)
 
     def get_announcements_categories(self) -> AnnouncementCategoriesResponse:
         return self.get("/v1/announcements/categories", path_params=None)

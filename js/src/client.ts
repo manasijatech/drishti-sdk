@@ -18,6 +18,7 @@ import {
   type NewsQueryParams,
   type BlockDealsQueryParams,
   type SymbolMetadataQueryParams,
+  type SymbolUniverseQueryParams,
   type SymbolQuarterQueryParams,
   type SymbolQuarterTranscriptQueryParams,
   type ConcallTranscriptBatchParams,
@@ -313,6 +314,15 @@ export class DrishtiClient {
   getSymbolsMetadata(params: SymbolMetadataQueryParams): Promise<SymbolMetadataResponse> {
     return this.get<SymbolMetadataResponse>("/v1/symbols/metadata", {
       query: serializeQueryParams(params, ["symbols", "scrip_codes"]),
+    });
+  }
+
+  getSymbols(params: SymbolUniverseQueryParams & { format: "json" }): Promise<SymbolMetadataResponse>;
+  getSymbols(params?: SymbolUniverseQueryParams & { format?: "csv" }): Promise<string>;
+  getSymbols(params: SymbolUniverseQueryParams): Promise<string | SymbolMetadataResponse>;
+  getSymbols(params: SymbolUniverseQueryParams = {}): Promise<string | SymbolMetadataResponse> {
+    return this.get<string | SymbolMetadataResponse>("/v1/symbols", {
+      query: serializeQueryParams(params),
     });
   }
 

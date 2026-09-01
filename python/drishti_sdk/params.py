@@ -197,6 +197,15 @@ class SymbolMetadataQueryParams(BaseModel):
         return _format_query_params(self.model_dump(exclude_none=True))
 
 
+class SymbolUniverseQueryParams(BaseModel):
+    """GET /v1/symbols. Defaults to CSV; pass format="json" for JSON."""
+
+    format: Literal["csv", "json"] = "csv"
+
+    def to_query_params(self) -> dict[str, Any] | None:
+        return _format_query_params(self.model_dump(exclude_none=True))
+
+
 class SymbolQuarterDetailQueryParams(BaseModel):
     """Optional query flags for GET /v1/earnings/detail and GET /v1/concalls/detail."""
 
@@ -280,6 +289,7 @@ class DailySummaryRequest(BaseModel):
     portfolio: list[DailySummaryPortfolioItem] | None = None
     symbols: list[str] | None = None
     items: list[DailySummaryItem] | None = None
+    context_window_days: int = Field(default=1, ge=1, le=7)
 
     def to_request_body(self) -> dict[str, Any]:
         body: dict[str, Any] = {}
@@ -297,6 +307,7 @@ class DailySummaryRequest(BaseModel):
                 item.model_dump(exclude_none=True)
                 for item in self.items
             ]
+        body["context_window_days"] = self.context_window_days
         return body
 
 

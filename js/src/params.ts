@@ -117,6 +117,11 @@ export type SymbolMetadataQueryParams = {
   scrip_codes?: string[];
 };
 
+/** GET /v1/symbols. Defaults to CSV; request JSON for a typed response. */
+export type SymbolUniverseQueryParams = {
+  format?: "csv" | "json";
+};
+
 /** Optional flags for GET /v1/earnings/detail and GET /v1/concalls/detail */
 export type SymbolQuarterDetailQueryParams = {
   detailed?: boolean;
@@ -180,6 +185,8 @@ export type DailySummaryRequestBody = {
   portfolio?: DailySummaryPortfolioItem[];
   symbols?: string[];
   items?: DailySummaryItem[];
+  /** Asia/Kolkata calendar days of context, inclusive of today. */
+  context_window_days?: number;
 };
 
 export type BatchSummaryInputLine = DailySummaryRequestBody & {

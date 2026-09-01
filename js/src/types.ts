@@ -39,8 +39,8 @@ export type SymbolMetadata = {
   basic_industry?: string | null;
   industry?: string | null;
   macro_economic_indicator?: string | null;
-  theme?: string | null;
   scrip_code?: string | null;
+  isin?: string | null;
 };
 
 export type SymbolMetadataResponse = {
@@ -285,6 +285,7 @@ export type SummaryDetails = {
   request_id: string;
   mode?: SummaryMode;
   input_type?: SummaryInputType;
+  context_window_days: number;
 };
 
 export type SummaryResponse = {

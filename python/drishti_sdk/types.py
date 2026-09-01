@@ -87,8 +87,8 @@ class SymbolMetadata(TypedDict, total=False):
     basic_industry: str | None
     industry: str | None
     macro_economic_indicator: str | None
-    theme: str | None
     scrip_code: str | None
+    isin: str | None
 
 
 class SymbolMetadataResponse(TypedDict):
@@ -310,6 +310,7 @@ class SummaryDetails(TypedDict, total=False):
     request_id: str
     mode: SummaryMode
     input_type: SummaryInputType
+    context_window_days: int
 
 
 class SummaryResponse(TypedDict, total=False):

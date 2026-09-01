@@ -32,7 +32,17 @@ with DrishtiClient(api_key="YOUR_API_KEY") as client:
     )
     block_deals = client.get_block_deals(
         symbols=["RECLTD", "NAUKRI"], exchange="NSE", limit=20
-    )  # 1 credit per REST request at present
+    )  # 1 credit when results are returned
+
+    symbol_universe = client.get_symbols(format="json")
+
+    summary = client.post_daily_summary(
+        request={
+            "symbols": ["RELIANCE", "TCS"],
+            "mode": "news_context",
+            "context_window_days": 7,
+        }
+    )
     print(len(news["data"]))
 ```
 
@@ -279,13 +289,15 @@ final_job = client.submit_batch_job_and_wait(
 ### REST helper methods
 
 - `get_news`
-- `get_block_deals` (1 credit per REST request at present)
+- `get_block_deals` (1 credit when results are returned)
+- `get_symbols`
 - `get_symbols_metadata`
 - `get_announcements_categories`
 - `get_announcements`
 - `get_announcements_attachments`
 - `get_announcement_citation_pdf`
 - `post_daily_summary`
+- `get_earnings_index`
 - `get_earnings`
 - `get_earnings_detail`
 - `get_earnings_attachments`
@@ -294,6 +306,7 @@ final_job = client.submit_batch_job_and_wait(
 - `get_upcoming_earnings`
 - `get_concalls`
 - `get_concall_citation_pdf`
+- `get_concalls_index`
 - `get_upcoming_concalls`
 - `get_concalls_detail`
 - `get_concalls_transcript`

@@ -136,11 +136,23 @@ const alerts = await client.getAlerts({
   limit: 25,
 });
 
-// Block deals (1 credit per REST request at present)
+// Block deals (1 credit when results are returned)
 const blockDeals = await client.getBlockDeals({
   symbols: ["RECLTD", "NAUKRI"],
   exchange: "NSE",
   limit: 20,
+});
+
+// Complete listed-company universe (50 credits; full-market access required)
+const symbolUniverse = await client.getSymbols({ format: "json" });
+
+// Daily summary with a seven-day context window
+const summary = await client.postDailySummary({
+  body: {
+    symbols: ["RELIANCE", "TCS"],
+    mode: "news_context",
+    context_window_days: 7,
+  },
 });
 
 // Account usage
@@ -388,12 +400,15 @@ const finalJob = await client.submitBatchJobAndWait({
 ### REST helper methods
 
 - `getNews`
+- `getBlockDeals`
+- `getSymbols`
 - `getSymbolsMetadata`
 - `getAnnouncementsCategories`
 - `getAnnouncements`
 - `getAnnouncementsAttachments`
 - `getAnnouncementCitationPdf`
 - `postDailySummary`
+- `getEarningsIndex`
 - `getEarnings`
 - `getEarningsDetail`
 - `getEarningsAttachments`
@@ -402,6 +417,7 @@ const finalJob = await client.submitBatchJobAndWait({
 - `getUpcomingEarnings`
 - `getConcalls`
 - `getConcallCitationPdf`
+- `getConcallsIndex`
 - `getUpcomingConcalls`
 - `getConcallsDetail`
 - `getConcallsTranscript`
