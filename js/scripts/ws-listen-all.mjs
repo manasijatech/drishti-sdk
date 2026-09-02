@@ -188,13 +188,9 @@ function prepareDb(dbPath) {
       company_name TEXT,
       image TEXT,
       date TEXT,
-      headline TEXT,
-      title TEXT,
       summary TEXT,
       category TEXT,
-      attachment_url TEXT,
       long_summary TEXT,
-      descriptor TEXT,
       important INTEGER,
       related_categories_json TEXT,
       extracted_information_json TEXT,
@@ -347,12 +343,12 @@ function upsertNews(db, data) {
 function upsertAnnouncements(db, data) {
   const statement = db.prepare(`
     INSERT INTO announcements_events (
-      id, symbol, company_name, image, date, headline, title, summary, category,
-      attachment_url, long_summary, descriptor, important, related_categories_json,
+      id, symbol, company_name, image, date, summary, category,
+      long_summary, important, related_categories_json,
       extracted_information_json, payload_json, received_at, last_seen_at
     ) VALUES (
-      @id, @symbol, @company_name, @image, @date, @headline, @title, @summary, @category,
-      @attachment_url, @long_summary, @descriptor, @important, @related_categories_json,
+      @id, @symbol, @company_name, @image, @date, @summary, @category,
+      @long_summary, @important, @related_categories_json,
       @extracted_information_json, @payload_json, @received_at, @last_seen_at
     )
     ON CONFLICT(id) DO UPDATE SET
@@ -360,13 +356,9 @@ function upsertAnnouncements(db, data) {
       company_name = excluded.company_name,
       image = excluded.image,
       date = excluded.date,
-      headline = excluded.headline,
-      title = excluded.title,
       summary = excluded.summary,
       category = excluded.category,
-      attachment_url = excluded.attachment_url,
       long_summary = excluded.long_summary,
-      descriptor = excluded.descriptor,
       important = excluded.important,
       related_categories_json = excluded.related_categories_json,
       extracted_information_json = excluded.extracted_information_json,
@@ -379,13 +371,9 @@ function upsertAnnouncements(db, data) {
     company_name: stringifyValue(data.company_name),
     image: stringifyValue(data.image),
     date: stringifyValue(data.date),
-    headline: stringifyValue(data.headline),
-    title: stringifyValue(data.title),
     summary: stringifyValue(data.summary),
     category: stringifyValue(data.category),
-    attachment_url: stringifyValue(data.attachment_url),
     long_summary: stringifyValue(data.long_summary),
-    descriptor: stringifyValue(data.descriptor),
     important: toInteger(data.important),
     related_categories_json: stringifyJson(data.related_categories),
     extracted_information_json: stringifyJson(data.extracted_information),
@@ -521,7 +509,7 @@ function persistChannelData(db, channel, data) {
 
 function preview(data) {
   const symbol = data.symbol;
-  const headline = data.headline ?? data.title ?? data.reason;
+  const headline = data.headline ?? data.title ?? data.summary ?? data.reason;
   const parts = [];
   if (symbol) {
     parts.push(String(symbol));

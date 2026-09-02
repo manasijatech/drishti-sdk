@@ -68,7 +68,7 @@ def _parse_symbols(raw: str) -> list[str]:
 
 def _preview(data: dict[str, object]) -> str:
     symbol = data.get("symbol")
-    headline = data.get("headline") or data.get("title") or data.get("reason")
+    headline = data.get("headline") or data.get("title") or data.get("summary") or data.get("reason")
     parts = [str(symbol)] if symbol else []
     if headline:
         parts.append(str(headline)[:120])

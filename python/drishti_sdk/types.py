@@ -101,26 +101,23 @@ class AnnouncementListItem(TypedDict, total=False):
     company_name: str | None
     image: str | None
     date: str | None
-    headline: str | None
-    title: str | None
     summary: str | None
     category: str | None
 
 
 class AnnouncementWebSocketItem(AnnouncementListItem, total=False):
-    attachment_url: str | None
+    pass
 
 
 class AnnouncementDetail(AnnouncementListItem, total=False):
     long_summary: str | None
     related_categories: list[str]
-    descriptor: str | None
     important: bool
     extracted_information: JsonValue
 
 
 class AnnouncementWebSocketDetail(AnnouncementDetail, total=False):
-    attachment_url: str | None
+    pass
 
 
 AnnouncementSummary: TypeAlias = AnnouncementDetail

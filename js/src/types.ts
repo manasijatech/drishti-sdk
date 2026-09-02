@@ -53,27 +53,20 @@ export type AnnouncementListItem = {
   company_name?: string | null;
   image?: string | null;
   date?: string | null;
-  headline?: string | null;
-  title?: string | null;
   summary?: string | null;
   category?: string | null;
 };
 
-export type AnnouncementWebSocketItem = AnnouncementListItem & {
-  attachment_url?: string | null;
-};
+export type AnnouncementWebSocketItem = AnnouncementListItem;
 
 export type AnnouncementDetail = AnnouncementListItem & {
   long_summary?: string | null;
   related_categories?: string[];
-  descriptor?: string | null;
   important?: boolean;
   extracted_information?: JsonValue;
 };
 
-export type AnnouncementWebSocketDetail = AnnouncementDetail & {
-  attachment_url?: string | null;
-};
+export type AnnouncementWebSocketDetail = AnnouncementDetail;
 
 /** Alias matching drishti-api `AnnouncementSummary` (detail rows with `detailed=true`). */
 export type AnnouncementSummary = AnnouncementDetail;
