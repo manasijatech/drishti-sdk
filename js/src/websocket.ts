@@ -106,7 +106,7 @@ export function parseWebSocketMessage(raw: string): WebSocketEvent {
       : [];
     return {
       kind: "subscribed",
-      product: String(record.product ?? ""),
+      product: normalizeWebSocketProduct(String(record.product ?? "")),
       tier: String(record.tier ?? ""),
       fullFeed: Boolean(record.full_feed),
       symbols,
@@ -121,7 +121,7 @@ export function parseWebSocketMessage(raw: string): WebSocketEvent {
     };
   }
   if (record.channel !== undefined) {
-    const channel = String(record.channel);
+    const channel = normalizeWebSocketProduct(String(record.channel));
     const data = record.data;
     if (data && typeof data === "object" && !Array.isArray(data)) {
       if (isDrishtiWebSocketProduct(channel)) {
@@ -157,10 +157,18 @@ function isDrishtiWebSocketProduct(value: string): value is DrishtiWebSocketProd
   return (DRISHTI_WS_PRODUCTS as readonly string[]).includes(value);
 }
 
+function normalizeWebSocketProduct(value: string): string {
+  return value === "block-deals" ? "block_deals" : value;
+}
+
+function toWireWebSocketProduct(value: DrishtiWebSocketProduct): string {
+  return value === "block_deals" ? "block-deals" : value;
+}
+
 function subscribeMessage(options: SubscribeOptions): string {
   return JSON.stringify({
     op: "subscribe",
-    product: options.product,
+    product: toWireWebSocketProduct(options.product),
     symbols: normalizeSymbols(options.symbols),
     detailed: options.detailed !== false,
   });
@@ -479,19 +487,22 @@ export class DrishtiWebSocketSession {
       }
       void this.forceReconnect("WebSocket error");
     });
-    socket.addEventListener("close", () => {
+    socket.addEventListener("close", (event) => {
       if (this.socket !== socket) {
         return;
       }
+      const code = "code" in event ? event.code : 0;
+      const detail = "reason" in event && event.reason ? `: ${event.reason}` : "";
+      const reason = `WebSocket closed (code ${code})${detail}`;
       this.socket = null;
-      this.clearPendingSubscribe();
+      this.rejectPendingSubscribe(new DrishtiWebSocketError(reason));
       this.lastMessageAt = null;
-      void this.onClose?.("WebSocket closed");
+      void this.onClose?.(reason);
       if (this.manuallyClosed) {
-        this.rejectWaiters("WebSocket closed");
+        this.rejectWaiters(reason);
         return;
       }
-      this.startConnectionMaintenance("WebSocket closed");
+      this.startConnectionMaintenance(reason);
     });
   }
 
@@ -512,7 +523,7 @@ export class DrishtiWebSocketSession {
     this.manuallyClosed = true;
     this.maintainingConnection = false;
     this.stopHeartbeatWatchdog();
-    this.clearPendingSubscribe();
+    this.rejectPendingSubscribe(new DrishtiWebSocketError("WebSocket closed"));
     if (this.socket === null) {
       this.rejectWaiters("WebSocket closed");
       return;
@@ -557,6 +568,16 @@ export class DrishtiWebSocketSession {
     }
     clearTimeout(this.pendingSubscribe.timeoutId);
     this.pendingSubscribe = null;
+  }
+
+  private rejectPendingSubscribe(error: DrishtiWebSocketError): void {
+    if (this.pendingSubscribe === null) {
+      return;
+    }
+    const pending = this.pendingSubscribe;
+    clearTimeout(pending.timeoutId);
+    this.pendingSubscribe = null;
+    pending.reject(error);
   }
 
   private async sendSubscribeWithRetry(
@@ -696,7 +717,7 @@ export class DrishtiWebSocketSession {
 
   private rejectWaiters(message: string): void {
     const error = new DrishtiWebSocketError(message);
-    this.clearPendingSubscribe();
+    this.rejectPendingSubscribe(error);
     while (this.waiters.length > 0) {
       this.waiters.shift()?.reject(error);
     }
@@ -762,7 +783,7 @@ export class DrishtiWebSocketSession {
     const staleSocket = this.socket;
     this.socket = null;
     this.lastMessageAt = null;
-    this.clearPendingSubscribe();
+    this.rejectPendingSubscribe(new DrishtiWebSocketError(reason));
     this.logLifecycle(`forcing reconnect (${reason})`);
     await this.onClose?.(reason);
     try {

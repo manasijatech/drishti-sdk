@@ -559,6 +559,7 @@ const ws = client.websocket({
     log(`[lifecycle] reconnect warning after ${attempt} attempts (${reason})`);
   },
   onNews: channelLogger(db, "news"),
+  onBlockDeals: channelLogger(db, "block_deals"),
   onAnnouncements: channelLogger(db, "announcements"),
   onEarnings: channelLogger(db, "earnings"),
   onConcalls: channelLogger(db, "concalls"),

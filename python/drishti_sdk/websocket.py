@@ -37,6 +37,15 @@ DRISHTI_WS_PRODUCTS: tuple[DrishtiWebSocketProduct, ...] = (
     "alerts",
 )
 
+
+def _normalize_websocket_product(value: str) -> str:
+    return "block_deals" if value == "block-deals" else value
+
+
+def _wire_websocket_product(value: DrishtiWebSocketProduct) -> str:
+    return "block-deals" if value == "block_deals" else value
+
+
 WebSocketHandler: TypeAlias = Callable[["WebSocketEvent"], None | Awaitable[None]]
 ChannelDataHandler: TypeAlias = Callable[[dict[str, Any]], None | Awaitable[None]]
 ReconnectAttemptHandler: TypeAlias = Callable[[int, float, str], None | Awaitable[None]]
@@ -109,7 +118,7 @@ class SubscribeOptions:
     def to_message(self) -> dict[str, Any]:
         return {
             "op": "subscribe",
-            "product": self.product,
+            "product": _wire_websocket_product(self.product),
             "symbols": _normalize_symbols(self.symbols),
             "detailed": self.detailed,
         }
@@ -171,7 +180,7 @@ def parse_websocket_message(raw: str) -> WebSocketEvent:
             else []
         )
         return SubscribedEvent(
-            product=str(payload.get("product") or ""),
+            product=_normalize_websocket_product(str(payload.get("product") or "")),
             tier=str(payload.get("tier") or ""),
             full_feed=bool(payload.get("full_feed")),
             symbols=symbol_list,
@@ -187,8 +196,8 @@ def parse_websocket_message(raw: str) -> WebSocketEvent:
     if channel is not None:
         data = payload.get("data")
         if isinstance(data, dict):
-            return DataEvent(channel=str(channel), data=data)
-        return DataEvent(channel=str(channel), data={"raw": data})
+            return DataEvent(channel=_normalize_websocket_product(str(channel)), data=data)
+        return DataEvent(channel=_normalize_websocket_product(str(channel)), data={"raw": data})
     return RawEvent(payload=payload)
 
 
@@ -433,7 +442,7 @@ class DrishtiWebSocketSession:
                 await self._receive_task
                 self._receive_task = None
             except Exception as exc:
-                self._clear_pending_subscribe()
+                self._fail_pending_subscribe(f"WebSocket connection failed: {exc}")
                 if self._receive_task is not None and not self._receive_task.done():
                     self._receive_task.cancel()
                     with contextlib.suppress(asyncio.CancelledError):
@@ -475,7 +484,7 @@ class DrishtiWebSocketSession:
             await self._emit_lifecycle(self._on_close, f"closed: {exc}")
         finally:
             self._ws = None
-            self._clear_pending_subscribe()
+            self._fail_pending_subscribe("WebSocket connection closed")
 
     async def close(self) -> None:
         self._manually_closed = True
@@ -534,6 +543,14 @@ class DrishtiWebSocketSession:
         if not future.done():
             future.cancel()
         self._pending_subscribe = None
+
+    def _fail_pending_subscribe(self, message: str) -> None:
+        if self._pending_subscribe is None:
+            return
+        _, future = self._pending_subscribe
+        self._pending_subscribe = None
+        if not future.done():
+            future.set_exception(DrishtiWebSocketError(message))
 
     def _resolve_pending_subscribe(self, event: WebSocketEvent) -> bool:
         if self._pending_subscribe is None:

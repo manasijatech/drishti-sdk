@@ -1,5 +1,6 @@
 import asyncio
 
+from drishti_sdk.exceptions import DrishtiWebSocketError
 from drishti_sdk.websocket import (
     DrishtiWebSocketSession,
     SubscribeOptions,
@@ -48,6 +49,45 @@ def test_subscribe_message_normalizes_symbols() -> None:
         symbols=["reliance", "RELIANCE", " tcs "],
     ).to_message()
     assert message["symbols"] == ["RELIANCE", "TCS"]
+
+
+def test_block_deals_uses_hyphenated_wire_product() -> None:
+    message = SubscribeOptions(product="block_deals").to_message()
+    assert message["product"] == "block-deals"
+
+
+def test_block_deals_wire_events_use_sdk_channel_name() -> None:
+    subscribed = parse_websocket_message(
+        '{"status":"subscribed","product":"block-deals","tier":"scale","full_feed":true}'
+    )
+    data = parse_websocket_message(
+        '{"channel":"block-deals","data":{"id":"deal-1","symbol":"RELIANCE"}}'
+    )
+
+    assert subscribed.kind == "subscribed"
+    assert subscribed.product == "block_deals"
+    assert data.kind == "data"
+    assert data.channel == "block_deals"
+
+
+def test_disconnect_rejects_pending_subscription_without_cancelling_it() -> None:
+    async def run() -> None:
+        session = DrishtiWebSocketSession(api_key="test-key")
+        future = asyncio.get_running_loop().create_future()
+        session._pending_subscribe = ("news", future)
+
+        session._fail_pending_subscribe("WebSocket connection closed")
+
+        assert session._pending_subscribe is None
+        assert not future.cancelled()
+        try:
+            await future
+        except DrishtiWebSocketError as exc:
+            assert str(exc) == "WebSocket connection closed"
+        else:
+            raise AssertionError("pending subscription should fail when the socket closes")
+
+    asyncio.run(run())
 
 
 def test_channel_handlers_receive_typed_payloads() -> None:

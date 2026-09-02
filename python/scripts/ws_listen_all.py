@@ -100,6 +100,7 @@ async def _run() -> int:
             f"[lifecycle] reconnect warning after {attempt} attempts ({reason})"
         ),
         on_news=on_channel("news"),
+        on_block_deals=on_channel("block_deals"),
         on_announcements=on_channel("announcements"),
         on_earnings=on_channel("earnings"),
         on_concalls=on_channel("concalls"),
