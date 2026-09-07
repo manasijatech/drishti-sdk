@@ -531,10 +531,10 @@ class DrishtiWebSocketSession:
             return
         await self._send_subscribe_with_retry(normalized, "subscribe")
 
-    def _log_lifecycle(self, message: str) -> None:
+    def _log_lifecycle(self, message: str, *args: object) -> None:
         if not self._enable_lifecycle_logging:
             return
-        logger.info("[drishti-sdk] %s", message)
+        logger.info("[drishti-sdk] " + message, *args)
 
     def _clear_pending_subscribe(self) -> None:
         if self._pending_subscribe is None:
