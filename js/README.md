@@ -136,7 +136,7 @@ const alerts = await client.getAlerts({
   limit: 25,
 });
 
-// Block deals (1 credit when results are returned)
+// Block deals (1 credit per returned item)
 const blockDeals = await client.getBlockDeals({
   symbols: ["RECLTD", "NAUKRI"],
   exchange: "NSE",

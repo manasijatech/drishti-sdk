@@ -289,7 +289,7 @@ final_job = client.submit_batch_job_and_wait(
 ### REST helper methods
 
 - `get_news`
-- `get_block_deals` (1 credit when results are returned)
+- `get_block_deals` (1 credit per returned item)
 - `get_symbols`
 - `get_symbols_metadata`
 - `get_announcements_categories`
