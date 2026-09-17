@@ -4,6 +4,11 @@
 
 Official HTTP and WebSocket client libraries for Alpha API (`/v1`) using API key authentication.
 
+Drishti is an [Indian stock market API](https://drishti.manasija.in) for building
+research, monitoring, and agent workflows around listed companies. Use these
+SDKs when an application needs structured market context, exchange filings,
+announcements, earnings, conference calls, news, or real-time updates.
+
 | Package | Directory | Package name |
 |---------|-----------|--------------|
 | Python SDK | `python/` | `drishti-sdk` on PyPI (import `drishti_sdk`) |
@@ -11,6 +16,9 @@ Official HTTP and WebSocket client libraries for Alpha API (`/v1`) using API key
 | MCP installer | `mcp/` | `drishti-mcp` on npm |
 
 See `python/README.md`, `js/README.md`, and `mcp/README.md` for install and usage.
+
+**Getting started:** [create a Drishti API key](https://platform.manasija.in/)
+and read the [Drishti API documentation](https://developers.manasija.in/docs).
 
 JavaScript / TypeScript install options:
 
