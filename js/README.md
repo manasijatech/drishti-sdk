@@ -237,7 +237,12 @@ import { DrishtiClient } from "drishti-sdk";
 const client = new DrishtiClient({ apiKey: process.env.DRISHTI_API_KEY! });
 const ws = client.websocket();
 
-await ws.subscribe({ product: "announcements", symbols: ["RELIANCE"], detailed: false });
+await ws.subscribe({
+  product: "announcements",
+  symbols: ["RELIANCE"],
+  categories: ["Dividend", "Board Meeting"],
+  detailed: false,
+});
 
 for await (const event of ws.events()) {
   if (event.kind === "subscribed") {
@@ -315,14 +320,19 @@ warning is logged (or `onReconnectWarning` is called) after repeated failures,
 then retries continue indefinitely until `close()` is called.
 
 Subscription messages accept an object shaped like
-`{ product, symbols?, detailed? }`. Symbols are normalized to uppercase and
-de-duplicated before the message is sent. Subscriptions are replayed after
-every reconnect.
+`{ product, symbols?, categories?, detailed? }`. Symbols are normalized to
+uppercase and de-duplicated before the message is sent. For announcements,
+`categories` is a list of primary category names. Those names are trimmed and
+de-duplicated, and their original casing is kept. An account can listen to at
+most 15 distinct announcement categories across all connections. Subscribing to
+a category that is already active on another connection does not use another
+slot. Omit `categories` when the account already receives every announcement
+category. Subscriptions are replayed after every reconnect.
 
 Event shapes:
 
 - `subscribed`: acknowledgement with `product`, `tier`, `fullFeed`,
-  `symbols`, and `detailed`
+  `symbols`, `categories`, and `detailed`
 - `data`: payload event with `channel` and `data`
 - `error`: error event with `message` and optional `code`
 - `raw`: unclassified JSON payload

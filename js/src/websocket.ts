@@ -73,6 +73,18 @@ function normalizeSymbols(symbols: readonly string[] | undefined): string[] {
   return Array.from(seen);
 }
 
+function normalizeCategories(categories: readonly string[] | undefined): string[] {
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+  for (const category of categories ?? []) {
+    const token = String(category).trim();
+    if (!token || seen.has(token)) continue;
+    seen.add(token);
+    normalized.push(token);
+  }
+  return normalized;
+}
+
 export function buildWebSocketUrl(baseUrl: string, apiKey?: string): string {
   const base = baseUrl.replace(/\/+$/, "");
   const wsBase = base.replace(/^https:/, "wss:").replace(/^http:/, "ws:");
@@ -104,12 +116,16 @@ export function parseWebSocketMessage(raw: string): WebSocketEvent {
     const symbols = Array.isArray(record.symbols)
       ? record.symbols.map((item) => String(item))
       : [];
+    const categories = Array.isArray(record.categories)
+      ? record.categories.map((item) => String(item))
+      : [];
     return {
       kind: "subscribed",
       product: normalizeWebSocketProduct(String(record.product ?? "")),
       tier: String(record.tier ?? ""),
       fullFeed: Boolean(record.full_feed),
       symbols,
+      categories,
       detailed: record.detailed !== false,
     };
   }
@@ -166,11 +182,13 @@ function toWireWebSocketProduct(value: DrishtiWebSocketProduct): string {
 }
 
 function subscribeMessage(options: SubscribeOptions): string {
+  const categories = normalizeCategories(options.categories);
   return JSON.stringify({
     op: "subscribe",
     product: toWireWebSocketProduct(options.product),
     symbols: normalizeSymbols(options.symbols),
     detailed: options.detailed !== false,
+    ...(categories.length ? { categories } : {}),
   });
 }
 
@@ -534,10 +552,12 @@ export class DrishtiWebSocketSession {
   }
 
   async subscribe(options: SubscribeOptions): Promise<void> {
+    const categories = normalizeCategories(options.categories);
     const normalized: SubscribeOptions = {
       product: options.product,
       symbols: normalizeSymbols(options.symbols),
       detailed: options.detailed !== false,
+      ...(categories.length ? { categories } : {}),
     };
     this.subscriptions.set(options.product, normalized);
     this.startConnectionMaintenance("subscribe");
@@ -804,6 +824,7 @@ export async function* streamProduct(options: {
   apiKey: string;
   product: DrishtiWebSocketProduct;
   symbols?: readonly string[];
+  categories?: readonly string[];
   detailed?: boolean;
   baseUrl?: string;
   headers?: Record<string, string>;
@@ -819,6 +840,7 @@ export async function* streamProduct(options: {
     await session.subscribe({
       product: options.product,
       symbols: options.symbols,
+      categories: options.categories,
       detailed: options.detailed,
     });
     for await (const event of session.events()) {

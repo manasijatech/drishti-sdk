@@ -109,19 +109,36 @@ def _normalize_symbols(symbols: Sequence[str]) -> list[str]:
     return normalized
 
 
+def _normalize_categories(categories: Sequence[str]) -> list[str]:
+    seen: set[str] = set()
+    normalized: list[str] = []
+    for category in categories:
+        token = str(category).strip()
+        if not token or token in seen:
+            continue
+        seen.add(token)
+        normalized.append(token)
+    return normalized
+
+
 @dataclass(frozen=True)
 class SubscribeOptions:
     product: DrishtiWebSocketProduct
     symbols: Sequence[str] = ()
     detailed: bool = True
+    categories: Sequence[str] = ()
 
     def to_message(self) -> dict[str, Any]:
-        return {
+        message: dict[str, Any] = {
             "op": "subscribe",
             "product": _wire_websocket_product(self.product),
             "symbols": _normalize_symbols(self.symbols),
             "detailed": self.detailed,
         }
+        categories = _normalize_categories(self.categories)
+        if categories:
+            message["categories"] = categories
+        return message
 
 
 @dataclass(frozen=True)
@@ -132,6 +149,7 @@ class SubscribedEvent:
     full_feed: bool = False
     symbols: list[str] | None = None
     detailed: bool = True
+    categories: list[str] | None = None
 
 
 @dataclass(frozen=True)
@@ -179,12 +197,19 @@ def parse_websocket_message(raw: str) -> WebSocketEvent:
             if isinstance(symbols, list)
             else []
         )
+        categories = payload.get("categories")
+        category_list = (
+            [str(item) for item in categories]
+            if isinstance(categories, list)
+            else []
+        )
         return SubscribedEvent(
             product=_normalize_websocket_product(str(payload.get("product") or "")),
             tier=str(payload.get("tier") or ""),
             full_feed=bool(payload.get("full_feed")),
             symbols=symbol_list,
             detailed=bool(payload.get("detailed", True)),
+            categories=category_list,
         )
     if "error" in payload:
         code = payload.get("code")
@@ -519,11 +544,13 @@ class DrishtiWebSocketSession:
                 product=cast(DrishtiWebSocketProduct, options),
                 symbols=kwargs.get("symbols") or (),
                 detailed=bool(kwargs.get("detailed", True)),
+                categories=kwargs.get("categories") or (),
             )
         normalized = SubscribeOptions(
             product=options.product,
             symbols=_normalize_symbols(options.symbols),
             detailed=bool(options.detailed),
+            categories=_normalize_categories(options.categories),
         )
         self._subscriptions[normalized.product] = normalized
         self._start_connection_maintenance("subscribe")
@@ -698,13 +725,21 @@ async def stream_product(
     api_key: str,
     product: DrishtiWebSocketProduct,
     symbols: Sequence[str] | None = None,
+    categories: Sequence[str] | None = None,
     detailed: bool = True,
     base_url: str | None = None,
     headers: dict[str, str] | None = None,
 ) -> AsyncIterator[dict[str, Any]]:
     session = DrishtiWebSocketSession(api_key=api_key, base_url=base_url, headers=headers)
     try:
-        await session.subscribe(SubscribeOptions(product=product, symbols=symbols or (), detailed=detailed))
+        await session.subscribe(
+            SubscribeOptions(
+                product=product,
+                symbols=symbols or (),
+                categories=categories or (),
+                detailed=detailed,
+            )
+        )
         async for event in session.events():
             if isinstance(event, DataEvent):
                 yield event.data

@@ -18,6 +18,7 @@ class ReconnectingWebSocket {
     this.readyState = ReconnectingWebSocket.CONNECTING;
     this.listeners = new Map();
     this.sentProducts = [];
+    this.sentRaw = [];
     this.connectionNumber = ReconnectingWebSocket.instances.length + 1;
     ReconnectingWebSocket.instances.push(this);
     setTimeout(() => {
@@ -39,6 +40,7 @@ class ReconnectingWebSocket {
 
   send(raw) {
     const message = JSON.parse(raw);
+    this.sentRaw.push(raw);
     this.sentProducts.push(message.product);
     if (this.connectionNumber === 1 && message.product === "block-deals") {
       queueMicrotask(() => this.close(1011, "test disconnect"));
@@ -72,6 +74,34 @@ class ReconnectingWebSocket {
     }
   }
 }
+
+test("sends announcement categories and reads them from the ack", async () => {
+  ReconnectingWebSocket.instances = [];
+  const session = new DrishtiWebSocketSession({
+    apiKey: "test-key",
+    webSocketImpl: ReconnectingWebSocket,
+  });
+  await session.subscribe({
+    product: "announcements",
+    categories: [" Dividend ", "Board Meeting", "Dividend"],
+  });
+  await new Promise((resolve) => setTimeout(resolve, 30));
+  const sent = JSON.parse(ReconnectingWebSocket.instances[0].sentRaw.at(-1));
+  assert.deepEqual(sent.categories, ["Dividend", "Board Meeting"]);
+
+  const event = parseWebSocketMessage(JSON.stringify({
+    status: "subscribed",
+    product: "announcements",
+    tier: "scale",
+    full_feed: true,
+    symbols: [],
+    categories: ["Dividend", "Board Meeting"],
+    detailed: true,
+  }));
+  assert.equal(event.kind, "subscribed");
+  assert.deepEqual(event.categories, ["Dividend", "Board Meeting"]);
+  await session.close();
+});
 
 test("normalizes the block deals wire contract", () => {
   const subscribed = parseWebSocketMessage(

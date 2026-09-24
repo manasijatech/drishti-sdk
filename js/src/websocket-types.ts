@@ -24,6 +24,7 @@ export type DrishtiWebSocketProduct = (typeof DRISHTI_WS_PRODUCTS)[number];
 export type SubscribeOptions = Readonly<{
   product: DrishtiWebSocketProduct;
   symbols?: readonly string[];
+  categories?: readonly string[];
   detailed?: boolean;
 }>;
 
@@ -33,6 +34,7 @@ export type SubscribedEvent = Readonly<{
   tier: string;
   fullFeed: boolean;
   symbols: string[];
+  categories: string[];
   detailed: boolean;
 }>;
 

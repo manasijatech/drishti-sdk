@@ -153,7 +153,12 @@ asyncio.run(main())
 
 ```python
 async with client.websocket() as ws:
-    await ws.subscribe("announcements", symbols=["RELIANCE"], detailed=False)
+    await ws.subscribe(
+        "announcements",
+        symbols=["RELIANCE"],
+        categories=["Dividend", "Board Meeting"],
+        detailed=False,
+    )
     async for event in ws.events():
         if event.kind == "subscribed":
             print("ready", event.product, event.tier)
@@ -219,12 +224,18 @@ background after disconnects.
 
 Subscription messages accept either `SubscribeOptions(...)` or the product name
 as a string. Symbols are normalized to uppercase and de-duplicated before the
-message is sent. Subscriptions are replayed after every reconnect.
+message is sent. Announcements subscriptions can also include `categories`, a
+list of primary category names. Category names are trimmed and de-duplicated,
+and their original casing is kept. An account can listen to at most 15 distinct
+announcement categories across all connections. Subscribing to a category that
+is already active on another connection does not use another slot. Omit
+`categories` when the account already receives every announcement category.
+Subscriptions are replayed after every reconnect.
 
 Event shapes:
 
 - `subscribed`: acknowledgement with `product`, `tier`, `full_feed`,
-  `symbols`, and `detailed`
+  `symbols`, `categories`, and `detailed`
 - `data`: payload event with `channel` and `data`
 - `error`: error event with `message` and optional `code`
 - `raw`: unclassified JSON payload

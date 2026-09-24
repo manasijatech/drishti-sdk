@@ -50,6 +50,24 @@ def test_subscribe_message_normalizes_symbols() -> None:
         symbols=["reliance", "RELIANCE", " tcs "],
     ).to_message()
     assert message["symbols"] == ["RELIANCE", "TCS"]
+    assert "categories" not in message
+
+
+def test_subscribe_message_includes_announcement_categories() -> None:
+    message = SubscribeOptions(
+        product="announcements",
+        categories=[" Dividend ", "Board Meeting", "Dividend"],
+    ).to_message()
+    assert message["categories"] == ["Dividend", "Board Meeting"]
+
+
+def test_parse_subscribed_ack_includes_categories() -> None:
+    event = parse_websocket_message(
+        '{"status":"subscribed","product":"announcements","tier":"scale","full_feed":true,'
+        '"symbols":[],"categories":["Dividend"],"detailed":true}'
+    )
+    assert event.kind == "subscribed"
+    assert event.categories == ["Dividend"]
 
 
 def test_block_deals_uses_hyphenated_wire_product() -> None:
