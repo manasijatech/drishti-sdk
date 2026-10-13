@@ -38,6 +38,16 @@ DRISHTI_WS_PRODUCTS: tuple[DrishtiWebSocketProduct, ...] = (
 )
 
 
+# Subscribe rejections that retrying on the same socket cannot fix (missing add-on, tier or
+# symbol limits, invalid categories). They fail fast instead of being retried in place; the
+# subscription is kept and retried on the next reconnect, with backoff.
+PERMANENT_SUBSCRIBE_ERROR_CODES: frozenset[str] = frozenset({"forbidden", "bad_request", "unauthorized"})
+
+
+def _is_permanent_subscribe_error(exc: BaseException) -> bool:
+    return getattr(exc, "code", None) in PERMANENT_SUBSCRIBE_ERROR_CODES
+
+
 def _normalize_websocket_product(value: str) -> str:
     return "block_deals" if value == "block-deals" else value
 
@@ -441,10 +451,13 @@ class DrishtiWebSocketSession:
                 await sleep(self._jitter(delay))
             elif reason not in {"context", "subscribe", "events", "initial"}:
                 self._log_lifecycle(f"reconnecting ({reason})")
+            # Keep our own reference: the receive task clears self._ws when it ends,
+            # and the socket must still be closed if setup fails after that.
+            ws = self._ws
             try:
-                if self._ws is None:
+                if ws is None:
                     url = build_websocket_url(self._base_url)
-                    self._ws = await websockets.connect(
+                    ws = await websockets.connect(
                         url,
                         additional_headers=self._merge_headers(),
                         open_timeout=self._open_timeout,
@@ -453,6 +466,7 @@ class DrishtiWebSocketSession:
                         close_timeout=self._close_timeout,
                         max_queue=self._max_queue,
                     )
+                    self._ws = ws
                 self._receive_task = asyncio.create_task(
                     self._receive_until_closed(),
                     name="drishti-ws-receive",
@@ -473,9 +487,9 @@ class DrishtiWebSocketSession:
                     with contextlib.suppress(asyncio.CancelledError):
                         await self._receive_task
                 self._receive_task = None
-                if self._ws is not None:
+                if ws is not None:
                     with contextlib.suppress(Exception):
-                        await self._ws.close()
+                        await ws.close()
                 self._ws = None
                 self._log_lifecycle(f"connection setup failed: {exc}")
                 if delay >= self._reconnect_max_delay and attempt >= self._reconnect_warn_after_attempts:
@@ -639,7 +653,7 @@ class DrishtiWebSocketSession:
                     )
                     if self._ws is None:
                         raise DrishtiWebSocketError(str(exc), code) from exc
-                    if attempt >= self._subscribe_max_attempts:
+                    if attempt >= self._subscribe_max_attempts or _is_permanent_subscribe_error(exc):
                         if isinstance(exc, DrishtiWebSocketError):
                             raise exc
                         raise DrishtiWebSocketError(str(exc), code) from exc

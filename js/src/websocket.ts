@@ -1,5 +1,24 @@
 import { DEFAULT_BASE_URL } from "./client.js";
 import { DrishtiWebSocketError } from "./errors.js";
+
+/**
+ * Subscribe rejections that retrying on the same socket cannot fix (missing add-on, tier or
+ * symbol limits, invalid categories). They fail fast instead of being retried in place; the
+ * subscription is kept and retried on the next reconnect, with backoff.
+ */
+export const PERMANENT_SUBSCRIBE_ERROR_CODES: ReadonlySet<string> = new Set([
+  "forbidden",
+  "bad_request",
+  "unauthorized",
+]);
+
+function isPermanentSubscribeError(error: unknown): boolean {
+  return (
+    error instanceof DrishtiWebSocketError
+    && error.code !== undefined
+    && PERMANENT_SUBSCRIBE_ERROR_CODES.has(error.code)
+  );
+}
 import {
   DRISHTI_WS_PRODUCTS,
 } from "./websocket-types.js";
@@ -627,7 +646,7 @@ export class DrishtiWebSocketSession {
         if (!this.connected || this.socket === null) {
           throw wsError;
         }
-        if (attempt >= this.subscribeMaxAttempts) {
+        if (attempt >= this.subscribeMaxAttempts || isPermanentSubscribeError(wsError)) {
           throw wsError;
         }
         await sleep(this.withJitter(delay));

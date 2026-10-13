@@ -162,3 +162,50 @@ test("reconnects when the socket closes during a subscription", async () => {
     await session.close();
   }
 });
+
+class RejectingWebSocket extends ReconnectingWebSocket {
+  send(raw) {
+    const message = JSON.parse(raw);
+    this.sentRaw.push(raw);
+    this.sentProducts.push(message.product);
+    queueMicrotask(() => {
+      this.emit("message", {
+        data: JSON.stringify({
+          error: `WebSocket addon '${message.product}' is not enabled for this key`,
+          code: "forbidden",
+        }),
+      });
+    });
+  }
+}
+
+test("keeps reconnecting with backoff when every subscription is permanently rejected", async () => {
+  ReconnectingWebSocket.instances = [];
+  const reconnectDelays = [];
+  const session = new DrishtiWebSocketSession({
+    apiKey: "test-key",
+    webSocketImpl: RejectingWebSocket,
+    reconnectInitialDelayMs: 100,
+    reconnectBackoffMultiplier: 2,
+    reconnectJitterRatio: 0,
+    subscribeRetryInitialDelayMs: 10,
+    onReconnectAttempt: (_attempt, delay) => {
+      reconnectDelays.push(delay);
+    },
+  });
+
+  try {
+    await session.subscribe({ product: "announcements" });
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
+    const sockets = ReconnectingWebSocket.instances;
+    assert.ok(sockets.length >= 3, `expected reconnects, got ${sockets.length} socket(s)`);
+    for (const socket of sockets.slice(0, -1)) {
+      assert.deepEqual(socket.sentProducts, ["announcements"]);
+      assert.equal(socket.readyState, ReconnectingWebSocket.CLOSED);
+    }
+    assert.deepEqual(reconnectDelays.slice(0, 2), [200, 400]);
+  } finally {
+    await session.close();
+  }
+});

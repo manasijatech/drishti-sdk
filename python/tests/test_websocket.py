@@ -211,3 +211,126 @@ def test_channel_listener_helpers_and_off() -> None:
         assert announcements == [{"symbol": "RELIANCE", "title": "Results"}]
 
     asyncio.run(run())
+
+
+def test_permanent_subscribe_rejection_is_not_retried() -> None:
+    async def run() -> None:
+        session = DrishtiWebSocketSession(api_key="test-key", subscribe_max_attempts=10)
+        session._ws = object()
+        calls = 0
+
+        async def reject(options: SubscribeOptions):
+            nonlocal calls
+            calls += 1
+            raise DrishtiWebSocketError("WebSocket addon 'announcements' is not enabled for this key", "forbidden")
+
+        session._send_subscribe_and_wait_for_ack = reject  # type: ignore[method-assign]
+        try:
+            await session._send_subscribe_with_retry(SubscribeOptions(product="announcements"), "subscribe")
+        except DrishtiWebSocketError as exc:
+            assert exc.code == "forbidden"
+        else:
+            raise AssertionError("permanent rejection should be raised")
+        assert calls == 1
+
+    asyncio.run(run())
+
+
+class _FakeSocket:
+    def __init__(self) -> None:
+        self.closed = False
+        self._closed_event = asyncio.Event()
+
+    async def recv(self) -> str:
+        await self._closed_event.wait()
+        raise asyncio.CancelledError
+
+    async def send(self, _message: str) -> None:
+        return None
+
+    async def close(self) -> None:
+        self.closed = True
+        self._closed_event.set()
+
+
+def _patch_connect(monkeypatch: object, sockets: list[_FakeSocket]) -> None:
+    import drishti_sdk.websocket as module
+
+    async def connect(*_args: object, **_kwargs: object) -> _FakeSocket:
+        socket = _FakeSocket()
+        sockets.append(socket)
+        return socket
+
+    async def no_sleep(_delay: float) -> None:
+        return None
+
+    monkeypatch.setattr(module.websockets, "connect", connect)  # type: ignore[attr-defined]
+    monkeypatch.setattr(module, "sleep", no_sleep)  # type: ignore[attr-defined]
+
+
+def test_failed_connection_setup_closes_the_socket(monkeypatch: object) -> None:
+    async def run() -> None:
+        sockets: list[_FakeSocket] = []
+        _patch_connect(monkeypatch, sockets)
+        session = DrishtiWebSocketSession(api_key="test-key")
+        session._subscriptions = {"news": SubscribeOptions(product="news", symbols=["INFY"])}
+        attempts = 0
+
+        async def resubscribe() -> bool:
+            nonlocal attempts
+            attempts += 1
+            # Let the receive task start, as it does in production, before failing.
+            await asyncio.sleep(0)
+            if attempts >= 3:
+                session._manually_closed = True
+            raise DrishtiWebSocketError("Subscribe acknowledgement timed out")
+
+        session._resubscribe_all = resubscribe  # type: ignore[method-assign]
+        await session._maintain_connection("initial")
+
+        assert len(sockets) == 3
+        assert all(socket.closed for socket in sockets)
+
+    asyncio.run(run())
+
+
+def test_rejected_subscriptions_keep_reconnecting_with_backoff(monkeypatch: object) -> None:
+    import drishti_sdk.websocket as module
+
+    async def run() -> None:
+        sockets: list[_FakeSocket] = []
+        _patch_connect(monkeypatch, sockets)
+        delays: list[float] = []
+
+        async def record_sleep(delay: float) -> None:
+            delays.append(delay)
+
+        monkeypatch.setattr(module, "sleep", record_sleep)  # type: ignore[attr-defined]
+        session = DrishtiWebSocketSession(
+            api_key="test-key",
+            reconnect_initial_delay=1.0,
+            reconnect_backoff_multiplier=2.0,
+            reconnect_max_delay=30.0,
+            reconnect_jitter_ratio=0,
+        )
+        announcements = SubscribeOptions(product="announcements")
+        session._subscriptions = {"announcements": announcements}
+        attempts = 0
+
+        async def reject(options: SubscribeOptions):
+            nonlocal attempts
+            attempts += 1
+            if attempts >= 4:
+                session._manually_closed = True
+            raise DrishtiWebSocketError("not enabled", "forbidden")
+
+        session._send_subscribe_and_wait_for_ack = reject  # type: ignore[method-assign]
+        await asyncio.wait_for(session._maintain_connection("initial"), timeout=2)
+
+        assert attempts == 4
+        assert len(sockets) == 4
+        assert all(socket.closed for socket in sockets)
+        assert session._subscriptions == {"announcements": announcements}
+        assert delays == [2.0, 4.0, 8.0]
+
+    asyncio.run(run())
