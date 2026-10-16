@@ -1,0 +1,25 @@
+{
+  "cases": [
+    {
+      "id": "url.https_becomes_wss",
+      "base_url": "https://api.test",
+      "expect": "wss://api.test/v1/ws"
+    },
+    {
+      "id": "url.http_becomes_ws_and_trailing_slash_trimmed",
+      "base_url": "http://localhost:8000/",
+      "expect": "ws://localhost:8000/v1/ws"
+    },
+    {
+      "id": "url.path_prefix_is_kept",
+      "base_url": "https://api.test/proxy",
+      "expect": "wss://api.test/proxy/v1/ws"
+    },
+    {
+      "id": "url.api_key_query_is_encoded",
+      "base_url": "https://api.test",
+      "api_key": "k 1+2&x",
+      "expect": "wss://api.test/v1/ws?api_key=k+1%2B2%26x"
+    }
+  ]
+}

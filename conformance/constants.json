@@ -1,0 +1,8 @@
+{
+  "default_base_url": "https://developers.manasija.in",
+  "ws_products": ["news", "block_deals", "announcements", "earnings", "concalls", "alerts"],
+  "permanent_subscribe_error_codes": ["bad_request", "forbidden", "unauthorized"],
+  "alert_types": ["52w_high", "52w_low", "earnings", "high_growth_concalls", "price_alert", "rvol_alert", "volume_alert"],
+  "batch_job_statuses": ["pending", "running", "succeeded", "partial", "failed", "cancelled"],
+  "batch_job_terminal_statuses": ["succeeded", "partial", "failed", "cancelled"]
+}

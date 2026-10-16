@@ -1,0 +1,37 @@
+{
+  "cases": [
+    {
+      "id": "daily_summary.symbols_with_retention_header",
+      "call": {
+        "method": "post_daily_summary",
+        "args": {
+          "body": { "symbols": ["TCS"], "mode": "news_context", "context_window_days": 7 },
+          "content_retention": "none"
+        }
+      },
+      "response": { "status": 200, "json": { "summary": "ok" } },
+      "expect_request": {
+        "method": "POST",
+        "path": "/v1/daily-summary/",
+        "query": {},
+        "headers": { "Content-Type": "application/json", "X-Alpha-Content-Retention": "none" },
+        "json_body": { "symbols": ["TCS"], "mode": "news_context", "context_window_days": 7 }
+      },
+      "expect_result": { "summary": "ok" }
+    },
+    {
+      "id": "daily_summary.body_is_sent_as_given",
+      "description": "SDKs must not inject defaults (exposure, context_window_days); the API applies its own.",
+      "call": {
+        "method": "post_daily_summary",
+        "args": { "body": { "portfolio": [{ "symbol": "TCS" }, { "symbol": "INFY", "exposure": 0.25, "label": "core" }] } }
+      },
+      "expect_request": {
+        "method": "POST",
+        "path": "/v1/daily-summary/",
+        "query": {},
+        "json_body": { "portfolio": [{ "symbol": "TCS" }, { "symbol": "INFY", "exposure": 0.25, "label": "core" }] }
+      }
+    }
+  ]
+}

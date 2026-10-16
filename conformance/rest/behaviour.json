@@ -1,0 +1,167 @@
+{
+  "cases": [
+    {
+      "id": "headers.api_key_and_accept",
+      "call": { "method": "get_account", "args": {} },
+      "expect_request": {
+        "method": "GET",
+        "path": "/v1/account",
+        "query": {},
+        "headers": { "X-API-Key": "test-key", "Accept": "application/json" }
+      }
+    },
+    {
+      "id": "headers.extra_client_headers_are_sent",
+      "client": { "headers": { "X-Team": "ops" } },
+      "call": { "method": "get_account", "args": {} },
+      "expect_request": { "method": "GET", "path": "/v1/account", "query": {}, "headers": { "X-Team": "ops", "X-API-Key": "test-key" } }
+    },
+    {
+      "id": "headers.extra_headers_cannot_override_api_key",
+      "client": { "headers": { "X-API-Key": "spoofed" } },
+      "call": { "method": "get_account", "args": {} },
+      "expect_request": { "method": "GET", "path": "/v1/account", "query": {}, "headers": { "X-API-Key": "test-key" } }
+    },
+    {
+      "id": "url.base_url_trailing_slash",
+      "client": { "base_url": "https://api.test/" },
+      "call": { "method": "get_account", "args": {} },
+      "expect_request": { "method": "GET", "path": "/v1/account", "query": {} }
+    },
+    {
+      "id": "url.base_url_with_path_prefix",
+      "client": { "base_url": "https://api.test/proxy/" },
+      "call": { "method": "get_account", "args": {} },
+      "expect_request": { "method": "GET", "path": "/proxy/v1/account", "query": {} }
+    },
+    {
+      "id": "url.path_params_are_percent_encoded",
+      "call": { "method": "get_announcement_citation_pdf", "positional": ["A/B C"] },
+      "response": { "status": 200, "content_type": "application/pdf", "text": "%PDF" },
+      "expect_request": { "method": "GET", "path": "/v1/announcements/citations/A%2FB%20C/pdf", "query": {} }
+    },
+    {
+      "id": "response.json_body_is_parsed",
+      "call": { "method": "get_account", "args": {} },
+      "response": { "status": 200, "content_type": "application/json; charset=utf-8", "json": { "id": "acct_1", "nested": { "n": 1 } } },
+      "expect_request": { "method": "GET", "path": "/v1/account", "query": {} },
+      "expect_result": { "id": "acct_1", "nested": { "n": 1 } }
+    },
+    {
+      "id": "response.no_content_returns_null",
+      "call": { "method": "delete_batch_jobs_job_id", "args": { "job_id": "job_1" } },
+      "response": { "status": 204 },
+      "expect_request": { "method": "DELETE", "path": "/v1/batch/jobs/job_1", "query": {} },
+      "expect_result": null
+    },
+    {
+      "id": "response.empty_json_body_returns_null",
+      "call": { "method": "get_account", "args": {} },
+      "response": { "status": 200, "content_type": "application/json", "text": "" },
+      "expect_request": { "method": "GET", "path": "/v1/account", "query": {} },
+      "expect_result": null
+    },
+    {
+      "id": "error.json_error_body",
+      "call": { "method": "get_account", "args": {} },
+      "response": { "status": 404, "json": { "detail": "Not found" } },
+      "expect_request": { "method": "GET", "path": "/v1/account", "query": {} },
+      "expect_error": { "type": "api_error", "status": 404, "body": { "detail": "Not found" } }
+    },
+    {
+      "id": "error.text_error_body",
+      "call": { "method": "get_account", "args": {} },
+      "response": { "status": 401, "content_type": "text/plain", "text": "unauthorized" },
+      "expect_request": { "method": "GET", "path": "/v1/account", "query": {} },
+      "expect_error": { "type": "api_error", "status": 401, "body": "unauthorized" }
+    },
+    {
+      "id": "retry.not_retried_on_400",
+      "call": { "method": "get_account", "args": {} },
+      "responses": [{ "status": 400, "json": { "detail": "bad" } }],
+      "expect_requests": [{ "method": "GET", "path": "/v1/account", "query": {} }],
+      "expect_error": { "type": "api_error", "status": 400, "body": { "detail": "bad" } }
+    },
+    {
+      "id": "retry.retries_429_then_succeeds",
+      "call": { "method": "get_account", "args": {} },
+      "responses": [
+        { "status": 429, "json": { "detail": "slow down" } },
+        { "status": 200, "json": { "id": "acct_1" } }
+      ],
+      "expect_requests": [
+        { "method": "GET", "path": "/v1/account", "query": {} },
+        { "method": "GET", "path": "/v1/account", "query": {} }
+      ],
+      "expect_result": { "id": "acct_1" }
+    },
+    {
+      "id": "retry.default_two_retries_then_error",
+      "call": { "method": "get_account", "args": {} },
+      "responses": [
+        { "status": 503, "json": { "detail": "down" } },
+        { "status": 502, "json": { "detail": "down" } },
+        { "status": 500, "json": { "detail": "still down" } }
+      ],
+      "expect_requests": [
+        { "method": "GET", "path": "/v1/account", "query": {} },
+        { "method": "GET", "path": "/v1/account", "query": {} },
+        { "method": "GET", "path": "/v1/account", "query": {} }
+      ],
+      "expect_error": { "type": "api_error", "status": 500, "body": { "detail": "still down" } }
+    },
+    {
+      "id": "retry.default_retryable_statuses",
+      "client": { "max_retries": 8 },
+      "call": { "method": "get_account", "args": {} },
+      "responses": [
+        { "status": 408, "json": {} },
+        { "status": 409, "json": {} },
+        { "status": 425, "json": {} },
+        { "status": 429, "json": {} },
+        { "status": 500, "json": {} },
+        { "status": 502, "json": {} },
+        { "status": 503, "json": {} },
+        { "status": 504, "json": {} },
+        { "status": 200, "json": { "id": "acct_1" } }
+      ],
+      "expect_request_count": 9,
+      "expect_result": { "id": "acct_1" }
+    },
+    {
+      "id": "retry.not_retried_on_501",
+      "call": { "method": "get_account", "args": {} },
+      "responses": [{ "status": 501, "json": { "detail": "nope" } }],
+      "expect_request_count": 1,
+      "expect_error": { "type": "api_error", "status": 501, "body": { "detail": "nope" } }
+    },
+    {
+      "id": "retry.network_error_then_succeeds",
+      "call": { "method": "get_account", "args": {} },
+      "responses": [
+        { "network_error": true },
+        { "status": 200, "json": { "id": "acct_1" } }
+      ],
+      "expect_requests": [
+        { "method": "GET", "path": "/v1/account", "query": {} },
+        { "method": "GET", "path": "/v1/account", "query": {} }
+      ],
+      "expect_result": { "id": "acct_1" }
+    },
+    {
+      "id": "retry.disabled_with_zero_max_retries",
+      "client": { "max_retries": 0 },
+      "call": { "method": "get_account", "args": {} },
+      "responses": [{ "status": 503, "json": { "detail": "down" } }],
+      "expect_requests": [{ "method": "GET", "path": "/v1/account", "query": {} }],
+      "expect_error": { "type": "api_error", "status": 503, "body": { "detail": "down" } }
+    },
+    {
+      "id": "client.blank_api_key_is_rejected",
+      "client": { "api_key": "   " },
+      "call": { "method": "get_account", "args": {} },
+      "expect_requests": [],
+      "expect_error": { "type": "invalid_argument" }
+    }
+  ]
+}

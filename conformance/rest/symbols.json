@@ -1,0 +1,29 @@
+{
+  "cases": [
+    {
+      "id": "symbols.metadata",
+      "call": { "method": "get_symbols_metadata", "args": { "symbols": ["TCS", "INFY"], "scrip_codes": ["532540"] } },
+      "response": { "status": 200, "json": { "data": [{ "symbol": "TCS" }] } },
+      "expect_request": {
+        "method": "GET",
+        "path": "/v1/symbols/metadata",
+        "query": { "symbols": ["TCS,INFY"], "scrip_codes": ["532540"] }
+      },
+      "expect_result": { "data": [{ "symbol": "TCS" }] }
+    },
+    {
+      "id": "symbols.universe_default_sends_no_format",
+      "call": { "method": "get_symbols", "args": {} },
+      "response": { "status": 200, "content_type": "text/csv", "text": "symbol,company_name\nTCS,Tata Consultancy Services\n" },
+      "expect_request": { "method": "GET", "path": "/v1/symbols", "query": {} },
+      "expect_result": "symbol,company_name\nTCS,Tata Consultancy Services\n"
+    },
+    {
+      "id": "symbols.universe_json",
+      "call": { "method": "get_symbols", "args": { "format": "json" } },
+      "response": { "status": 200, "json": { "data": [{ "symbol": "TCS" }] } },
+      "expect_request": { "method": "GET", "path": "/v1/symbols", "query": { "format": ["json"] } },
+      "expect_result": { "data": [{ "symbol": "TCS" }] }
+    }
+  ]
+}

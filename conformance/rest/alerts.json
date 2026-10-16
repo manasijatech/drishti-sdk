@@ -1,0 +1,34 @@
+{
+  "cases": [
+    {
+      "id": "alerts.all_filters",
+      "call": {
+        "method": "get_alerts",
+        "args": {
+          "symbols": ["TCS"],
+          "scrip_codes": ["532540"],
+          "type": ["price_alert", "52w_high"],
+          "from": "2026-01-01",
+          "to": "2026-01-31",
+          "important": true,
+          "page": 1,
+          "limit": 10
+        }
+      },
+      "expect_request": {
+        "method": "GET",
+        "path": "/v1/alerts",
+        "query": {
+          "symbols": ["TCS"],
+          "scrip_codes": ["532540"],
+          "type": ["price_alert,52w_high"],
+          "from": ["2026-01-01"],
+          "to": ["2026-01-31"],
+          "important": ["true"],
+          "page": ["1"],
+          "limit": ["10"]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "cases": [
+    {
+      "id": "parse.heartbeat",
+      "raw": "{\"type\":\"heartbeat\",\"sent_at\":\"2026-01-01T00:00:00Z\"}",
+      "expect": { "kind": "heartbeat", "sent_at": "2026-01-01T00:00:00Z" }
+    },
+    {
+      "id": "parse.heartbeat_without_timestamp",
+      "raw": "{\"type\":\"heartbeat\"}",
+      "expect": { "kind": "heartbeat", "sent_at": "" }
+    },
+    {
+      "id": "parse.subscribed_ack",
+      "raw": "{\"status\":\"subscribed\",\"product\":\"news\",\"tier\":\"scale\",\"full_feed\":true,\"symbols\":[\"TCS\"],\"detailed\":false}",
+      "expect": {
+        "kind": "subscribed",
+        "product": "news",
+        "tier": "scale",
+        "full_feed": true,
+        "symbols": ["TCS"],
+        "categories": [],
+        "detailed": false
+      }
+    },
+    {
+      "id": "parse.subscribed_ack_with_categories_and_defaults",
+      "raw": "{\"status\":\"subscribed\",\"product\":\"announcements\",\"categories\":[\"Dividend\"]}",
+      "expect": {
+        "kind": "subscribed",
+        "product": "announcements",
+        "tier": "",
+        "full_feed": false,
+        "symbols": [],
+        "categories": ["Dividend"],
+        "detailed": true
+      }
+    },
+    {
+      "id": "parse.subscribed_ack_block_deals_wire_name",
+      "raw": "{\"status\":\"subscribed\",\"product\":\"block-deals\",\"tier\":\"scale\",\"full_feed\":true,\"symbols\":[],\"detailed\":true}",
+      "expect": {
+        "kind": "subscribed",
+        "product": "block_deals",
+        "tier": "scale",
+        "full_feed": true,
+        "symbols": [],
+        "categories": [],
+        "detailed": true
+      }
+    },
+    {
+      "id": "parse.error_with_code",
+      "raw": "{\"error\":\"Add-on required\",\"code\":\"forbidden\"}",
+      "expect": { "kind": "error", "message": "Add-on required", "code": "forbidden" }
+    },
+    {
+      "id": "parse.error_numeric_code_is_stringified",
+      "raw": "{\"error\":\"Too many\",\"code\":429}",
+      "expect": { "kind": "error", "message": "Too many", "code": "429" }
+    },
+    {
+      "id": "parse.error_without_message",
+      "raw": "{\"error\":null}",
+      "expect": { "kind": "error", "message": "Unknown error", "code": null }
+    },
+    {
+      "id": "parse.data_event",
+      "raw": "{\"channel\":\"news\",\"data\":{\"id\":\"n1\",\"symbol\":\"TCS\"}}",
+      "expect": { "kind": "data", "channel": "news", "data": { "id": "n1", "symbol": "TCS" } }
+    },
+    {
+      "id": "parse.data_event_block_deals_wire_name",
+      "raw": "{\"channel\":\"block-deals\",\"data\":{\"id\":\"b1\"}}",
+      "expect": { "kind": "data", "channel": "block_deals", "data": { "id": "b1" } }
+    },
+    {
+      "id": "parse.data_event_non_object_payload_is_wrapped",
+      "raw": "{\"channel\":\"alerts\",\"data\":[1,2]}",
+      "expect": { "kind": "data", "channel": "alerts", "data": { "raw": [1, 2] } }
+    },
+    {
+      "id": "parse.data_event_unknown_channel",
+      "raw": "{\"channel\":\"future_product\",\"data\":{\"x\":1}}",
+      "expect": { "kind": "data", "channel": "future_product", "data": { "x": 1 } }
+    },
+    {
+      "id": "parse.unrecognised_object_is_raw",
+      "raw": "{\"hello\":\"world\"}",
+      "expect": { "kind": "raw", "payload": { "hello": "world" } }
+    },
+    {
+      "id": "parse.invalid_json",
+      "raw": "not json",
+      "expect": { "kind": "error", "message": "Invalid JSON", "code": null }
+    },
+    {
+      "id": "parse.non_object_json",
+      "raw": "[1,2,3]",
+      "expect": { "kind": "error", "message": "Expected a JSON object", "code": null }
+    }
+  ]
+}

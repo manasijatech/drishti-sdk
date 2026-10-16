@@ -87,7 +87,7 @@ function normalizeSymbols(symbols: readonly string[] | undefined): string[] {
   const seen = new Set<string>();
   for (const symbol of symbols ?? []) {
     const token = String(symbol).trim().toUpperCase();
-    seen.add(token);
+    if (token) seen.add(token);
   }
   return Array.from(seen);
 }
@@ -151,7 +151,7 @@ export function parseWebSocketMessage(raw: string): WebSocketEvent {
   if (record.error !== undefined) {
     return {
       kind: "error",
-      message: String(record.error),
+      message: record.error ? String(record.error) : "Unknown error",
       code: record.code === undefined || record.code === null ? undefined : String(record.code),
     };
   }
@@ -200,15 +200,16 @@ function toWireWebSocketProduct(value: DrishtiWebSocketProduct): string {
   return value === "block_deals" ? "block-deals" : value;
 }
 
-function subscribeMessage(options: SubscribeOptions): string {
+/** Build the JSON `subscribe` message sent over the socket for `options`. */
+export function buildSubscribeMessage(options: SubscribeOptions): Record<string, unknown> {
   const categories = normalizeCategories(options.categories);
-  return JSON.stringify({
+  return {
     op: "subscribe",
     product: toWireWebSocketProduct(options.product),
     symbols: normalizeSymbols(options.symbols),
     detailed: options.detailed !== false,
     ...(categories.length ? { categories } : {}),
-  });
+  };
 }
 
 function sleep(ms: number): Promise<void> {
@@ -682,7 +683,7 @@ export class DrishtiWebSocketSession {
           reject(error);
         },
       };
-      this.socket!.send(subscribeMessage(options));
+      this.socket!.send(JSON.stringify(buildSubscribeMessage(options)));
     });
   }
 

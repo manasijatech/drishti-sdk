@@ -1,0 +1,26 @@
+{
+  "cases": [
+    {
+      "id": "account.detail",
+      "call": { "method": "get_account", "args": {} },
+      "response": { "status": 200, "json": { "id": "acct_1" } },
+      "expect_request": { "method": "GET", "path": "/v1/account", "query": {} },
+      "expect_result": { "id": "acct_1" }
+    },
+    {
+      "id": "account.limits",
+      "call": { "method": "get_account_limits", "args": {} },
+      "expect_request": { "method": "GET", "path": "/v1/account/limits", "query": {} }
+    },
+    {
+      "id": "account.usage",
+      "call": { "method": "get_account_usage", "args": {} },
+      "expect_request": { "method": "GET", "path": "/v1/account/usage", "query": {} }
+    },
+    {
+      "id": "account.ledger",
+      "call": { "method": "get_account_ledger", "args": { "limit": 10 } },
+      "expect_request": { "method": "GET", "path": "/v1/account/ledger", "query": { "limit": ["10"] } }
+    }
+  ]
+}

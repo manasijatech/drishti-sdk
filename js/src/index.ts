@@ -18,6 +18,7 @@ export type { ApiErrorBody } from "./errors.js";
 export {
   DRISHTI_WS_PRODUCTS,
   DrishtiWebSocketSession,
+  buildSubscribeMessage,
   buildWebSocketUrl,
   parseWebSocketMessage,
   streamProduct,

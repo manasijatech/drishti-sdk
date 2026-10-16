@@ -1,0 +1,126 @@
+{
+  "cases": [
+    {
+      "id": "earnings.index",
+      "call": {
+        "method": "get_earnings_index",
+        "args": {
+          "symbols": ["TCS"],
+          "scrip_codes": ["532540"],
+          "from": "2026-01-01",
+          "to": "2026-03-31",
+          "quarter": "q4_26",
+          "page": 1,
+          "limit": 10
+        }
+      },
+      "expect_request": {
+        "method": "GET",
+        "path": "/v1/earnings/index",
+        "query": {
+          "symbols": ["TCS"],
+          "scrip_codes": ["532540"],
+          "from": ["2026-01-01"],
+          "to": ["2026-03-31"],
+          "quarter": ["q4_26"],
+          "page": ["1"],
+          "limit": ["10"]
+        }
+      }
+    },
+    {
+      "id": "earnings.list_all_filters_and_table_normalization",
+      "call": {
+        "method": "get_earnings",
+        "args": {
+          "ids": ["e1", "e2"],
+          "symbols": ["TCS", "INFY"],
+          "scrip_codes": ["532540"],
+          "from": "2026-01-01",
+          "to": "2026-03-31",
+          "quarter": "q4_26",
+          "detailed": true,
+          "page": 1,
+          "limit": 10
+        }
+      },
+      "response": {
+        "status": 200,
+        "json": {
+          "data": [
+            { "id": "e1", "earnings_table_extraction": { "revenue": 100 } },
+            { "id": "e2", "earnings_table": { "revenue": 1 }, "earnings_table_extraction": { "revenue": 2 } }
+          ],
+          "page": 1
+        }
+      },
+      "expect_request": {
+        "method": "GET",
+        "path": "/v1/earnings",
+        "query": {
+          "ids": ["e1,e2"],
+          "symbols": ["TCS,INFY"],
+          "scrip_codes": ["532540"],
+          "from": ["2026-01-01"],
+          "to": ["2026-03-31"],
+          "quarter": ["q4_26"],
+          "detailed": ["true"],
+          "page": ["1"],
+          "limit": ["10"]
+        }
+      },
+      "expect_result": {
+        "data": [
+          { "id": "e1", "earnings_table": { "revenue": 100 }, "earnings_table_extraction": { "revenue": 100 } },
+          { "id": "e2", "earnings_table": { "revenue": 1 }, "earnings_table_extraction": { "revenue": 2 } }
+        ],
+        "page": 1
+      }
+    },
+    {
+      "id": "earnings.detail_with_table_normalization",
+      "call": { "method": "get_earnings_detail", "args": { "quarter": "q4_26", "symbol": "TCS", "detailed": true } },
+      "response": { "status": 200, "json": { "id": "e1", "earnings_table_extraction": { "eps": 5 } } },
+      "expect_request": {
+        "method": "GET",
+        "path": "/v1/earnings/detail",
+        "query": { "quarter": ["q4_26"], "symbol": ["TCS"], "detailed": ["true"] }
+      },
+      "expect_result": { "id": "e1", "earnings_table": { "eps": 5 }, "earnings_table_extraction": { "eps": 5 } }
+    },
+    {
+      "id": "earnings.attachments",
+      "call": { "method": "get_earnings_attachments", "args": { "ids": ["e1", "e2"] } },
+      "expect_request": { "method": "GET", "path": "/v1/earnings/attachments", "query": { "ids": ["e1,e2"] } }
+    },
+    {
+      "id": "earnings.citation_pdf",
+      "call": { "method": "get_earnings_citation_pdf", "positional": ["E1"] },
+      "response": { "status": 200, "content_type": "application/pdf", "text": "%PDF-1.4" },
+      "expect_request": { "method": "GET", "path": "/v1/earnings/citations/E1/pdf", "query": {} },
+      "expect_result": "%PDF-1.4"
+    },
+    {
+      "id": "earnings.citation_pdf_with_page",
+      "call": { "method": "get_earnings_citation_pdf", "positional": ["E1"], "args": { "page": 3 } },
+      "response": { "status": 200, "content_type": "application/pdf", "text": "%PDF-1.4" },
+      "expect_request": { "method": "GET", "path": "/v1/earnings/citations/E1/pdf", "query": { "page": ["3"] } }
+    },
+    {
+      "id": "earnings.citation_page",
+      "call": { "method": "get_earnings_citation_page", "positional": ["E1", 4] },
+      "response": { "status": 200, "content_type": "text/html", "text": "<html></html>" },
+      "expect_request": { "method": "GET", "path": "/v1/earnings/citations/E1/page/4", "query": {} },
+      "expect_result": "<html></html>"
+    },
+    {
+      "id": "earnings.upcoming",
+      "call": { "method": "get_upcoming_earnings", "args": { "symbols": ["TCS"], "scrip_codes": ["532540"], "page": 1, "limit": 5 } },
+      "expect_request": {
+        "method": "GET",
+        "path": "/v1/earnings/upcoming",
+        "query": { "symbols": ["TCS"], "scrip_codes": ["532540"], "page": ["1"], "limit": ["5"] }
+      }
+    }
+  ]
+}
