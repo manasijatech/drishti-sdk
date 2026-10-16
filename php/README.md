@@ -162,6 +162,40 @@ Event kinds: `subscribed`, `data`, `error`, `heartbeat`, `raw`, plus `message` f
 
 To get lifecycle logs, pass any PSR-3 logger: `$client->websocket(logger: $logger)`. See [`examples/ws_listen.php`](examples/ws_listen.php) for a complete worker.
 
+## Laravel
+
+The SDK works with Laravel 12 and 13. It supports both Guzzle 7 and Guzzle 8, so it uses whichever version your app already has. Register the client once in a service provider:
+
+```php
+// app/Providers/AppServiceProvider.php
+use Drishti\DrishtiClient;
+
+public function register(): void
+{
+    $this->app->singleton(DrishtiClient::class, fn () => new DrishtiClient(
+        apiKey: config('services.drishti.key'),
+    ));
+}
+```
+
+Add `'drishti' => ['key' => env('DRISHTI_API_KEY')]` to `config/services.php`, then inject `DrishtiClient` into controllers, jobs or commands.
+
+For the WebSocket, use an Artisan command and keep it running with Supervisor, like a queue worker. Laravel's logger works as the session logger:
+
+```php
+// routes/console.php
+use Drishti\DrishtiClient;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
+
+Artisan::command('drishti:listen', function (DrishtiClient $client) {
+    $session = $client->websocket(logger: Log::channel('stack'));
+    $session->onAnnouncements(fn (array $item) => Log::info('announcement', $item));
+    $session->subscribe('announcements', symbols: ['RELIANCE', 'TCS']);
+    $session->run();
+});
+```
+
 ## Development
 
 The library's `composer.json` lives at the repository root.
