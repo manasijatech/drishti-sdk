@@ -14,3 +14,6 @@ js/node_modules/
 js/dist/
 *.log
 *.sqlite*
+vendor/
+composer.lock
+.phpunit.cache/
