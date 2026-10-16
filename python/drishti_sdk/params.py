@@ -17,6 +17,8 @@ def _format_query_params(raw: dict[str, Any]) -> dict[str, Any] | None:
         if value is None:
             continue
         if key in {"symbols", "scrip_codes", "categories", "ids", "type"} and isinstance(value, list):
+            if not value:
+                continue
             out[key] = ",".join(str(item) for item in value)
         else:
             out[key] = value
@@ -198,9 +200,9 @@ class SymbolMetadataQueryParams(BaseModel):
 
 
 class SymbolUniverseQueryParams(BaseModel):
-    """GET /v1/symbols. Defaults to CSV; pass format="json" for JSON."""
+    """GET /v1/symbols. The API defaults to CSV; pass format="json" for JSON."""
 
-    format: Literal["csv", "json"] = "csv"
+    format: Literal["csv", "json"] | None = None
 
     def to_query_params(self) -> dict[str, Any] | None:
         return _format_query_params(self.model_dump(exclude_none=True))
@@ -292,23 +294,8 @@ class DailySummaryRequest(BaseModel):
     context_window_days: int = Field(default=1, ge=1, le=7)
 
     def to_request_body(self) -> dict[str, Any]:
-        body: dict[str, Any] = {}
-        if self.mode is not None:
-            body["mode"] = self.mode
-        if self.portfolio is not None:
-            body["portfolio"] = [
-                item.model_dump(exclude_none=True)
-                for item in self.portfolio
-            ]
-        if self.symbols is not None:
-            body["symbols"] = self.symbols
-        if self.items is not None:
-            body["items"] = [
-                item.model_dump(exclude_none=True)
-                for item in self.items
-            ]
-        body["context_window_days"] = self.context_window_days
-        return body
+        # Only send fields the caller set; the API applies its own defaults.
+        return self.model_dump(exclude_unset=True, exclude_none=True)
 
 
 class BatchSummaryInputLine(DailySummaryRequest):
@@ -317,7 +304,7 @@ class BatchSummaryInputLine(DailySummaryRequest):
     custom_id: str
 
     def to_jsonl_line(self) -> str:
-        return self.model_dump_json(exclude_none=True)
+        return self.model_dump_json(exclude_unset=True, exclude_none=True)
 
 
 def build_batch_input_jsonl(lines: list[BatchSummaryInputLine]) -> bytes:

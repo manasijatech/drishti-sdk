@@ -1,0 +1,120 @@
+{
+  "cases": [
+    {
+      "id": "batch_jobs.list",
+      "call": { "method": "get_batch_jobs", "args": { "limit": 5 } },
+      "expect_request": { "method": "GET", "path": "/v1/batch/jobs", "query": { "limit": ["5"] } }
+    },
+    {
+      "id": "batch_jobs.get",
+      "call": { "method": "get_batch_jobs_job_id", "args": { "job_id": "job_1" } },
+      "response": { "status": 200, "json": { "id": "job_1", "status": "running" } },
+      "expect_request": { "method": "GET", "path": "/v1/batch/jobs/job_1", "query": {} },
+      "expect_result": { "id": "job_1", "status": "running" }
+    },
+    {
+      "id": "batch_jobs.get_numeric_id",
+      "call": { "method": "get_batch_jobs_job_id", "args": { "job_id": 42 } },
+      "expect_request": { "method": "GET", "path": "/v1/batch/jobs/42", "query": {} }
+    },
+    {
+      "id": "batch_jobs.cancel",
+      "call": { "method": "delete_batch_jobs_job_id", "args": { "job_id": "job_1" } },
+      "response": { "status": 200, "json": { "id": "job_1", "status": "cancelled" } },
+      "expect_request": { "method": "DELETE", "path": "/v1/batch/jobs/job_1", "query": {} },
+      "expect_result": { "id": "job_1", "status": "cancelled" }
+    },
+    {
+      "id": "batch_jobs.results_raw",
+      "call": { "method": "get_batch_jobs_job_id_results", "args": { "job_id": "job_1" } },
+      "response": { "status": 200, "content_type": "application/x-ndjson", "text": "{\"custom_id\":\"a\"}\n" },
+      "expect_request": { "method": "GET", "path": "/v1/batch/jobs/job_1/results", "query": {} },
+      "expect_result": "{\"custom_id\":\"a\"}\n"
+    },
+    {
+      "id": "batch_jobs.results_parsed",
+      "call": { "method": "get_batch_jobs_job_id_results_parsed", "args": { "job_id": "job_1" } },
+      "response": {
+        "status": 200,
+        "content_type": "application/x-ndjson",
+        "text": "{\"custom_id\":\"a\",\"status\":\"succeeded\"}\n\n{\"custom_id\":\"b\",\"status\":\"failed\"}\n"
+      },
+      "expect_request": { "method": "GET", "path": "/v1/batch/jobs/job_1/results", "query": {} },
+      "expect_result": [
+        { "custom_id": "a", "status": "succeeded" },
+        { "custom_id": "b", "status": "failed" }
+      ]
+    },
+    {
+      "id": "batch_jobs.submit_file_all_fields",
+      "call": {
+        "method": "post_batch_jobs_file",
+        "args": {
+          "file_name": "input.jsonl",
+          "file_content": "{\"custom_id\":\"a\",\"symbols\":[\"TCS\"]}\n",
+          "display_name": "Nightly run",
+          "metadata": "{\"team\":\"ops\"}",
+          "content_retention": "none"
+        }
+      },
+      "response": { "status": 200, "json": { "id": "job_9", "status": "pending" } },
+      "expect_request": {
+        "method": "POST",
+        "path": "/v1/batch/jobs",
+        "query": {},
+        "headers": { "X-Alpha-Content-Retention": "none" },
+        "multipart": {
+          "fields": { "display_name": "Nightly run", "metadata": "{\"team\":\"ops\"}" },
+          "files": { "file": { "filename": "input.jsonl", "content": "{\"custom_id\":\"a\",\"symbols\":[\"TCS\"]}\n" } }
+        }
+      },
+      "expect_result": { "id": "job_9", "status": "pending" }
+    },
+    {
+      "id": "batch_jobs.submit_alias_minimal",
+      "call": {
+        "method": "post_batch_jobs",
+        "args": { "file_name": "input.jsonl", "file_content": "{}\n" }
+      },
+      "response": { "status": 200, "json": { "id": "job_9", "status": "pending" } },
+      "expect_request": {
+        "method": "POST",
+        "path": "/v1/batch/jobs",
+        "query": {},
+        "multipart": {
+          "fields": {},
+          "files": { "file": { "filename": "input.jsonl", "content": "{}\n" } }
+        }
+      }
+    },
+    {
+      "id": "batch_jobs.wait_for_completion_polls_until_terminal",
+      "call": { "method": "wait_for_batch_job_completion", "args": { "job_id": "job_1", "poll_interval_ms": 0 } },
+      "responses": [
+        { "status": 200, "json": { "id": "job_1", "status": "running" } },
+        { "status": 200, "json": { "id": "job_1", "status": "SUCCEEDED" } }
+      ],
+      "expect_requests": [
+        { "method": "GET", "path": "/v1/batch/jobs/job_1", "query": {} },
+        { "method": "GET", "path": "/v1/batch/jobs/job_1", "query": {} }
+      ],
+      "expect_result": { "id": "job_1", "status": "SUCCEEDED" }
+    },
+    {
+      "id": "batch_jobs.submit_and_wait",
+      "call": {
+        "method": "submit_batch_job_and_wait",
+        "args": { "file_name": "input.jsonl", "file_content": "{}\n", "poll_interval_ms": 0 }
+      },
+      "responses": [
+        { "status": 200, "json": { "id": "job_9", "status": "pending" } },
+        { "status": 200, "json": { "id": "job_9", "status": "partial" } }
+      ],
+      "expect_requests": [
+        { "method": "POST", "path": "/v1/batch/jobs", "query": {} },
+        { "method": "GET", "path": "/v1/batch/jobs/job_9", "query": {} }
+      ],
+      "expect_result": { "id": "job_9", "status": "partial" }
+    }
+  ]
+}

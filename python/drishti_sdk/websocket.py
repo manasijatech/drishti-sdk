@@ -10,6 +10,7 @@ from asyncio import sleep
 from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from typing import Any, Literal, TypedDict, TypeAlias, cast
+from urllib.parse import urlencode
 
 import websockets
 
@@ -103,7 +104,7 @@ def build_websocket_url(base_url: str, *, include_api_key_query: bool = False, a
     ws_base = base.replace("https://", "wss://").replace("http://", "ws://")
     url = f"{ws_base}/v1/ws"
     if include_api_key_query and api_key:
-        return f"{url}?api_key={api_key}"
+        return f"{url}?{urlencode({'api_key': api_key})}"
     return url
 
 

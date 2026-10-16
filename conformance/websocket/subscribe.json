@@ -1,0 +1,35 @@
+{
+  "cases": [
+    {
+      "id": "subscribe.minimal_defaults_to_detailed",
+      "options": { "product": "news" },
+      "expect": { "op": "subscribe", "product": "news", "symbols": [], "detailed": true }
+    },
+    {
+      "id": "subscribe.symbols_are_trimmed_uppercased_and_deduped",
+      "options": { "product": "news", "symbols": [" tcs ", "TCS", "", "  ", "infy"] },
+      "expect": { "op": "subscribe", "product": "news", "symbols": ["TCS", "INFY"], "detailed": true }
+    },
+    {
+      "id": "subscribe.categories_are_trimmed_and_deduped",
+      "options": { "product": "announcements", "categories": [" Dividend ", "Dividend", "", "Board Meeting"], "detailed": false },
+      "expect": {
+        "op": "subscribe",
+        "product": "announcements",
+        "symbols": [],
+        "detailed": false,
+        "categories": ["Dividend", "Board Meeting"]
+      }
+    },
+    {
+      "id": "subscribe.empty_categories_are_omitted",
+      "options": { "product": "announcements", "categories": ["", " "] },
+      "expect": { "op": "subscribe", "product": "announcements", "symbols": [], "detailed": true }
+    },
+    {
+      "id": "subscribe.block_deals_uses_hyphenated_wire_name",
+      "options": { "product": "block_deals", "symbols": ["RELIANCE"] },
+      "expect": { "op": "subscribe", "product": "block-deals", "symbols": ["RELIANCE"], "detailed": true }
+    }
+  ]
+}

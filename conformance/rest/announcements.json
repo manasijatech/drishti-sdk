@@ -1,0 +1,55 @@
+{
+  "cases": [
+    {
+      "id": "announcements.categories",
+      "call": { "method": "get_announcements_categories", "args": {} },
+      "response": { "status": 200, "json": { "data": ["Dividend"] } },
+      "expect_request": { "method": "GET", "path": "/v1/announcements/categories", "query": {} },
+      "expect_result": { "data": ["Dividend"] }
+    },
+    {
+      "id": "announcements.list_all_filters",
+      "call": {
+        "method": "get_announcements",
+        "args": {
+          "symbols": ["TCS"],
+          "scrip_codes": ["532540", "500325"],
+          "categories": ["Board Meeting", "Dividend"],
+          "from": "2026-02-01",
+          "to": "2026-02-28",
+          "detailed": true,
+          "important": false,
+          "page": 3,
+          "limit": 20
+        }
+      },
+      "expect_request": {
+        "method": "GET",
+        "path": "/v1/announcements",
+        "query": {
+          "symbols": ["TCS"],
+          "scrip_codes": ["532540,500325"],
+          "categories": ["Board Meeting,Dividend"],
+          "from": ["2026-02-01"],
+          "to": ["2026-02-28"],
+          "detailed": ["true"],
+          "important": ["false"],
+          "page": ["3"],
+          "limit": ["20"]
+        }
+      }
+    },
+    {
+      "id": "announcements.attachments",
+      "call": { "method": "get_announcements_attachments", "args": { "ids": ["a1", "a2"] } },
+      "expect_request": { "method": "GET", "path": "/v1/announcements/attachments", "query": { "ids": ["a1,a2"] } }
+    },
+    {
+      "id": "announcements.citation_pdf",
+      "call": { "method": "get_announcement_citation_pdf", "positional": ["ANN1"] },
+      "response": { "status": 200, "content_type": "application/pdf", "text": "%PDF-1.4" },
+      "expect_request": { "method": "GET", "path": "/v1/announcements/citations/ANN1/pdf", "query": {} },
+      "expect_result": "%PDF-1.4"
+    }
+  ]
+}

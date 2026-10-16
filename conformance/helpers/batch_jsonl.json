@@ -1,0 +1,31 @@
+{
+  "cases": [
+    {
+      "id": "build_batch_input_jsonl.lines_are_sent_as_given",
+      "function": "build_batch_input_jsonl",
+      "input": [
+        { "custom_id": "a", "symbols": ["TCS"], "mode": "news_context", "context_window_days": 3 },
+        { "custom_id": "b", "portfolio": [{ "symbol": "INFY", "exposure": 0.5 }] }
+      ],
+      "expect_lines": [
+        { "custom_id": "a", "symbols": ["TCS"], "mode": "news_context", "context_window_days": 3 },
+        { "custom_id": "b", "portfolio": [{ "symbol": "INFY", "exposure": 0.5 }] }
+      ]
+    },
+    {
+      "id": "build_batch_input_jsonl.empty_is_rejected",
+      "function": "build_batch_input_jsonl",
+      "input": [],
+      "expect_error": { "type": "invalid_argument" }
+    },
+    {
+      "id": "parse_batch_result_jsonl.skips_blank_lines",
+      "function": "parse_batch_result_jsonl",
+      "input": "{\"custom_id\":\"a\",\"status\":\"succeeded\"}\n\n   \n{\"custom_id\":\"b\",\"status\":\"failed\",\"error\":{\"message\":\"x\"}}\n",
+      "expect_result": [
+        { "custom_id": "a", "status": "succeeded" },
+        { "custom_id": "b", "status": "failed", "error": { "message": "x" } }
+      ]
+    }
+  ]
+}

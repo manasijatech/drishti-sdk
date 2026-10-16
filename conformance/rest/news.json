@@ -1,0 +1,44 @@
+{
+  "cases": [
+    {
+      "id": "news.no_params",
+      "call": { "method": "get_news", "args": {} },
+      "expect_request": { "method": "GET", "path": "/v1/news", "query": {} }
+    },
+    {
+      "id": "news.all_filters",
+      "call": {
+        "method": "get_news",
+        "args": {
+          "symbols": ["TCS", "INFY"],
+          "scrip_codes": ["532540"],
+          "sentiment": "positive",
+          "from": "2026-01-01",
+          "to": "2026-01-31T23:59:59Z",
+          "page": 2,
+          "limit": 5
+        }
+      },
+      "response": { "status": 200, "json": { "data": [{ "id": "n1" }], "page": 2 } },
+      "expect_request": {
+        "method": "GET",
+        "path": "/v1/news",
+        "query": {
+          "symbols": ["TCS,INFY"],
+          "scrip_codes": ["532540"],
+          "sentiment": ["positive"],
+          "from": ["2026-01-01"],
+          "to": ["2026-01-31T23:59:59Z"],
+          "page": ["2"],
+          "limit": ["5"]
+        }
+      },
+      "expect_result": { "data": [{ "id": "n1" }], "page": 2 }
+    },
+    {
+      "id": "news.empty_lists_are_omitted",
+      "call": { "method": "get_news", "args": { "symbols": [], "scrip_codes": [] } },
+      "expect_request": { "method": "GET", "path": "/v1/news", "query": {} }
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "cases": [
+    {
+      "id": "block_deals.all_filters",
+      "call": {
+        "method": "get_block_deals",
+        "args": {
+          "symbols": ["RELIANCE", "TCS"],
+          "exchange": "NSE",
+          "from": "2026-01-01",
+          "to": "2026-01-02",
+          "page": 1,
+          "limit": 50
+        }
+      },
+      "response": { "status": 200, "json": { "data": [], "page": 1 } },
+      "expect_request": {
+        "method": "GET",
+        "path": "/v1/block-deals",
+        "query": {
+          "symbols": ["RELIANCE,TCS"],
+          "exchange": ["NSE"],
+          "from": ["2026-01-01"],
+          "to": ["2026-01-02"],
+          "page": ["1"],
+          "limit": ["50"]
+        }
+      },
+      "expect_result": { "data": [], "page": 1 }
+    }
+  ]
+}

@@ -1,0 +1,115 @@
+{
+  "cases": [
+    {
+      "id": "concalls.list_all_filters",
+      "call": {
+        "method": "get_concalls",
+        "args": {
+          "symbols": ["TCS"],
+          "scrip_codes": ["532540"],
+          "from": "2026-01-01",
+          "to": "2026-01-31",
+          "detailed": false,
+          "page": 2,
+          "limit": 25
+        }
+      },
+      "expect_request": {
+        "method": "GET",
+        "path": "/v1/concalls",
+        "query": {
+          "symbols": ["TCS"],
+          "scrip_codes": ["532540"],
+          "from": ["2026-01-01"],
+          "to": ["2026-01-31"],
+          "detailed": ["false"],
+          "page": ["2"],
+          "limit": ["25"]
+        }
+      }
+    },
+    {
+      "id": "concalls.citation_pdf",
+      "call": { "method": "get_concall_citation_pdf", "positional": ["C1"] },
+      "response": { "status": 200, "content_type": "application/pdf", "text": "%PDF-1.4" },
+      "expect_request": { "method": "GET", "path": "/v1/concalls/citations/C1/pdf", "query": {} },
+      "expect_result": "%PDF-1.4"
+    },
+    {
+      "id": "concalls.index",
+      "call": {
+        "method": "get_concalls_index",
+        "args": {
+          "symbols": ["TCS"],
+          "scrip_codes": ["532540"],
+          "from": "2026-01-01",
+          "to": "2026-03-31",
+          "quarter": "q4_26",
+          "page": 1,
+          "limit": 10
+        }
+      },
+      "expect_request": {
+        "method": "GET",
+        "path": "/v1/concalls/index",
+        "query": {
+          "symbols": ["TCS"],
+          "scrip_codes": ["532540"],
+          "from": ["2026-01-01"],
+          "to": ["2026-03-31"],
+          "quarter": ["q4_26"],
+          "page": ["1"],
+          "limit": ["10"]
+        }
+      }
+    },
+    {
+      "id": "concalls.upcoming",
+      "call": {
+        "method": "get_upcoming_concalls",
+        "args": { "symbols": ["TCS"], "scrip_codes": ["532540"], "detailed": true, "page": 1, "limit": 5 }
+      },
+      "expect_request": {
+        "method": "GET",
+        "path": "/v1/concalls/upcoming",
+        "query": { "symbols": ["TCS"], "scrip_codes": ["532540"], "detailed": ["true"], "page": ["1"], "limit": ["5"] }
+      }
+    },
+    {
+      "id": "concalls.detail",
+      "call": { "method": "get_concalls_detail", "args": { "quarter": "q4_26", "scrip_code": "532540", "detailed": false } },
+      "response": { "status": 200, "json": { "id": "c1" } },
+      "expect_request": {
+        "method": "GET",
+        "path": "/v1/concalls/detail",
+        "query": { "quarter": ["q4_26"], "scrip_code": ["532540"], "detailed": ["false"] }
+      },
+      "expect_result": { "id": "c1" }
+    },
+    {
+      "id": "concalls.transcript",
+      "call": { "method": "get_concalls_transcript", "args": { "quarter": "q4_26", "symbol": "TCS" } },
+      "expect_request": {
+        "method": "GET",
+        "path": "/v1/concalls/transcript",
+        "query": { "quarter": ["q4_26"], "symbol": ["TCS"] }
+      }
+    },
+    {
+      "id": "concalls.transcripts_batch",
+      "call": {
+        "method": "post_concalls_transcripts",
+        "args": { "items": [{ "symbol": "TCS", "quarter": "q4_26" }, { "symbol": "INFY", "quarter": "q3_26" }] }
+      },
+      "response": { "status": 200, "json": { "data": [] } },
+      "expect_request": {
+        "method": "POST",
+        "path": "/v1/concalls/transcripts",
+        "query": {},
+        "headers": { "Content-Type": "application/json" },
+        "json_body": { "items": [{ "symbol": "TCS", "quarter": "q4_26" }, { "symbol": "INFY", "quarter": "q3_26" }] }
+      },
+      "expect_result": { "data": [] }
+    }
+  ]
+}

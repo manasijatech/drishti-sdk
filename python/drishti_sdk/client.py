@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 from typing import TYPE_CHECKING, Any, Literal, Mapping, TypeVar, cast
+from urllib.parse import quote
 
 if TYPE_CHECKING:
     from drishti_sdk.websocket import (
@@ -124,7 +125,7 @@ class DrishtiClient:
         self.close()
 
     def _merge_headers(self) -> dict[str, str]:
-        out = dict(self._extra_headers)
+        out = {"Accept": "application/json", **self._extra_headers}
         out["X-API-Key"] = self._api_key
         return out
 
@@ -141,7 +142,8 @@ class DrishtiClient:
             return path
         resolved_path = path
         for key, value in path_params.items():
-            resolved_path = resolved_path.replace(f":{key}", str(value)).replace(f"{{{key}}}", str(value))
+            encoded = quote(str(value), safe="")
+            resolved_path = resolved_path.replace(f":{key}", encoded).replace(f"{{{key}}}", encoded)
         return resolved_path
 
     def request(
@@ -283,7 +285,7 @@ class DrishtiClient:
     def get_symbols(
         self,
         *,
-        format: Literal["csv", "json"] = "csv",
+        format: Literal["csv", "json"] | None = None,
     ) -> str | SymbolMetadataResponse:
         params = SymbolUniverseQueryParams(format=format)
         return self.get("/v1/symbols", params=coerce_query_params(params), path_params=None)
