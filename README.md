@@ -13,12 +13,20 @@ announcements, earnings, conference calls, news, or real-time updates.
 |---------|-----------|--------------|
 | Python SDK | `python/` | `drishti-sdk` on PyPI (import `drishti_sdk`) |
 | TypeScript SDK | `js/` | `drishti-sdk` on npm |
+| PHP SDK | `php/` | `manasija/drishti-sdk` on Packagist (namespace `Drishti\`) |
 | MCP installer | `mcp/` | `drishti-mcp` on npm |
 
-See `python/README.md`, `js/README.md`, and `mcp/README.md` for install and usage.
+See `python/README.md`, `js/README.md`, `php/README.md`, and `mcp/README.md` for install and usage.
+All SDKs pass the shared [conformance suite](conformance/README.md), so they behave the same.
 
 **Getting started:** [create a Drishti API key](https://platform.manasija.in/)
 and read the [Drishti API documentation](https://developers.manasija.in/docs).
+
+PHP install (PHP 8.2+):
+
+```bash
+composer require manasija/drishti-sdk
+```
 
 JavaScript / TypeScript install options:
 

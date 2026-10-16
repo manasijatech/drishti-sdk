@@ -7,9 +7,10 @@ way. Each SDK has a thin runner that loads these JSON files:
 |-----|--------|---------|
 | Python | `python/tests/test_conformance.py` | `cd python && pytest` |
 | JS / TS | `js/tests/conformance.test.mjs` | `cd js && npm test` |
+| PHP | `php/tests/ConformanceTest.php` | `composer test` (repo root) |
 
 To change SDK behaviour, change the fixture first, watch every runner fail, then update each SDK
-until they all pass. CI (`.github/workflows/test.yml`) runs both suites on every PR.
+until they all pass. CI (`.github/workflows/test.yml`) runs every suite on every PR.
 
 ## Layout
 
@@ -26,7 +27,8 @@ until they all pass. CI (`.github/workflows/test.yml`) runs both suites on every
 Names are canonical **snake_case** and match the Python SDK and the API. Runners translate them to
 the local idiom:
 
-- Method `get_news` → JS `getNews`.
+- Method `get_news` → JS and PHP `getNews`.
+- PHP passes arguments as camelCase named arguments (`scrip_codes` → `scripCodes:`, `job_id` → `jobId:`, `file_content` → `fileContent:`), with `positional` spread first.
 - Argument `from` → Python `from_`.
 - `content_retention` → JS `contentRetention`.
 - `file_name` + `file_content` → Python `file_name` + `file_bytes`, JS `filename` + `file` (Blob).
@@ -50,9 +52,9 @@ Runners use API key `test-key`, base URL `https://api.test`, and retry delays of
 | `expect_request` / `expect_requests` | Requests the SDK must send, exactly that many. `path` is the raw, percent-encoded path. `query` is a decoded multimap that must match exactly. `headers` must be present with these values (other headers are allowed). `json_body` and `multipart` are optional. |
 | `expect_request_count` | Number of requests, when their details don't matter. |
 | `expect_result` | Deep-equal return value. `null` means the SDK returns null/None. |
-| `expect_error` | `{"type": "api_error", "status", "body"}` (an API error exposing the status and parsed body), or `{"type": "invalid_argument"}` (Python `ValueError`, JS `Error`). |
+| `expect_error` | `{"type": "api_error", "status", "body"}` (an API error exposing the status and parsed body), or `{"type": "invalid_argument"}` (Python `ValueError`, JS `Error`, PHP `InvalidArgumentException`). |
 
-## Adding an SDK (e.g. PHP)
+## Adding an SDK
 
 Write a runner that iterates every file above, applies the naming conventions, injects a fake
 HTTP transport that records requests and replays `responses`, and asserts as described. Add the
