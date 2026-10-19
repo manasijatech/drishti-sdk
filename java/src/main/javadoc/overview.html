@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Drishti SDK for Java</title>
+</head>
+<body>
+<p>The official Java client for the <a href="https://drishti.manasija.in">Drishti</a> Indian stock-market API
+(<code>/v1</code>). It covers corporate announcements, earnings filings, conference calls, news, block deals,
+market alerts, AI daily summaries, batch jobs and live websocket streams.</p>
+
+<h1>Requirements</h1>
+<ul>
+  <li>Java 17 or later.</li>
+  <li>A Drishti API key from the <a href="https://platform.manasija.in/developer-portal">platform console</a>.</li>
+  <li>One runtime dependency, Jackson Databind. HTTP and websockets use the JDK's <code>java.net.http</code>.</li>
+</ul>
+
+<h1>Install</h1>
+<pre>
+&lt;dependency&gt;
+  &lt;groupId&gt;io.github.techmanasija&lt;/groupId&gt;
+  &lt;artifactId&gt;drishti-sdk&lt;/artifactId&gt;
+  &lt;version&gt;1.0.0&lt;/version&gt;
+&lt;/dependency&gt;
+</pre>
+
+<h1>Quick start</h1>
+<pre>{@code
+DrishtiClient client = DrishtiClient.create(System.getenv("DRISHTI_API_KEY"));
+
+JsonNode news = client.getNews(new NewsParams().symbols("RELIANCE", "TCS").limit(10));
+for (JsonNode item : news.path("data")) {
+    System.out.println(item.path("symbol").asText() + ": " + item.path("title").asText());
+}
+}</pre>
+
+<h1>Where to start</h1>
+<table class="striped">
+  <caption>Main entry points</caption>
+  <thead><tr><th scope="col">Task</th><th scope="col">Use</th></tr></thead>
+  <tbody>
+    <tr><td>Call REST endpoints</td><td>{@link in.manasija.drishti.DrishtiClient}, with filters from {@link in.manasija.drishti.params}</td></tr>
+    <tr><td>Stream live events</td><td>{@link in.manasija.drishti.websocket.DrishtiWebSocketSession}</td></tr>
+    <tr><td>Run many AI summaries at once</td><td>{@link in.manasija.drishti.DrishtiClient#submitBatchJobAndWait(in.manasija.drishti.params.BatchJobRequest)} and {@link in.manasija.drishti.Params#buildBatchInputJsonl(java.util.List)}</td></tr>
+    <tr><td>Handle failures</td><td>{@link in.manasija.drishti.exception.DrishtiApiException} and the other types in {@link in.manasija.drishti.exception}</td></tr>
+    <tr><td>Check credits and limits</td><td>{@link in.manasija.drishti.DrishtiClient#getAccountUsage()} and {@link in.manasija.drishti.DrishtiClient#getAccountLimits()}</td></tr>
+  </tbody>
+</table>
+
+<h1>Live streams</h1>
+<pre>{@code
+DrishtiWebSocketSession ws = client.websocket()
+        .onAnnouncements(a -> System.out.println(a.path("symbol").asText() + " " + a.path("summary").asText()))
+        .onSubscribed(ack -> System.out.println("subscribed on tier " + ack.tier()));
+ws.subscribe("announcements", List.of("RELIANCE", "TCS"));
+ws.run(); // reconnects and resubscribes automatically until stop()
+}</pre>
+
+<h1>Batch summaries</h1>
+<pre>{@code
+String jsonl = Params.buildBatchInputJsonl(List.of(
+        Map.of("custom_id", "tcs", "symbols", List.of("TCS"), "mode", "news_context"),
+        Map.of("custom_id", "infy", "symbols", List.of("INFY"), "mode", "news_context")));
+JsonNode job = client.submitBatchJobAndWait(new BatchJobRequest("watchlist.jsonl", jsonl),
+        Duration.ofSeconds(5), Duration.ofMinutes(30));
+List<ObjectNode> results = client.getBatchJobsJobIdResultsParsed(job.path("id").asText());
+}</pre>
+
+<h1>Behaviour shared by every Drishti SDK</h1>
+<p>This SDK passes the same cross-language conformance suite as the Python, TypeScript and PHP SDKs. Requests,
+retries, error handling and websocket parsing therefore behave the same in every language.</p>
+</body>
+</html>

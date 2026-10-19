@@ -8,6 +8,7 @@ way. Each SDK has a thin runner that loads these JSON files:
 | Python | `python/tests/test_conformance.py` | `cd python && pytest` |
 | JS / TS | `js/tests/conformance.test.mjs` | `cd js && npm test` |
 | PHP | `php/tests/ConformanceTest.php` | `composer test` (repo root) |
+| Java | `java/src/test/java/in/manasija/drishti/ConformanceTest.java` | `cd java && ./mvnw test` |
 
 To change SDK behaviour, change the fixture first, watch every runner fail, then update each SDK
 until they all pass. CI (`.github/workflows/test.yml`) runs every suite on every PR.
@@ -36,6 +37,14 @@ the local idiom:
 - `post_daily_summary`'s `body` → Python `request`.
 - Parsed WebSocket events use snake_case fields (`full_feed`, `sent_at`). An absent optional field
   is `null`.
+- Java maps each call explicitly in `ConformanceTest.invoke`:
+  - filters go into the endpoint's params object (`get_news` → `getNews(new NewsParams()...)`);
+  - `content_retention` → `ContentRetention.NONE`;
+  - `poll_interval_ms` → `Duration`;
+  - numeric `job_id` → its string form;
+  - `get_symbols` with `format: "json"` → `getSymbolsJson()`;
+  - citation PDFs are `byte[]`, compared as UTF-8 text;
+  - parsed events are compared through `WebSocketEvent.toJson()`.
 
 Runners use API key `test-key`, base URL `https://api.test`, and retry delays of 0.
 
