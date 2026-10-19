@@ -1,0 +1,62 @@
+package in.manasija.drishti.params;
+
+import java.util.Objects;
+
+/**
+ * Lookup for one filing on {@code GET /v1/earnings/detail} or {@code GET /v1/concalls/detail}.
+ *
+ * <p>The fiscal quarter is required; identify the company with {@link #symbol(String)} or
+ * {@link #scripCode(String)}.
+ *
+ * <p>Setters are fluent and every unset filter is omitted from the request:
+ *
+ * <pre>{@code
+ * new DetailParams("q4_26").symbol("TCS").detailed(true)
+ * }</pre>
+ *
+ * @see in.manasija.drishti.DrishtiClient#getEarningsDetail(DetailParams)
+ * @see <a href="https://drishti.manasija.in/docs/api-reference/earnings/get-one-earnings-filing">API reference</a>
+ * @since 1.0.0
+ */
+public final class DetailParams extends QueryParams<DetailParams> {
+
+    /**
+     * Creates the lookup for a fiscal quarter.
+     *
+     * @param quarter the fiscal quarter, written {@code q<quarter>_<yy>}, for example {@code q4_26}
+     * @throws NullPointerException when {@code quarter} is {@code null}
+     */
+    public DetailParams(String quarter) {
+        set("quarter", Objects.requireNonNull(quarter, "quarter"));
+    }
+
+    /**
+     * Selects the company by NSE trading symbol.
+     *
+     * @param value the trading symbol, or {@code null} to clear it
+     * @return this object, for chaining
+     */
+    public DetailParams symbol(String value) {
+        return set("symbol", value);
+    }
+
+    /**
+     * Selects the company by BSE scrip code.
+     *
+     * @param value the BSE scrip code, or {@code null} to clear it
+     * @return this object, for chaining
+     */
+    public DetailParams scripCode(String value) {
+        return set("scrip_code", value);
+    }
+
+    /**
+     * Chooses the detail shape ({@code true}) or the summary list shape ({@code false}).
+     *
+     * @param value {@code true} for the detail shape, or {@code null} to clear it
+     * @return this object, for chaining
+     */
+    public DetailParams detailed(Boolean value) {
+        return set("detailed", value);
+    }
+}

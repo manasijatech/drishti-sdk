@@ -18,6 +18,7 @@ Use this skill to write or review code that calls Drishti Alpha API (`/v1`) thro
 
 - TypeScript/JavaScript package: `drishti-sdk`.
 - Python package: `drishti-sdk`, import module `drishti_sdk`.
+- Java artifact: `in.manasija:drishti-sdk`, package `in.manasija.drishti` (see `references/usage.md`).
 - Both SDKs expose `DrishtiClient` and `DrishtiApiError`.
 
 ## JavaScript And TypeScript

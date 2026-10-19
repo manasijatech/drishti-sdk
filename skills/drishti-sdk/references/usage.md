@@ -129,9 +129,35 @@ except DrishtiApiError as error:
     raise
 ```
 
+## Java Example
+
+Maven `in.manasija:drishti-sdk` (Java 17+, package `in.manasija.drishti`). Method names match JS; filters are fluent params objects; JSON comes back as Jackson `JsonNode`.
+
+```java
+import in.manasija.drishti.DrishtiClient;
+import in.manasija.drishti.exception.DrishtiApiException;
+import in.manasija.drishti.params.AnnouncementsParams;
+
+DrishtiClient client = DrishtiClient.fromEnvironment(); // DRISHTI_API_KEY
+try {
+    JsonNode announcements = client.getAnnouncements(new AnnouncementsParams()
+            .symbols("RELIANCE").categories("Board Meeting").important(true).detailed(true).limit(10));
+    JsonNode summary = client.postDailySummary(Map.of("portfolio", List.of(Map.of("symbol", "RELIANCE", "exposure", 10))));
+} catch (DrishtiApiException e) {
+    System.err.println(e.getStatusCode() + " " + e.getBody());
+}
+
+// WebSocket: blocking run() or background start()/close(); reconnects and resubscribes automatically.
+DrishtiWebSocketSession ws = client.websocket().onAnnouncements(a -> System.out.println(a));
+ws.subscribe("alerts", List.of("RELIANCE"));
+ws.start();
+```
+
+Low-level: `client.get("/v1/news", Map.of("symbols", "RELIANCE"))` or `client.requestV1("GET", "news", query, null)` returns a `DrishtiResponse` (`json()`, `text()`, `bytes()`).
+
 ## WebSocket
 
-Websocket is supported in both SDKs at `/v1/ws`. Sessions connect automatically, replay subscriptions after reconnects, and retry with backoff until `close()`.
+Websocket is supported in every SDK at `/v1/ws` (Java usage is above). Sessions connect automatically, replay subscriptions after reconnects, and retry with backoff until `close()`.
 
 ### JavaScript / TypeScript
 

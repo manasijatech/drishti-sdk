@@ -14,9 +14,10 @@ announcements, earnings, conference calls, news, or real-time updates.
 | Python SDK | `python/` | `drishti-sdk` on PyPI (import `drishti_sdk`) |
 | TypeScript SDK | `js/` | `drishti-sdk` on npm |
 | PHP SDK | `php/` | `manasija/drishti-sdk` on Packagist (namespace `Drishti\`) |
+| Java SDK | `java/` | `in.manasija:drishti-sdk` (Maven, package `in.manasija.drishti`) |
 | MCP installer | `mcp/` | `drishti-mcp` on npm |
 
-See `python/README.md`, `js/README.md`, `php/README.md`, and `mcp/README.md` for install and usage.
+See `python/README.md`, `js/README.md`, `php/README.md`, `java/README.md`, and `mcp/README.md` for install and usage.
 All SDKs pass the shared [conformance suite](conformance/README.md), so they behave the same.
 
 **Getting started:** [create a Drishti API key](https://platform.manasija.in/)
@@ -26,6 +27,16 @@ PHP install (PHP 8.2+):
 
 ```bash
 composer require manasija/drishti-sdk
+```
+
+Java install (Java 17+), Maven:
+
+```xml
+<dependency>
+  <groupId>in.manasija</groupId>
+  <artifactId>drishti-sdk</artifactId>
+  <version>1.0.0</version>
+</dependency>
 ```
 
 JavaScript / TypeScript install options:

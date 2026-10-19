@@ -37,6 +37,26 @@ jobs:
       - run: npm ci
       - run: npm test
 
+  java:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['17', '21']
+    name: java (${{ matrix.java }})
+    defaults:
+      run:
+        working-directory: java
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      # Tests (conformance, websocket session, loopback transports, examples) plus the Javadoc gate.
+      - run: chmod +x mvnw && ./mvnw -B verify
+
   php:
     runs-on: ubuntu-latest
     strategy:
