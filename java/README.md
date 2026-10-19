@@ -24,7 +24,7 @@ Maven:
 
 ```xml
 <dependency>
-  <groupId>in.manasija</groupId>
+  <groupId>io.github.techmanasija</groupId>
   <artifactId>drishti-sdk</artifactId>
   <version>1.0.0</version>
 </dependency>
@@ -33,7 +33,7 @@ Maven:
 Gradle:
 
 ```groovy
-implementation("in.manasija:drishti-sdk:1.0.0")
+implementation("io.github.techmanasija:drishti-sdk:1.0.0")
 ```
 
 To drop the SDK onto a classpath without a build tool, use `drishti-sdk-1.0.0-all.jar`. It

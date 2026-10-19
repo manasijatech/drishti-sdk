@@ -131,7 +131,7 @@ except DrishtiApiError as error:
 
 ## Java Example
 
-Maven `in.manasija:drishti-sdk` (Java 17+, package `in.manasija.drishti`). Method names match JS; filters are fluent params objects; JSON comes back as Jackson `JsonNode`.
+Maven `io.github.techmanasija:drishti-sdk` (Java 17+, package `in.manasija.drishti`). Method names match JS; filters are fluent params objects; JSON comes back as Jackson `JsonNode`.
 
 ```java
 import in.manasija.drishti.DrishtiClient;

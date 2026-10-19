@@ -14,7 +14,7 @@ announcements, earnings, conference calls, news, or real-time updates.
 | Python SDK | `python/` | `drishti-sdk` on PyPI (import `drishti_sdk`) |
 | TypeScript SDK | `js/` | `drishti-sdk` on npm |
 | PHP SDK | `php/` | `manasija/drishti-sdk` on Packagist (namespace `Drishti\`) |
-| Java SDK | `java/` | `in.manasija:drishti-sdk` (Maven, package `in.manasija.drishti`) |
+| Java SDK | `java/` | `io.github.techmanasija:drishti-sdk` (Maven, package `in.manasija.drishti`) |
 | MCP installer | `mcp/` | `drishti-mcp` on npm |
 
 See `python/README.md`, `js/README.md`, `php/README.md`, `java/README.md`, and `mcp/README.md` for install and usage.
@@ -33,7 +33,7 @@ Java install (Java 17+), Maven:
 
 ```xml
 <dependency>
-  <groupId>in.manasija</groupId>
+  <groupId>io.github.techmanasija</groupId>
   <artifactId>drishti-sdk</artifactId>
   <version>1.0.0</version>
 </dependency>
