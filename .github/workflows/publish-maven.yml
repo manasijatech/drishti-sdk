@@ -1,0 +1,120 @@
+name: Publish Maven package
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "java/pom.xml"
+      - ".github/workflows/publish-maven.yml"
+  workflow_dispatch:
+    inputs:
+      auto_publish:
+        description: "Publish straight to Maven Central (otherwise the upload waits for a Publish click in the Central Portal)"
+        type: boolean
+        default: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: java
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+          # Writes ~/.m2/settings.xml with a "central" server that reads these env vars.
+          server-id: central
+          server-username: CENTRAL_TOKEN_USERNAME
+          server-password: CENTRAL_TOKEN_PASSWORD
+
+      - name: Check package version changed
+        id: version
+        working-directory: .
+        run: |
+          version_of() { grep -m1 -o '<version>[^<]*</version>' | sed -E 's#</?version>##g'; }
+          NEW_VERSION=$(sed -n '/<artifactId>drishti-sdk<\/artifactId>/,/<\/version>/p' java/pom.xml | version_of)
+          echo "new=$NEW_VERSION"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual run: publishing $NEW_VERSION."
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          BASE="${{ github.event.before }}"
+          if [ "$BASE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BASE:java/pom.xml"; then
+            echo "Package did not exist before this push."
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          OLD_VERSION=$(git show "$BASE:java/pom.xml" | sed -n '/<artifactId>drishti-sdk<\/artifactId>/,/<\/version>/p' | version_of)
+          echo "old=$OLD_VERSION"
+          if [ "$OLD_VERSION" != "$NEW_VERSION" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Tests, the Javadoc gate and packaging run on every attempt, even when nothing is published.
+      - name: Build and test
+        run: chmod +x mvnw && ./mvnw -B verify
+
+      # Maven Central needs signatures it can check against a public keyserver. Each release
+      # gets a fresh signing key that only ever exists on this runner, so no private key or
+      # passphrase is stored anywhere. To sign with a long-lived key instead, import it here.
+      - name: Create release signing key
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          export GNUPGHOME="$RUNNER_TEMP/gnupg"
+          mkdir -p "$GNUPGHOME" && chmod 700 "$GNUPGHOME"
+          gpg --batch --passphrase '' --quick-gen-key \
+            "Drishti SDK release ${{ github.run_id }} <operations@manasija.in>" rsa4096 sign 2y
+          KEY_ID=$(gpg --list-secret-keys --with-colons | awk -F: '/^sec/{print $5; exit}')
+          echo "Signing key: $KEY_ID"
+
+          for server in hkps://keyserver.ubuntu.com hkps://keys.openpgp.org; do
+            gpg --keyserver "$server" --send-keys "$KEY_ID" || echo "Upload to $server failed"
+          done
+
+          # Wait until the key is downloadable, so Central's signature check can find it.
+          CHECK_HOME="$RUNNER_TEMP/gnupg-check"
+          mkdir -p "$CHECK_HOME" && chmod 700 "$CHECK_HOME"
+          for attempt in $(seq 1 30); do
+            if GNUPGHOME="$CHECK_HOME" gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys "$KEY_ID" 2>/dev/null; then
+              echo "Key is live on keyserver.ubuntu.com"
+              break
+            fi
+            if [ "$attempt" = 30 ]; then echo "Key never appeared on the keyserver" && exit 1; fi
+            sleep 10
+          done
+
+          echo "GNUPGHOME=$GNUPGHOME" >> "$GITHUB_ENV"
+          echo "SIGNING_KEY_ID=$KEY_ID" >> "$GITHUB_ENV"
+
+      - name: Upload to Maven Central
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          AUTO_PUBLISH="${{ github.event.inputs.auto_publish == 'true' }}"
+          WAIT_UNTIL=validated
+          if [ "$AUTO_PUBLISH" = "true" ]; then WAIT_UNTIL=published; fi
+          ./mvnw -B -P release -DskipTests \
+            -Dgpg.keyname="$SIGNING_KEY_ID" \
+            -Dcentral.autoPublish="$AUTO_PUBLISH" \
+            -Dcentral.waitUntil="$WAIT_UNTIL" \
+            deploy
+        env:
+          CENTRAL_TOKEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
+          CENTRAL_TOKEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}

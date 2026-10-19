@@ -254,3 +254,29 @@ DRISHTI_API_KEY=... ./mvnw test -Dtest=LiveSmokeTest  # optional: real API, uses
 - writes `target/drishti-sdk-1.0.0.jar`, `-sources.jar`, `-javadoc.jar` and `-all.jar`.
 
 The API reference is generated at `target/reports/apidocs/index.html`.
+
+## Releasing to Maven Central
+
+Releases go out through the Sonatype Central Portal under the `io.github.techmanasija` namespace (verified through GitHub, no DNS needed).
+
+**To release:** bump `<version>` in `pom.xml` and merge to `main`.
+- `.github/workflows/publish-maven.yml` sees the version change, runs the full build, signs every artifact and uploads them.
+- The deployment then waits for a manual **Publish** click at
+  [central.sonatype.com → Deployments](https://central.sonatype.com/publishing/deployments).
+- A published version can never be changed or deleted, so check the deployment's file list before clicking.
+- To retry an upload, run the workflow by hand from the Actions tab.
+
+**Repository secrets the workflow needs:** `CENTRAL_TOKEN_USERNAME` and `CENTRAL_TOKEN_PASSWORD`, a Central Portal
+user token (Account → Generate User Token), not your login.
+
+**Signing:** each release is signed with a fresh key that the workflow creates on the CI runner. It publishes
+the public key to keyserver.ubuntu.com and keys.openpgp.org, where Central checks signatures, and waits
+until the key is downloadable. No private key or passphrase is stored anywhere. To sign with a long-lived
+key instead, import it in the "Create release signing key" step.
+
+**Publishing without the manual click:** run the workflow by hand with **auto_publish** checked. It then
+publishes straight to Maven Central and waits until the release is live.
+
+To check the signed bundle locally without uploading, run `./mvnw -P release -DskipPublishing=true deploy`.
+It needs a `central` server entry in `~/.m2/settings.xml` (dummy values are fine) and a local GPG key
+(pass `-Dgpg.keyname=<KEY_ID>` to pick it).
