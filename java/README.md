@@ -257,7 +257,7 @@ The API reference is generated at `target/reports/apidocs/index.html`.
 
 ## Releasing to Maven Central
 
-Releases go out through the Sonatype Central Portal under the `in.manasija` namespace.
+Releases go out through the Sonatype Central Portal under the `io.github.techmanasija` namespace (verified through GitHub, no DNS needed).
 
 **To release:** bump `<version>` in `pom.xml` and merge to `main`.
 - `.github/workflows/publish-maven.yml` sees the version change, runs the full build, signs every artifact and uploads them.
