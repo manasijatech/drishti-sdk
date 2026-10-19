@@ -47,6 +47,9 @@
     <assertj.version>3.26.3</assertj.version>
     <!-- Shared fixtures that every Drishti SDK must pass. -->
     <conformance.dir>${project.basedir}/../conformance</conformance.dir>
+    <!-- Release: uploads wait for a manual Publish click unless -Dcentral.autoPublish=true. -->
+    <central.autoPublish>false</central.autoPublish>
+    <central.waitUntil>validated</central.waitUntil>
   </properties>
 
   <dependencies>
@@ -232,8 +235,8 @@
             <extensions>true</extensions>
             <configuration>
               <publishingServerId>central</publishingServerId>
-              <autoPublish>false</autoPublish>
-              <waitUntil>validated</waitUntil>
+              <autoPublish>${central.autoPublish}</autoPublish>
+              <waitUntil>${central.waitUntil}</waitUntil>
               <deploymentName>drishti-sdk ${project.version}</deploymentName>
             </configuration>
           </plugin>

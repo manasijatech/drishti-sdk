@@ -8,6 +8,11 @@ on:
       - "java/pom.xml"
       - ".github/workflows/publish-maven.yml"
   workflow_dispatch:
+    inputs:
+      auto_publish:
+        description: "Publish straight to Maven Central (otherwise the upload waits for a Publish click in the Central Portal)"
+        type: boolean
+        default: false
 
 jobs:
   publish:
@@ -33,8 +38,6 @@ jobs:
           server-id: central
           server-username: CENTRAL_TOKEN_USERNAME
           server-password: CENTRAL_TOKEN_PASSWORD
-          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-          gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
       - name: Check package version changed
         id: version
@@ -69,12 +72,49 @@ jobs:
       - name: Build and test
         run: chmod +x mvnw && ./mvnw -B verify
 
-      # Signs and uploads to the Central Portal. The deployment then waits for a manual
-      # "Publish" click at https://central.sonatype.com/publishing/deployments.
+      # Maven Central needs signatures it can check against a public keyserver. Each release
+      # gets a fresh signing key that only ever exists on this runner, so no private key or
+      # passphrase is stored anywhere. To sign with a long-lived key instead, import it here.
+      - name: Create release signing key
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          export GNUPGHOME="$RUNNER_TEMP/gnupg"
+          mkdir -p "$GNUPGHOME" && chmod 700 "$GNUPGHOME"
+          gpg --batch --passphrase '' --quick-gen-key \
+            "Drishti SDK release ${{ github.run_id }} <operations@manasija.in>" rsa4096 sign 2y
+          KEY_ID=$(gpg --list-secret-keys --with-colons | awk -F: '/^sec/{print $5; exit}')
+          echo "Signing key: $KEY_ID"
+
+          for server in hkps://keyserver.ubuntu.com hkps://keys.openpgp.org; do
+            gpg --keyserver "$server" --send-keys "$KEY_ID" || echo "Upload to $server failed"
+          done
+
+          # Wait until the key is downloadable, so Central's signature check can find it.
+          CHECK_HOME="$RUNNER_TEMP/gnupg-check"
+          mkdir -p "$CHECK_HOME" && chmod 700 "$CHECK_HOME"
+          for attempt in $(seq 1 30); do
+            if GNUPGHOME="$CHECK_HOME" gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys "$KEY_ID" 2>/dev/null; then
+              echo "Key is live on keyserver.ubuntu.com"
+              break
+            fi
+            if [ "$attempt" = 30 ]; then echo "Key never appeared on the keyserver" && exit 1; fi
+            sleep 10
+          done
+
+          echo "GNUPGHOME=$GNUPGHOME" >> "$GITHUB_ENV"
+          echo "SIGNING_KEY_ID=$KEY_ID" >> "$GITHUB_ENV"
+
       - name: Upload to Maven Central
         if: steps.version.outputs.changed == 'true'
-        run: ./mvnw -B -P release -DskipTests deploy
+        run: |
+          AUTO_PUBLISH="${{ github.event.inputs.auto_publish == 'true' }}"
+          WAIT_UNTIL=validated
+          if [ "$AUTO_PUBLISH" = "true" ]; then WAIT_UNTIL=published; fi
+          ./mvnw -B -P release -DskipTests \
+            -Dgpg.keyname="$SIGNING_KEY_ID" \
+            -Dcentral.autoPublish="$AUTO_PUBLISH" \
+            -Dcentral.waitUntil="$WAIT_UNTIL" \
+            deploy
         env:
           CENTRAL_TOKEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
           CENTRAL_TOKEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
-          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}

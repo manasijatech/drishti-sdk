@@ -266,16 +266,17 @@ Releases go out through the Sonatype Central Portal under the `io.github.techman
 - A published version can never be changed or deleted, so check the deployment's file list before clicking.
 - To retry an upload, run the workflow by hand from the Actions tab.
 
-**Repository secrets the workflow needs:**
+**Repository secrets the workflow needs:** `CENTRAL_TOKEN_USERNAME` and `CENTRAL_TOKEN_PASSWORD`, a Central Portal
+user token (Account → Generate User Token), not your login.
 
-| Secret | Value |
-| --- | --- |
-| `CENTRAL_TOKEN_USERNAME`, `CENTRAL_TOKEN_PASSWORD` | A Central Portal user token (Account → Generate User Token), not your login |
-| `GPG_PRIVATE_KEY` | `gpg --armor --export-secret-keys <KEY_ID>` |
-| `GPG_PASSPHRASE` | The key's passphrase |
+**Signing:** each release is signed with a fresh key that the workflow creates on the CI runner. It publishes
+the public key to keyserver.ubuntu.com and keys.openpgp.org, where Central checks signatures, and waits
+until the key is downloadable. No private key or passphrase is stored anywhere. To sign with a long-lived
+key instead, import it in the "Create release signing key" step.
 
-Publish the public key to a keyserver once: `gpg --keyserver keys.openpgp.org --send-keys <KEY_ID>`.
-Central checks signatures against it.
+**Publishing without the manual click:** run the workflow by hand with **auto_publish** checked. It then
+publishes straight to Maven Central and waits until the release is live.
 
 To check the signed bundle locally without uploading, run `./mvnw -P release -DskipPublishing=true deploy`.
-It needs a `central` server entry in `~/.m2/settings.xml` (dummy values are fine) and a local GPG key.
+It needs a `central` server entry in `~/.m2/settings.xml` (dummy values are fine) and a local GPG key
+(pass `-Dgpg.keyname=<KEY_ID>` to pick it).
