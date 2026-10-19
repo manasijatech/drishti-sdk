@@ -212,6 +212,21 @@ class JdkTransportIntegrationTest {
     }
 
     @Test
+    void errorEnvelopeMessageAndCodeAreExposed() {
+        server.createContext("/v1/account", exchange -> {
+            record(exchange);
+            respond(exchange, 401, "application/json",
+                    "{\"error\":{\"code\":\"unauthorized\",\"message\":\"Invalid API key\"}}".getBytes(StandardCharsets.UTF_8));
+        });
+
+        assertThatThrownBy(() -> client().getAccount())
+                .isInstanceOfSatisfying(DrishtiApiException.class, e -> {
+                    assertThat(e.getDetail()).isEqualTo("Invalid API key");
+                    assertThat(e.getErrorCode()).isEqualTo("unauthorized");
+                });
+    }
+
+    @Test
     void connectionRefusedBecomesNetworkExceptionAfterRetries() throws IOException {
         int closedPort;
         try (ServerSocket socket = new ServerSocket(0, 1, InetAddress.getLoopbackAddress())) {

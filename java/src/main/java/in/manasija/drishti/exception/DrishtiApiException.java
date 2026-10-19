@@ -81,12 +81,20 @@ public final class DrishtiApiException extends DrishtiException {
     }
 
     /**
-     * Returns the {@code detail} message from a JSON error body, falling back to the raw body.
+     * Returns a human-readable message from the error body.
      *
-     * @return a human-readable error message, or {@code null} when the body was empty
+     * <p>Reads {@code error.message} from the API's error envelope
+     * ({@code {"error": {"code": "unauthorized", "message": "Invalid API key"}}}), then a top-level
+     * {@code detail}, and falls back to the raw body.
+     *
+     * @return the error message, or {@code null} when the body was empty
      */
     public String getDetail() {
         if (body instanceof JsonNode node) {
+            JsonNode message = node.path("error").path("message");
+            if (message.isTextual()) {
+                return message.asText();
+            }
             JsonNode detail = node.get("detail");
             if (detail != null && detail.isTextual()) {
                 return detail.asText();
@@ -94,6 +102,22 @@ public final class DrishtiApiException extends DrishtiException {
             return node.toString();
         }
         return body == null ? null : body.toString();
+    }
+
+    /**
+     * Returns the machine-readable error code from the API's error envelope.
+     *
+     * @return the code, for example {@code unauthorized} or {@code insufficient_credits}, or
+     *     {@code null} when the body has none
+     */
+    public String getErrorCode() {
+        if (body instanceof JsonNode node) {
+            JsonNode code = node.path("error").path("code");
+            if (code.isTextual()) {
+                return code.asText();
+            }
+        }
+        return null;
     }
 
     private static String render(Object body) {
