@@ -1,0 +1,80 @@
+name: Publish Maven package
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "java/pom.xml"
+      - ".github/workflows/publish-maven.yml"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: java
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+          # Writes ~/.m2/settings.xml with a "central" server that reads these env vars.
+          server-id: central
+          server-username: CENTRAL_TOKEN_USERNAME
+          server-password: CENTRAL_TOKEN_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: Check package version changed
+        id: version
+        working-directory: .
+        run: |
+          version_of() { grep -m1 -o '<version>[^<]*</version>' | sed -E 's#</?version>##g'; }
+          NEW_VERSION=$(sed -n '/<artifactId>drishti-sdk<\/artifactId>/,/<\/version>/p' java/pom.xml | version_of)
+          echo "new=$NEW_VERSION"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual run: publishing $NEW_VERSION."
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          BASE="${{ github.event.before }}"
+          if [ "$BASE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BASE:java/pom.xml"; then
+            echo "Package did not exist before this push."
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          OLD_VERSION=$(git show "$BASE:java/pom.xml" | sed -n '/<artifactId>drishti-sdk<\/artifactId>/,/<\/version>/p' | version_of)
+          echo "old=$OLD_VERSION"
+          if [ "$OLD_VERSION" != "$NEW_VERSION" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Tests, the Javadoc gate and packaging run on every attempt, even when nothing is published.
+      - name: Build and test
+        run: chmod +x mvnw && ./mvnw -B verify
+
+      # Signs and uploads to the Central Portal. The deployment then waits for a manual
+      # "Publish" click at https://central.sonatype.com/publishing/deployments.
+      - name: Upload to Maven Central
+        if: steps.version.outputs.changed == 'true'
+        run: ./mvnw -B -P release -DskipTests deploy
+        env:
+          CENTRAL_TOKEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
+          CENTRAL_TOKEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}

@@ -254,3 +254,28 @@ DRISHTI_API_KEY=... ./mvnw test -Dtest=LiveSmokeTest  # optional: real API, uses
 - writes `target/drishti-sdk-1.0.0.jar`, `-sources.jar`, `-javadoc.jar` and `-all.jar`.
 
 The API reference is generated at `target/reports/apidocs/index.html`.
+
+## Releasing to Maven Central
+
+Releases go out through the Sonatype Central Portal under the `in.manasija` namespace.
+
+**To release:** bump `<version>` in `pom.xml` and merge to `main`.
+- `.github/workflows/publish-maven.yml` sees the version change, runs the full build, signs every artifact and uploads them.
+- The deployment then waits for a manual **Publish** click at
+  [central.sonatype.com → Deployments](https://central.sonatype.com/publishing/deployments).
+- A published version can never be changed or deleted, so check the deployment's file list before clicking.
+- To retry an upload, run the workflow by hand from the Actions tab.
+
+**Repository secrets the workflow needs:**
+
+| Secret | Value |
+| --- | --- |
+| `CENTRAL_TOKEN_USERNAME`, `CENTRAL_TOKEN_PASSWORD` | A Central Portal user token (Account → Generate User Token), not your login |
+| `GPG_PRIVATE_KEY` | `gpg --armor --export-secret-keys <KEY_ID>` |
+| `GPG_PASSPHRASE` | The key's passphrase |
+
+Publish the public key to a keyserver once: `gpg --keyserver keys.openpgp.org --send-keys <KEY_ID>`.
+Central checks signatures against it.
+
+To check the signed bundle locally without uploading, run `./mvnw -P release -DskipPublishing=true deploy`.
+It needs a `central` server entry in `~/.m2/settings.xml` (dummy values are fine) and a local GPG key.
