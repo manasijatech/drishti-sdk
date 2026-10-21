@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="RetryingRequest" xml:space="preserve"><value>Retrying {Method} {Path} after {Failure} (attempt {Attempt} of {MaxRetries}) in {DelayMs} ms</value></data>
+  <data name="FollowingRedirect" xml:space="preserve"><value>Following {StatusCode} redirect to {Location}</value></data>
+  <data name="WebSocketConnected" xml:space="preserve"><value>WebSocket connected; resubscribing {SubscriptionCount} product(s)</value></data>
+  <data name="WebSocketConnectFailed" xml:space="preserve"><value>WebSocket connection setup failed: {Reason}</value></data>
+  <data name="WebSocketReconnecting" xml:space="preserve"><value>WebSocket reconnecting ({Reason})</value></data>
+  <data name="WebSocketReconnectWarning" xml:space="preserve"><value>WebSocket still unable to connect after {Attempts} attempts ({Reason}); retrying</value></data>
+  <data name="WebSocketSubscribed" xml:space="preserve"><value>Subscribed {Product} tier={Tier} full_feed={FullFeed} ({Reason}, attempt {Attempt})</value></data>
+  <data name="WebSocketSubscribeFailed" xml:space="preserve"><value>Subscribe failed product={Product} attempt={Attempt}/{MaxAttempts} ({Reason}): {Error} [{Code}]</value></data>
+  <data name="WebSocketForcingReconnect" xml:space="preserve"><value>Forcing WebSocket reconnect ({Reason})</value></data>
+  <data name="WebSocketHandlerFailed" xml:space="preserve"><value>WebSocket {Source} handler threw</value></data>
+</root>

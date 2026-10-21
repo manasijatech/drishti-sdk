@@ -19,3 +19,8 @@ composer.lock
 .phpunit.cache/
 .phpunit.result.cache
 java/target/
+dotnet/**/bin/
+dotnet/**/obj/
+dotnet/**/TestResults/
+*.nupkg
+*.snupkg

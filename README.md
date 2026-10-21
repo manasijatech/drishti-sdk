@@ -15,9 +15,10 @@ announcements, earnings, conference calls, news, or real-time updates.
 | TypeScript SDK | `js/` | `drishti-sdk` on npm |
 | PHP SDK | `php/` | `manasija/drishti-sdk` on Packagist (namespace `Drishti\`) |
 | Java SDK | `java/` | `io.github.techmanasija:drishti-sdk` (Maven, package `in.manasija.drishti`) |
+| .NET SDK | `dotnet/` | `Manasija.Drishti` on NuGet (namespace `Manasija.Drishti`) |
 | MCP installer | `mcp/` | `drishti-mcp` on npm |
 
-See `python/README.md`, `js/README.md`, `php/README.md`, `java/README.md`, and `mcp/README.md` for install and usage.
+See `python/README.md`, `js/README.md`, `php/README.md`, `java/README.md`, `dotnet/README.md`, and `mcp/README.md` for install and usage.
 All SDKs pass the shared [conformance suite](conformance/README.md), so they behave the same.
 
 **Getting started:** [create a Drishti API key](https://platform.manasija.in/)
@@ -37,6 +38,12 @@ Java install (Java 17+), Maven:
   <artifactId>drishti-sdk</artifactId>
   <version>1.0.0</version>
 </dependency>
+```
+
+.NET install (.NET 8+ or .NET Standard 2.0):
+
+```bash
+dotnet add package Manasija.Drishti
 ```
 
 JavaScript / TypeScript install options:
