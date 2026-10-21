@@ -17,6 +17,8 @@ jobs:
         working-directory: dotnet
     permissions:
       contents: read
+      # Trusted Publishing: GitHub's OIDC token is exchanged for a short-lived NuGet API key.
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -67,8 +69,17 @@ jobs:
       - name: Pack
         run: dotnet pack src/Manasija.Drishti/Manasija.Drishti.csproj -c Release -o "$RUNNER_TEMP/nupkg"
 
+      # Needs a Trusted Publishing policy on nuget.org for this repo and workflow file, and a
+      # NUGET_USER secret holding the nuget.org profile name (not email) of a policy owner.
+      - name: NuGet login
+        if: steps.version.outputs.changed == 'true'
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       - name: Push to NuGet
         if: steps.version.outputs.changed == 'true'
         run: dotnet nuget push "$RUNNER_TEMP/nupkg/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
