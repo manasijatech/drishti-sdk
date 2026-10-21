@@ -9,6 +9,7 @@ way. Each SDK has a thin runner that loads these JSON files:
 | JS / TS | `js/tests/conformance.test.mjs` | `cd js && npm test` |
 | PHP | `php/tests/ConformanceTest.php` | `composer test` (repo root) |
 | Java | `java/src/test/java/in/manasija/drishti/ConformanceTest.java` | `cd java && ./mvnw test` |
+| .NET | `dotnet/tests/Manasija.Drishti.Tests/Conformance/ConformanceTests.cs` | `cd dotnet && dotnet test --filter "TestCategory!=Live"` |
 
 To change SDK behaviour, change the fixture first, watch every runner fail, then update each SDK
 until they all pass. CI (`.github/workflows/test.yml`) runs every suite on every PR.
@@ -45,6 +46,11 @@ the local idiom:
   - `get_symbols` with `format: "json"` → `getSymbolsJson()`;
   - citation PDFs are `byte[]`, compared as UTF-8 text;
   - parsed events are compared through `WebSocketEvent.toJson()`.
+- .NET maps each call explicitly in `ConformanceTests.Invoke`, like Java:
+  - methods are PascalCase with an `Async` suffix (`get_news` → `GetNewsAsync(new NewsParams { ... })`);
+  - batch routes use resource names (`get_batch_jobs_job_id` → `GetBatchJobAsync`, `delete_batch_jobs_job_id` → `CancelBatchJobAsync`), and `post_batch_jobs_file` is `PostBatchJobsAsync`;
+  - `alerts` `type` → `AlertsParams.Types`; `poll_interval_ms` → `TimeSpan`; `content_retention` → `ContentRetention.None`;
+  - models are compared through their underlying `Json`; parsed events through `WebSocketEvent.ToJson()`.
 
 Runners use API key `test-key`, base URL `https://api.test`, and retry delays of 0.
 

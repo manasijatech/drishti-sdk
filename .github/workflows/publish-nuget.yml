@@ -1,0 +1,85 @@
+name: Publish NuGet package
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "dotnet/src/Manasija.Drishti/Manasija.Drishti.csproj"
+      - ".github/workflows/publish-nuget.yml"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dotnet
+    permissions:
+      contents: read
+      # Trusted Publishing: GitHub's OIDC token is exchanged for a short-lived NuGet API key.
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Check package version changed
+        id: version
+        working-directory: .
+        run: |
+          PROJECT=dotnet/src/Manasija.Drishti/Manasija.Drishti.csproj
+          version_of() { grep -m1 -o '<Version>[^<]*</Version>' | sed -E 's#</?Version>##g'; }
+          NEW_VERSION=$(version_of < "$PROJECT")
+          echo "new=$NEW_VERSION"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual run: publishing $NEW_VERSION."
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          BASE="${{ github.event.before }}"
+          if [ "$BASE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BASE:$PROJECT"; then
+            echo "Package did not exist before this push."
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          OLD_VERSION=$(git show "$BASE:$PROJECT" | version_of)
+          echo "old=$OLD_VERSION"
+          if [ "$OLD_VERSION" != "$NEW_VERSION" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Tests and packaging run on every attempt, even when nothing is published.
+      - name: Build and test
+        run: dotnet test Drishti.sln -c Release --filter "TestCategory!=Live"
+
+      - name: Pack
+        run: dotnet pack src/Manasija.Drishti/Manasija.Drishti.csproj -c Release -o "$RUNNER_TEMP/nupkg"
+
+      # Needs a Trusted Publishing policy on nuget.org for this repo and workflow file, and a
+      # NUGET_USER secret holding the nuget.org profile name (not email) of a policy owner.
+      - name: NuGet login
+        if: steps.version.outputs.changed == 'true'
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Push to NuGet
+        if: steps.version.outputs.changed == 'true'
+        run: dotnet nuget push "$RUNNER_TEMP/nupkg/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
