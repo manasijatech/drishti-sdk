@@ -48,6 +48,13 @@
       "expect_result": { "id": "acct_1", "nested": { "n": 1 } }
     },
     {
+      "id": "response.json_media_type_is_case_insensitive",
+      "call": { "method": "get_account", "args": {} },
+      "response": { "status": 200, "content_type": "Application/JSON; charset=UTF-8", "json": { "id": "acct_1" } },
+      "expect_request": { "method": "GET", "path": "/v1/account", "query": {} },
+      "expect_result": { "id": "acct_1" }
+    },
+    {
       "id": "response.no_content_returns_null",
       "call": { "method": "delete_batch_jobs_job_id", "args": { "job_id": "job_1" } },
       "response": { "status": 204 },
@@ -67,6 +74,13 @@
       "response": { "status": 404, "json": { "detail": "Not found" } },
       "expect_request": { "method": "GET", "path": "/v1/account", "query": {} },
       "expect_error": { "type": "api_error", "status": 404, "body": { "detail": "Not found" } }
+    },
+    {
+      "id": "error.problem_json_error_body",
+      "call": { "method": "get_account", "args": {} },
+      "response": { "status": 422, "content_type": "application/problem+json", "json": { "detail": "Invalid" } },
+      "expect_request": { "method": "GET", "path": "/v1/account", "query": {} },
+      "expect_error": { "type": "api_error", "status": 422, "body": { "detail": "Invalid" } }
     },
     {
       "id": "error.text_error_body",

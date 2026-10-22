@@ -46,6 +46,38 @@
       ]
     },
     {
+      "id": "batch_jobs.results_raw_application_jsonl",
+      "call": { "method": "get_batch_jobs_job_id_results", "args": { "job_id": "job_1" } },
+      "response": {
+        "status": 200,
+        "content_type": "application/jsonl",
+        "text": "{\"custom_id\":\"a\",\"status\":\"succeeded\"}\n{\"custom_id\":\"b\",\"status\":\"failed\"}\n"
+      },
+      "expect_request": { "method": "GET", "path": "/v1/batch/jobs/job_1/results", "query": {} },
+      "expect_result": "{\"custom_id\":\"a\",\"status\":\"succeeded\"}\n{\"custom_id\":\"b\",\"status\":\"failed\"}\n"
+    },
+    {
+      "id": "batch_jobs.results_raw_application_jsonl_single_line",
+      "call": { "method": "get_batch_jobs_job_id_results", "args": { "job_id": "job_1" } },
+      "response": { "status": 200, "content_type": "application/jsonl", "text": "{\"custom_id\": \"a\"}\n" },
+      "expect_request": { "method": "GET", "path": "/v1/batch/jobs/job_1/results", "query": {} },
+      "expect_result": "{\"custom_id\": \"a\"}\n"
+    },
+    {
+      "id": "batch_jobs.results_parsed_application_jsonl",
+      "call": { "method": "get_batch_jobs_job_id_results_parsed", "args": { "job_id": "job_1" } },
+      "response": {
+        "status": 200,
+        "content_type": "application/jsonl; charset=utf-8",
+        "text": "{\"custom_id\":\"a\",\"status\":\"succeeded\"}\n{\"custom_id\":\"b\",\"status\":\"failed\"}\n"
+      },
+      "expect_request": { "method": "GET", "path": "/v1/batch/jobs/job_1/results", "query": {} },
+      "expect_result": [
+        { "custom_id": "a", "status": "succeeded" },
+        { "custom_id": "b", "status": "failed" }
+      ]
+    },
+    {
       "id": "batch_jobs.submit_file_all_fields",
       "call": {
         "method": "post_batch_jobs_file",
