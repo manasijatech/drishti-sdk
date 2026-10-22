@@ -121,13 +121,22 @@ function contentRetentionHeaders(
   return { "X-Alpha-Content-Retention": contentRetention };
 }
 
+/**
+ * True for `application/json` and `+json` media types, ignoring parameters and case.
+ * A substring check would also match `application/jsonl` (batch results), which is not JSON.
+ */
+function isJsonContentType(contentType: string): boolean {
+  const mediaType = (contentType.split(";", 1)[0] ?? "").trim().toLowerCase();
+  return mediaType === "application/json" || mediaType.endsWith("+json");
+}
+
 async function parseResponse<TResponse extends JsonValue | string | null>(response: Response): Promise<TResponse> {
   if (response.status === 204) {
     return null as TResponse;
   }
   const contentType = response.headers.get("content-type") ?? "";
   let data: JsonValue | string | null;
-  if (contentType.includes("application/json")) {
+  if (isJsonContentType(contentType)) {
     const text = await response.text();
     data = text.length > 0 ? (JSON.parse(text) as JsonValue) : null;
   } else {
