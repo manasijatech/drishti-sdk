@@ -865,7 +865,7 @@ final class DrishtiClient
             return null;
         }
         $text = (string) $response->getBody();
-        if (str_contains($response->getHeaderLine('Content-Type'), 'application/json')) {
+        if (self::isJsonContentType($response->getHeaderLine('Content-Type'))) {
             $data = $text === '' ? null : json_decode($text, true, flags: JSON_THROW_ON_ERROR);
         } else {
             $data = $text === '' ? null : $text;
@@ -875,6 +875,17 @@ final class DrishtiClient
         }
 
         return $data;
+    }
+
+    /**
+     * True for `application/json` and `+json` media types, ignoring parameters and case.
+     * A substring check would also match `application/jsonl` (batch results), which is not JSON.
+     */
+    private static function isJsonContentType(string $contentType): bool
+    {
+        $mediaType = strtolower(trim(explode(';', $contentType, 2)[0]));
+
+        return $mediaType === 'application/json' || str_ends_with($mediaType, '+json');
     }
 
     /** @return array<string, string> */
