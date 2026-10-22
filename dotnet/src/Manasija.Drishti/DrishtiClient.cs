@@ -685,7 +685,7 @@ public sealed class DrishtiClient : IDrishtiClient, IDisposable
         var body = response.Body;
         var contentType = response.ContentType;
         JsonElement? json = null;
-        if (status != 204 && body.Length > 0 && contentType.IndexOf("application/json", StringComparison.OrdinalIgnoreCase) >= 0)
+        if (status != 204 && body.Length > 0 && IsJsonContentType(contentType))
         {
             try
             {
@@ -707,6 +707,18 @@ public sealed class DrishtiClient : IDrishtiClient, IDisposable
         }
 
         return new DrishtiResponse(status, contentType, body, json);
+    }
+
+    /// <summary>
+    /// True for <c>application/json</c> and <c>+json</c> media types, ignoring parameters and case.
+    /// A substring check would also match <c>application/jsonl</c> (batch results), which is not JSON.
+    /// </summary>
+    private static bool IsJsonContentType(string contentType)
+    {
+        var semicolon = contentType.IndexOf(';');
+        var mediaType = (semicolon < 0 ? contentType : contentType.Substring(0, semicolon)).Trim();
+        return string.Equals(mediaType, "application/json", StringComparison.OrdinalIgnoreCase)
+            || mediaType.EndsWith("+json", StringComparison.OrdinalIgnoreCase);
     }
 
     private static T? Wrap<T>(JsonElement? json)
