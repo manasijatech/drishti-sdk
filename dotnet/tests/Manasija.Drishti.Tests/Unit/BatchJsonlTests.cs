@@ -1,7 +1,10 @@
+using System.Text;
 using FluentAssertions;
 using Manasija.Drishti.Batch;
 using Manasija.Drishti.Exceptions;
+using Manasija.Drishti.Http;
 using Manasija.Drishti.Params;
+using Manasija.Drishti.Tests.Fakes;
 
 namespace Manasija.Drishti.Tests.Unit;
 
@@ -66,5 +69,42 @@ public sealed class BatchJsonlTests
         line.CustomId.Should().Be("a");
         line.Summary.Should().Be("All good");
         line.Error.Should().BeNull();
+    }
+
+    private const string ResultsJsonl =
+        "{\"custom_id\":\"a\",\"status\":\"succeeded\"}\n{\"custom_id\":\"b\",\"status\":\"failed\"}\n";
+
+    private static FakeTransport JsonlResults()
+        => new FakeTransport().Enqueue(new TransportResponse(
+            200,
+            new Dictionary<string, string> { ["Content-Type"] = "application/jsonl" },
+            Encoding.UTF8.GetBytes(ResultsJsonl)));
+
+    [TestMethod]
+    public async Task GetBatchJobResults_ApplicationJsonl_ReturnsRawText()
+    {
+        // Arrange
+        var transport = JsonlResults();
+        using var client = FakeTransport.CreateClient(transport);
+
+        // Act
+        var text = await client.GetBatchJobResultsAsync("job_1");
+
+        // Assert
+        text.Should().Be(ResultsJsonl);
+        transport.Requests.Should().ContainSingle().Which.Uri.AbsolutePath.Should().Be("/v1/batch/jobs/job_1/results");
+    }
+
+    [TestMethod]
+    public async Task GetBatchJobResultsParsed_ApplicationJsonl_ReturnsEveryLine()
+    {
+        // Arrange
+        using var client = FakeTransport.CreateClient(JsonlResults());
+
+        // Act
+        var lines = await client.GetBatchJobResultsParsedAsync("job_1");
+
+        // Assert
+        lines.Select(line => (line.CustomId, line.Status)).Should().Equal(("a", "succeeded"), ("b", "failed"));
     }
 }

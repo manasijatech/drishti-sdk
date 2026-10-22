@@ -79,6 +79,15 @@ DEFAULT_TIMEOUT_SEC = 60.0
 TResponse = TypeVar("TResponse")
 
 
+def _is_json_content_type(content_type: str) -> bool:
+    """True for ``application/json`` and ``+json`` media types, ignoring parameters and case.
+
+    A substring check would also match ``application/jsonl`` (batch results), which is not JSON.
+    """
+    media_type = content_type.split(";", 1)[0].strip().lower()
+    return media_type == "application/json" or media_type.endswith("+json")
+
+
 def _normalize_earnings_item_payload(item: Any) -> Any:
     if not isinstance(item, dict):
         return item
@@ -221,7 +230,7 @@ class DrishtiClient:
         if response.status_code == 204:
             return None
         content_type = response.headers.get("content-type", "")
-        if "application/json" in content_type and response.content:
+        if _is_json_content_type(content_type) and response.content:
             data: JsonValue = response.json()
         elif response.content:
             data = response.text
