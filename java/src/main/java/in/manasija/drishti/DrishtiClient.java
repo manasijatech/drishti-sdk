@@ -1391,7 +1391,7 @@ public final class DrishtiClient {
         byte[] body = response.body();
         String contentType = response.contentType();
         JsonNode json = null;
-        if (status != 204 && body.length > 0 && contentType.toLowerCase(Locale.ROOT).contains("application/json")) {
+        if (status != 204 && body.length > 0 && isJsonContentType(contentType)) {
             try {
                 json = Json.parse(new String(body, StandardCharsets.UTF_8));
             } catch (JsonProcessingException e) {
@@ -1405,6 +1405,17 @@ public final class DrishtiClient {
             throw new DrishtiApiException(status, errorBody);
         }
         return new DrishtiResponse(status, contentType, body, json);
+    }
+
+    /**
+     * Reports whether a {@code Content-Type} is {@code application/json} or a {@code +json} type,
+     * ignoring parameters and case. A substring check would also match {@code application/jsonl}
+     * (batch results), which is not a single JSON document.
+     */
+    private static boolean isJsonContentType(String contentType) {
+        int semicolon = contentType.indexOf(';');
+        String mediaType = (semicolon < 0 ? contentType : contentType.substring(0, semicolon)).trim().toLowerCase(Locale.ROOT);
+        return mediaType.equals("application/json") || mediaType.endsWith("+json");
     }
 
     private Duration retryDelay(int attempt) {

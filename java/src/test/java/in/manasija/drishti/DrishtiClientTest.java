@@ -99,6 +99,32 @@ class DrishtiClientTest {
         assertThatThrownBy(client::getAccount).isInstanceOf(DrishtiException.class).hasMessageContaining("Expected a JSON response");
     }
 
+    private static final String BATCH_RESULTS_JSONL =
+            "{\"custom_id\":\"a\",\"status\":\"succeeded\"}\n{\"custom_id\":\"b\",\"status\":\"failed\"}\n";
+
+    private static TransportResponse jsonl(String body) {
+        return new TransportResponse(200, "application/jsonl", body.getBytes(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void batchResultsReturnRawJsonlText() {
+        DrishtiClient client = client(List.of(jsonl(BATCH_RESULTS_JSONL)));
+
+        assertThat(client.getBatchJobsJobIdResults("job_1")).isEqualTo(BATCH_RESULTS_JSONL);
+        assertThat(requests.get(0).uri().getPath()).isEqualTo("/v1/batch/jobs/job_1/results");
+    }
+
+    @Test
+    void batchResultsParsedSplitsJsonlLines() {
+        DrishtiClient client = client(List.of(jsonl(BATCH_RESULTS_JSONL)));
+
+        List<String> parsed = client.getBatchJobsJobIdResultsParsed("job_1").stream().map(JsonNode::toString).toList();
+
+        assertThat(parsed).containsExactly(
+                "{\"custom_id\":\"a\",\"status\":\"succeeded\"}",
+                "{\"custom_id\":\"b\",\"status\":\"failed\"}");
+    }
+
     @Test
     void requestV1AddsThePrefixOnce() {
         DrishtiClient client = client(List.of(json("{}"), json("{}")));
