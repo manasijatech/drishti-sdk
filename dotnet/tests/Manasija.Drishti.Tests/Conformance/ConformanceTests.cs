@@ -264,7 +264,7 @@ public sealed class ConformanceTests
             "get_announcements" => await client.GetAnnouncementsAsync(new AnnouncementsParams
             {
                 Symbols = StrList(a, "symbols"), ScripCodes = StrList(a, "scrip_codes"), Categories = StrList(a, "categories"),
-                From = Str(a, "from"), To = Str(a, "to"), Detailed = Bool(a, "detailed"), Important = Bool(a, "important"),
+                From = Str(a, "from"), To = Str(a, "to"), Detailed = Bool(a, "detailed"),
                 Page = Int(a, "page"), Limit = Int(a, "limit"),
             }),
             "get_announcements_attachments" => await client.GetAnnouncementsAttachmentsAsync(StrList(a, "ids")!),

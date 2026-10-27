@@ -23,7 +23,7 @@ public sealed class DrishtiClientOptions
     public const string SectionName = "Drishti";
 
     /// <summary>The default <c>User-Agent</c> header.</summary>
-    public const string DefaultUserAgent = "drishti-sdk-dotnet/1.0.0";
+    public const string DefaultUserAgent = "drishti-sdk-dotnet/1.1.1";
 
     /// <summary>Your API key, sent as <c>X-API-Key</c>. Required.</summary>
     [Required]

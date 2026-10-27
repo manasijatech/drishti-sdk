@@ -261,7 +261,6 @@ final class DrishtiClient
         ?string $from = null,
         ?string $to = null,
         ?bool $detailed = null,
-        ?bool $important = null,
         ?int $page = null,
         ?int $limit = null,
     ): ?array {
@@ -272,7 +271,6 @@ final class DrishtiClient
             'from' => $from,
             'to' => $to,
             'detailed' => $detailed,
-            'important' => $important,
             'page' => $page,
             'limit' => $limit,
         ]);

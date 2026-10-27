@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Use case: a research desk's morning digest for a watchlist. It prints the past week's important
+ * Use case: a research desk's morning digest for a watchlist. It prints the past week's
  * announcements, recent news, market alerts and upcoming earnings dates.
  *
  * <pre>
@@ -30,9 +30,9 @@ public final class WatchlistDigest {
         LocalDate weekAgo = LocalDate.now().minusDays(7);
 
         try {
-            section("Important announcements since " + weekAgo);
+            section("Announcements since " + weekAgo);
             JsonNode announcements = client.getAnnouncements(new AnnouncementsParams()
-                    .symbols(watchlist).from(weekAgo).important(true).detailed(false).limit(10));
+                    .symbols(watchlist).from(weekAgo).detailed(false).limit(10));
             for (JsonNode item : announcements.path("data")) {
                 System.out.printf("  %-10s %-20s %s%n", item.path("symbol").asText(),
                         item.path("category").asText(), item.path("summary").asText());

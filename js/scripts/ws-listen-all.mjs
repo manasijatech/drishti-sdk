@@ -191,7 +191,6 @@ function prepareDb(dbPath) {
       summary TEXT,
       category TEXT,
       long_summary TEXT,
-      important INTEGER,
       related_categories_json TEXT,
       extracted_information_json TEXT,
       payload_json TEXT NOT NULL,
@@ -344,11 +343,11 @@ function upsertAnnouncements(db, data) {
   const statement = db.prepare(`
     INSERT INTO announcements_events (
       id, symbol, company_name, image, date, summary, category,
-      long_summary, important, related_categories_json,
+      long_summary, related_categories_json,
       extracted_information_json, payload_json, received_at, last_seen_at
     ) VALUES (
       @id, @symbol, @company_name, @image, @date, @summary, @category,
-      @long_summary, @important, @related_categories_json,
+      @long_summary, @related_categories_json,
       @extracted_information_json, @payload_json, @received_at, @last_seen_at
     )
     ON CONFLICT(id) DO UPDATE SET
@@ -359,7 +358,6 @@ function upsertAnnouncements(db, data) {
       summary = excluded.summary,
       category = excluded.category,
       long_summary = excluded.long_summary,
-      important = excluded.important,
       related_categories_json = excluded.related_categories_json,
       extracted_information_json = excluded.extracted_information_json,
       payload_json = excluded.payload_json,
@@ -374,7 +372,6 @@ function upsertAnnouncements(db, data) {
     summary: stringifyValue(data.summary),
     category: stringifyValue(data.category),
     long_summary: stringifyValue(data.long_summary),
-    important: toInteger(data.important),
     related_categories_json: stringifyJson(data.related_categories),
     extracted_information_json: stringifyJson(data.extracted_information),
     payload_json: stringifyJson(data) ?? "null",

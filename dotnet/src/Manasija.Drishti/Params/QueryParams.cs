@@ -114,9 +114,6 @@ public sealed record AnnouncementsParams : QueryParams
     /// <summary>Return detail fields (long summary, extracted information).</summary>
     public bool? Detailed { get; init; }
 
-    /// <summary>Only important (<see langword="true"/>) or only other (<see langword="false"/>) announcements.</summary>
-    public bool? Important { get; init; }
-
     /// <summary>The 1-based page.</summary>
     public int? Page { get; init; }
 
@@ -126,7 +123,7 @@ public sealed record AnnouncementsParams : QueryParams
     /// <inheritdoc />
     protected internal override void WriteTo(QueryBuilder query) => query
         .Add("symbols", Symbols).Add("scrip_codes", ScripCodes).Add("categories", Categories)
-        .Add("from", From).Add("to", To).Add("detailed", Detailed).Add("important", Important)
+        .Add("from", From).Add("to", To).Add("detailed", Detailed)
         .Add("page", Page).Add("limit", Limit);
 }
 

@@ -96,14 +96,14 @@ class JdkTransportIntegrationTest {
         });
 
         JsonNode result = client().getAnnouncements(new AnnouncementsParams()
-                .symbols("RELIANCE", "TCS").categories("Board Meeting").important(true).limit(5));
+                .symbols("RELIANCE", "TCS").categories("Board Meeting").detailed(true).limit(5));
 
         assertThat(result.path("data").get(0).path("summary").asText()).isEqualTo("Board approves results");
         Map<String, Object> request = seen.get(0);
         assertThat(request).containsEntry("apiKey", "live-test-key").containsEntry("accept", "application/json");
         assertThat((String) request.get("userAgent")).startsWith("drishti-sdk-java/");
         assertThat((String) request.get("rawQuery"))
-                .contains("symbols=RELIANCE%2CTCS", "categories=Board%20Meeting", "important=true", "limit=5");
+                .contains("symbols=RELIANCE%2CTCS", "categories=Board%20Meeting", "detailed=true", "limit=5");
     }
 
     @Test

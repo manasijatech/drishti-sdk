@@ -84,7 +84,6 @@ class AnnouncementsListQueryParams(PaginatedFeedQueryParams):
     """GET /v1/announcements list mode."""
 
     categories: list[str] | None = None
-    important: bool | None = None
 
 
 class IndexQueryParams(BaseModel):
