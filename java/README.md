@@ -228,7 +228,7 @@ Runnable programs live in [`src/test/java/in/manasija/drishti/examples`](src/tes
 
 | Example | Use case |
 | --- | --- |
-| `WatchlistDigest` | Morning digest for a watchlist: important announcements, news, alerts, upcoming earnings |
+| `WatchlistDigest` | Morning digest for a watchlist: recent announcements, news, alerts, upcoming earnings |
 | `ListenAnnouncements` | Long-running worker that streams announcements, earnings and alerts |
 | `PortfolioBatchSummary` | Nightly AI summaries for many portfolios in one batch job |
 | `EarningsDeepDive` | One company's quarter: filing, results table, concall transcript, source PDF |

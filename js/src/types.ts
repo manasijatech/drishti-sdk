@@ -62,7 +62,6 @@ export type AnnouncementWebSocketItem = AnnouncementListItem;
 export type AnnouncementDetail = AnnouncementListItem & {
   long_summary?: string | null;
   related_categories?: string[];
-  important?: boolean;
   extracted_information?: JsonValue;
 };
 
