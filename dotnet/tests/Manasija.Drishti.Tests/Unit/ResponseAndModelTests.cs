@@ -180,6 +180,18 @@ public sealed class ResponseAndModelTests
     }
 
     [TestMethod]
+    public void Earnings_ResultsPagesReadsIntegersAndDefaultsToEmpty()
+    {
+        // Arrange
+        var detailed = new Earnings(JsonAssert.Parse("{\"results_pages\":[3,4,\"x\"]}"));
+        var summary = new Earnings(JsonAssert.Parse("{\"id\":\"e1\"}"));
+
+        // Act / Assert
+        detailed.ResultsPages.Should().Equal(3, 4);
+        summary.ResultsPages.Should().BeEmpty();
+    }
+
+    [TestMethod]
     public async Task DetailEndpoints_RequireSymbolOrScripCode()
     {
         // Arrange

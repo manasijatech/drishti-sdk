@@ -63,6 +63,7 @@ Each model is a typed view over the JSON the API returned:
 - Properties are read on demand. A missing, `null` or mistyped value returns `null`, so new API fields never break you.
 - `model.Json` is the full `JsonElement`. Use `model.Deserialize<MyType>()` to map it onto your own class (snake_case names).
 - Free-form fields (`EarningsTable`, `ExtractedInformation`, `Metadata`, …) are `JsonElement?`.
+- `Earnings.ResultsPages` lists the 1-indexed PDF pages that hold the results statements (detailed rows only). Pass one to `GetEarningsCitationPageAsync`.
 - CSV, JSONL and HTML responses come back as `string`; PDF citations as `byte[]`.
 - An empty response (`204`, or an empty body) comes back as `null`.
 

@@ -72,6 +72,8 @@ $alerts = $client->getAlerts(type: ['price_alert', '52w_high'], important: true)
 $pdf = $client->getEarningsCitationPdf('EARNINGS_ID', page: 3);   // PDF bytes
 ```
 
+Detailed earnings rows include `results_pages`, the 1-indexed PDF pages that hold the results statements. Pass one as `page` to `getEarningsCitationPdf` or `getEarningsCitationPage`.
+
 For a route without a helper method, use `request()` directly:
 
 ```php

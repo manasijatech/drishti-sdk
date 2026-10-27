@@ -80,13 +80,13 @@
     {
       "id": "earnings.detail_with_table_normalization",
       "call": { "method": "get_earnings_detail", "args": { "quarter": "q4_26", "symbol": "TCS", "detailed": true } },
-      "response": { "status": 200, "json": { "id": "e1", "earnings_table_extraction": { "eps": 5 } } },
+      "response": { "status": 200, "json": { "id": "e1", "earnings_table_extraction": { "eps": 5 }, "results_pages": [3, 4] } },
       "expect_request": {
         "method": "GET",
         "path": "/v1/earnings/detail",
         "query": { "quarter": ["q4_26"], "symbol": ["TCS"], "detailed": ["true"] }
       },
-      "expect_result": { "id": "e1", "earnings_table": { "eps": 5 }, "earnings_table_extraction": { "eps": 5 } }
+      "expect_result": { "id": "e1", "earnings_table": { "eps": 5 }, "earnings_table_extraction": { "eps": 5 }, "results_pages": [3, 4] }
     },
     {
       "id": "earnings.attachments",

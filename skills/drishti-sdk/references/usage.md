@@ -51,7 +51,7 @@ pip install drishti-sdk
 | Earnings detail | `getEarningsDetail({ symbol?, scrip_code?, quarter, detailed? })` | `get_earnings_detail(...)` |
 | Earnings attachments | `getEarningsAttachments({ ids })` | `get_earnings_attachments(...)` |
 | Earnings PDF citation | `getEarningsCitationPdf(id, page?)` | `get_earnings_citation_pdf(id, page=...)` |
-| Earnings PDF page citation | `getEarningsCitationPage(id, page)` | `get_earnings_citation_page(id, page)` |
+| Earnings PDF page citation | `getEarningsCitationPage(id, page)` | `get_earnings_citation_page(id, page)` — use a page from a detailed row's `results_pages` |
 | Upcoming earnings | `getUpcomingEarnings(params?)` | `get_upcoming_earnings(...)` |
 | Concalls index | `getConcallsIndex(params?)` | `get_concalls_index(...)` |
 | Concalls list | `getConcalls(params?)` | `get_concalls(...)` |

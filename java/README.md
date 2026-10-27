@@ -94,7 +94,9 @@ JsonNode summary  = client.postDailySummary(Map.of(
 ```
 
 `getEarnings` and `getEarningsDetail` copy `earnings_table_extraction` into `earnings_table` when
-the API only returns the extraction, so you can always read `earnings_table`.
+the API only returns the extraction, so you can always read `earnings_table`. Detailed rows also
+include `results_pages`, the 1-indexed PDF pages that hold the results statements; pass one to
+`getEarningsCitationPage`.
 
 For a route without a helper method, use `request()` directly:
 

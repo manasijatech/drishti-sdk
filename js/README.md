@@ -119,6 +119,9 @@ const earnings = await client.getEarningsDetail({
   quarter: "q4_26",
   detailed: true,
 });
+// Detailed rows carry results_pages: the 1-indexed PDF pages that hold the results statements.
+const firstPage = "results_pages" in earnings ? earnings.results_pages?.[0] : undefined;
+const pageHtml = firstPage ? await client.getEarningsCitationPage(earnings.id, firstPage) : undefined;
 
 // Earnings list by record id
 const earningsRows = await client.getEarnings({

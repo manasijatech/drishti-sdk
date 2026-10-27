@@ -91,6 +91,9 @@ with DrishtiClient(api_key="YOUR_API_KEY") as client:
         quarter="q4_26",
         detailed=True,
     )
+    # Detailed rows carry results_pages: the 1-indexed PDF pages that hold the results statements.
+    if earnings.get("results_pages"):
+        page_html = client.get_earnings_citation_page(earnings["id"], earnings["results_pages"][0])
 
     earnings_rows = client.get_earnings(
         ids=["67c2f8a1b2c3d4e5f6a7b8d0"],

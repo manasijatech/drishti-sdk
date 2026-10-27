@@ -99,6 +99,8 @@ export type EarningsWebSocketItem = EarningsListItem & {
 export type EarningsDetail = EarningsListItem & {
   earnings_significant?: boolean;
   earnings_table?: JsonObject | null;
+  /** 1-indexed pages of the source PDF that hold the results statements (`[]` when none). Pass one to `getEarningsCitationPage`. */
+  results_pages?: number[];
 };
 
 export type EarningsWebSocketDetail = EarningsDetail & {

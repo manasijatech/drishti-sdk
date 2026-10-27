@@ -44,6 +44,17 @@ public sealed class Earnings(JsonElement json) : DrishtiObject(json)
     /// <summary>The extracted results table (detailed only).</summary>
     public JsonElement? EarningsTable => GetElement("earnings_table");
 
+    /// <summary>
+    /// The 1-indexed pages of the source PDF that hold the results statements (detailed only;
+    /// empty when missing). Pass one to <c>GetEarningsCitationPageAsync</c>.
+    /// </summary>
+    public IReadOnlyList<int> ResultsPages => GetElement("results_pages") is { ValueKind: JsonValueKind.Array } pages
+        ? pages.EnumerateArray()
+            .Where(page => page.ValueKind == JsonValueKind.Number && page.TryGetInt32(out _))
+            .Select(page => page.GetInt32())
+            .ToList()
+        : [];
+
     /// <summary>The source filing URL (WebSocket payloads only).</summary>
     public string? AttachmentUrl => GetString("attachment_url");
 }
