@@ -310,7 +310,7 @@ export class DrishtiClient {
 
   getNews(params: NewsQueryParams = {}): Promise<PaginatedResponse<NewsItem>> {
     return this.get<PaginatedResponse<NewsItem>>("/v1/news", {
-      query: serializeQueryParams(params, ["symbols", "scrip_codes"]),
+      query: serializeQueryParams(params, ["symbols", "scrip_codes", "sectors"]),
     });
   }
 

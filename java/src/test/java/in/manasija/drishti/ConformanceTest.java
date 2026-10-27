@@ -170,7 +170,7 @@ class ConformanceTest {
     private static Object invoke(DrishtiClient client, String method, JsonNode args, JsonNode positional) {
         return switch (method) {
             case "get_news" -> client.getNews(new NewsParams()
-                    .symbols(list(args, "symbols")).scripCodes(list(args, "scrip_codes"))
+                    .symbols(list(args, "symbols")).scripCodes(list(args, "scrip_codes")).sectors(list(args, "sectors"))
                     .sentiment(text(args, "sentiment")).from(text(args, "from")).to(text(args, "to"))
                     .page(integer(args, "page")).limit(integer(args, "limit")));
             case "get_block_deals" -> client.getBlockDeals(new BlockDealsParams()

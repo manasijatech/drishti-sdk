@@ -130,6 +130,8 @@ export type NewsItem = {
   symbol?: string | null;
   sentiment?: string | null;
   article_type?: string | null;
+  /** Sector tag (e.g. "Bank", "IT"); null when the article has none. */
+  sector?: string | null;
   scrip_code?: string | null;
   date?: string | null;
   link?: string | null;

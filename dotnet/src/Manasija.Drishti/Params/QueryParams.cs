@@ -28,6 +28,9 @@ public sealed record NewsParams : QueryParams
     /// <summary>BSE scrip codes, such as <c>532540</c>.</summary>
     public IReadOnlyList<string>? ScripCodes { get; init; }
 
+    /// <summary>Sectors, such as <c>Bank</c> or <c>IT</c> (case-insensitive exact match).</summary>
+    public IReadOnlyList<string>? Sectors { get; init; }
+
     /// <summary><c>positive</c>, <c>negative</c> or <c>neutral</c>.</summary>
     public string? Sentiment { get; init; }
 
@@ -45,7 +48,7 @@ public sealed record NewsParams : QueryParams
 
     /// <inheritdoc />
     protected internal override void WriteTo(QueryBuilder query) => query
-        .Add("symbols", Symbols).Add("scrip_codes", ScripCodes).Add("sentiment", Sentiment)
+        .Add("symbols", Symbols).Add("scrip_codes", ScripCodes).Add("sectors", Sectors).Add("sentiment", Sentiment)
         .Add("from", From).Add("to", To).Add("page", Page).Add("limit", Limit);
 }
 

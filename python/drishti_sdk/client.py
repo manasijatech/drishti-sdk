@@ -245,6 +245,7 @@ class DrishtiClient:
         *,
         symbols: list[str] | None = None,
         scrip_codes: list[str] | None = None,
+        sectors: list[str] | None = None,
         sentiment: NewsSentiment | None = None,
         from_: str | None = None,
         to: str | None = None,
@@ -254,6 +255,7 @@ class DrishtiClient:
         params = NewsQueryParams(
             symbols=symbols,
             scrip_codes=scrip_codes,
+            sectors=sectors,
             sentiment=sentiment,
             from_=from_,
             to=to,

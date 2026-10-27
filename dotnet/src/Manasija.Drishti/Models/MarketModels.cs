@@ -38,6 +38,9 @@ public sealed class NewsItem(JsonElement json) : DrishtiObject(json)
     /// <summary>The article category.</summary>
     public string? ArticleType => GetString("article_type");
 
+    /// <summary>The sector tag, such as <c>Bank</c>; <c>null</c> when the article has none.</summary>
+    public string? Sector => GetString("sector");
+
     /// <summary>The BSE scrip code.</summary>
     public string? ScripCode => GetString("scrip_code");
 

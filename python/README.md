@@ -30,6 +30,7 @@ with DrishtiClient(api_key="YOUR_API_KEY") as client:
         symbols=["RELIANCE", "TCS"],
         limit=10,
     )
+    bank_news = client.get_news(sectors=["Bank", "Finance"], limit=10)  # items include `sector`
     block_deals = client.get_block_deals(
         symbols=["RECLTD", "NAUKRI"], exchange="NSE", limit=20
     )  # 1 credit when results are returned

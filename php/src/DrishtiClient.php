@@ -164,6 +164,7 @@ final class DrishtiClient
      * @param list<string>|null $symbols
      * @param list<string>|null $scripCodes
      * @param 'positive'|'negative'|'neutral'|null $sentiment
+     * @param list<string>|null $sectors Case-insensitive exact sector match, such as Bank or IT.
      * @return array<string, mixed>|null
      */
     public function getNews(
@@ -174,10 +175,12 @@ final class DrishtiClient
         ?string $to = null,
         ?int $page = null,
         ?int $limit = null,
+        ?array $sectors = null,
     ): ?array {
         return $this->getArray('/v1/news', [
             'symbols' => $symbols,
             'scrip_codes' => $scripCodes,
+            'sectors' => $sectors,
             'sentiment' => $sentiment,
             'from' => $from,
             'to' => $to,
