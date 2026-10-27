@@ -73,6 +73,17 @@ jobs:
       # the conformance, unit and websocket session tests. Live API tests are excluded.
       - run: dotnet test Drishti.sln -c Release --filter "TestCategory!=Live"
 
+  tooling:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      # The OpenAPI diff used by .github/workflows/openapi-sync.yml.
+      - run: node --test scripts/openapi-diff.test.mjs
+
   php:
     runs-on: ubuntu-latest
     strategy:
