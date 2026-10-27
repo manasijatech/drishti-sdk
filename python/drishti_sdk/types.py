@@ -112,7 +112,6 @@ class AnnouncementWebSocketItem(AnnouncementListItem, total=False):
 class AnnouncementDetail(AnnouncementListItem, total=False):
     long_summary: str | None
     related_categories: list[str]
-    important: bool
     extracted_information: JsonValue
 
 

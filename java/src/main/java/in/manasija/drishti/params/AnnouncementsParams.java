@@ -10,7 +10,7 @@ import java.util.Collection;
  * <p>Setters are fluent and every unset filter is omitted from the request:
  *
  * <pre>{@code
- * new AnnouncementsParams().symbols("RELIANCE").categories("Board Meeting").important(true)
+ * new AnnouncementsParams().symbols("RELIANCE").categories("Board Meeting").detailed(true)
  * }</pre>
  *
  * @see in.manasija.drishti.DrishtiClient#getAnnouncements(AnnouncementsParams)
@@ -145,16 +145,6 @@ public final class AnnouncementsParams extends QueryParams<AnnouncementsParams> 
      */
     public AnnouncementsParams detailed(Boolean value) {
         return set("detailed", value);
-    }
-
-    /**
-     * Returns only items flagged important ({@code true}) or only other items ({@code false}).
-     *
-     * @param value the importance filter, or {@code null} to clear it
-     * @return this object, for chaining
-     */
-    public AnnouncementsParams important(Boolean value) {
-        return set("important", value);
     }
 
     /**

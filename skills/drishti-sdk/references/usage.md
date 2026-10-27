@@ -94,7 +94,6 @@ try {
   const announcements = await client.getAnnouncements({
     symbols: ["RELIANCE"],
     categories: ["board meeting"],
-    important: true,
     detailed: true,
     limit: 10,
   });
@@ -120,7 +119,7 @@ from drishti_sdk import DrishtiApiError, DrishtiClient
 try:
     with DrishtiClient(api_key="YOUR_API_KEY") as client:
         news = client.get_news(symbols=["RELIANCE"], limit=10)
-        announcements = client.get_announcements(symbols=["RELIANCE"], important=True, detailed=True, limit=10)
+        announcements = client.get_announcements(symbols=["RELIANCE"], detailed=True, limit=10)
         summary = client.post_daily_summary(
             body={"portfolio": [{"symbol": "RELIANCE", "exposure": 10}]}
         )
@@ -141,7 +140,7 @@ import in.manasija.drishti.params.AnnouncementsParams;
 DrishtiClient client = DrishtiClient.fromEnvironment(); // DRISHTI_API_KEY
 try {
     JsonNode announcements = client.getAnnouncements(new AnnouncementsParams()
-            .symbols("RELIANCE").categories("Board Meeting").important(true).detailed(true).limit(10));
+            .symbols("RELIANCE").categories("Board Meeting").detailed(true).limit(10));
     JsonNode summary = client.postDailySummary(Map.of("portfolio", List.of(Map.of("symbol", "RELIANCE", "exposure", 10))));
 } catch (DrishtiApiException e) {
     System.err.println(e.getStatusCode() + " " + e.getBody());

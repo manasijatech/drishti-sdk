@@ -184,7 +184,7 @@ class ConformanceTest {
             case "get_announcements" -> client.getAnnouncements(new AnnouncementsParams()
                     .symbols(list(args, "symbols")).scripCodes(list(args, "scrip_codes"))
                     .categories(list(args, "categories")).from(text(args, "from")).to(text(args, "to"))
-                    .detailed(bool(args, "detailed")).important(bool(args, "important"))
+                    .detailed(bool(args, "detailed"))
                     .page(integer(args, "page")).limit(integer(args, "limit")));
             case "get_announcements_attachments" -> client.getAnnouncementsAttachments(list(args, "ids"));
             case "get_announcement_citation_pdf" -> client.getAnnouncementCitationPdf(positional.get(0).asText());

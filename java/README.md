@@ -26,17 +26,17 @@ Maven:
 <dependency>
   <groupId>io.github.techmanasija</groupId>
   <artifactId>drishti-sdk</artifactId>
-  <version>1.0.1</version>
+  <version>1.1.0</version>
 </dependency>
 ```
 
 Gradle:
 
 ```groovy
-implementation("io.github.techmanasija:drishti-sdk:1.0.1")
+implementation("io.github.techmanasija:drishti-sdk:1.1.0")
 ```
 
-To drop the SDK onto a classpath without a build tool, use `drishti-sdk-1.0.1-all.jar`. It
+To drop the SDK onto a classpath without a build tool, use `drishti-sdk-1.1.0-all.jar`. It
 includes Jackson.
 
 ## Quick start
@@ -228,7 +228,7 @@ Runnable programs live in [`src/test/java/in/manasija/drishti/examples`](src/tes
 
 | Example | Use case |
 | --- | --- |
-| `WatchlistDigest` | Morning digest for a watchlist: important announcements, news, alerts, upcoming earnings |
+| `WatchlistDigest` | Morning digest for a watchlist: recent announcements, news, alerts, upcoming earnings |
 | `ListenAnnouncements` | Long-running worker that streams announcements, earnings and alerts |
 | `PortfolioBatchSummary` | Nightly AI summaries for many portfolios in one batch job |
 | `EarningsDeepDive` | One company's quarter: filing, results table, concall transcript, source PDF |
@@ -251,7 +251,7 @@ DRISHTI_API_KEY=... ./mvnw test -Dtest=LiveSmokeTest  # optional: real API, uses
 - runs every shared conformance fixture, the websocket session tests (a port of the PHP suite),
   loopback tests for the real JDK HTTP and websocket transports, and the examples;
 - fails on any Javadoc warning (`doclint=all`);
-- writes `target/drishti-sdk-1.0.1.jar`, `-sources.jar`, `-javadoc.jar` and `-all.jar`.
+- writes `target/drishti-sdk-1.1.0.jar`, `-sources.jar`, `-javadoc.jar` and `-all.jar`.
 
 The API reference is generated at `target/reports/apidocs/index.html`.
 

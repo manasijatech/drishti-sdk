@@ -146,9 +146,6 @@ public sealed class Announcement(JsonElement json) : DrishtiObject(json)
     /// <summary>Other categories that apply (detailed only).</summary>
     public IReadOnlyList<string> RelatedCategories => GetStringList("related_categories");
 
-    /// <summary>Whether the announcement is flagged important (detailed only).</summary>
-    public bool? Important => GetBoolean("important");
-
     /// <summary>Structured data extracted from the filing (detailed only).</summary>
     public JsonElement? ExtractedInformation => GetElement("extracted_information");
 }

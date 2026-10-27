@@ -5,7 +5,7 @@
  * DrishtiClient client = DrishtiClient.fromEnvironment(); // reads DRISHTI_API_KEY
  * JsonNode announcements = client.getAnnouncements(new AnnouncementsParams()
  *         .symbols("RELIANCE")
- *         .important(true)
+ *         .categories("Board Meeting")
  *         .limit(5));
  * }</pre>
  *

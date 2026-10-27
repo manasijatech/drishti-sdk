@@ -56,7 +56,6 @@ export type IndexQueryParams = {
 /** GET /v1/announcements list filter. */
 export type AnnouncementsListQueryParams = PaginatedFeedQueryParams & {
   categories?: string[];
-  important?: boolean;
 };
 
 export type AnnouncementsQueryParams = AnnouncementsListQueryParams;
