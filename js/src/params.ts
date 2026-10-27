@@ -15,6 +15,8 @@ export type NewsQueryParams = {
   symbols?: string[];
   /** Serialized as comma-separated `scrip_codes`. */
   scrip_codes?: string[];
+  /** Case-insensitive exact sector match (e.g. "Bank", "IT"). Serialized as comma-separated `sectors`. */
+  sectors?: string[];
   sentiment?: NewsSentiment;
   /** Query key: `from`. */
   from?: IsoDateTimeParam;

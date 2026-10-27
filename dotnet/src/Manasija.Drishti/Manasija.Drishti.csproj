@@ -7,7 +7,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <PackageId>Manasija.Drishti</PackageId>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <Title>Drishti SDK for .NET</Title>
     <Description>Official .NET client for the Drishti market-intelligence API: news, announcements, earnings, concalls, alerts, daily summaries, batch jobs and the live WebSocket feed.</Description>
     <PackageTags>drishti;manasija;nse;bse;india;stocks;market-data;sdk</PackageTags>

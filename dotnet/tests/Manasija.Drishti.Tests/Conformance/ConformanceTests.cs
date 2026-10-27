@@ -246,7 +246,8 @@ public sealed class ConformanceTests
         {
             "get_news" => await client.GetNewsAsync(new NewsParams
             {
-                Symbols = StrList(a, "symbols"), ScripCodes = StrList(a, "scrip_codes"), Sentiment = Str(a, "sentiment"),
+                Symbols = StrList(a, "symbols"), ScripCodes = StrList(a, "scrip_codes"), Sectors = StrList(a, "sectors"),
+                Sentiment = Str(a, "sentiment"),
                 From = Str(a, "from"), To = Str(a, "to"), Page = Int(a, "page"), Limit = Int(a, "limit"),
             }),
             "get_block_deals" => await client.GetBlockDealsAsync(new BlockDealsParams

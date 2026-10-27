@@ -65,6 +65,10 @@ const news = await client.getNews({
 });
 
 console.log(news.data.length);
+
+// Filter by sector; each item carries `sector` when tagged.
+const bankNews = await client.getNews({ sectors: ["Bank", "Finance"], limit: 10 });
+console.log(bankNews.data[0]?.sector);
 ```
 
 All SDK calls automatically send `X-API-Key` using the key passed to `DrishtiClient`.

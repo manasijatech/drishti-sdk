@@ -72,6 +72,30 @@ public final class NewsParams extends QueryParams<NewsParams> {
     }
 
     /**
+     * Filters by sector, for example {@code Bank} or {@code IT} (case-insensitive exact match).
+     *
+     * <p>Sent as one comma-separated {@code sectors} value. An empty list sends no filter.
+     *
+     * @param values the sector names
+     * @return this object, for chaining
+     */
+    public NewsParams sectors(String... values) {
+        return setList("sectors", values == null ? null : Arrays.asList(values));
+    }
+
+    /**
+     * Filters by sector, for example {@code Bank} or {@code IT} (case-insensitive exact match).
+     *
+     * <p>Sent as one comma-separated {@code sectors} value. An empty list sends no filter.
+     *
+     * @param values the sector names, or {@code null} to clear the filter
+     * @return this object, for chaining
+     */
+    public NewsParams sectors(Collection<String> values) {
+        return setList("sectors", values);
+    }
+
+    /**
      * Filters by sentiment: {@code positive}, {@code negative} or {@code neutral} (see {@link in.manasija.drishti.Types#SENTIMENT_POSITIVE}).
      *
      * @param value the sentiment, or {@code null} to clear it

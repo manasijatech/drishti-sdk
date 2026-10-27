@@ -174,6 +174,7 @@ class NewsItem(TypedDict, total=False):
     symbol: str | None
     sentiment: str | None
     article_type: str | None
+    sector: str | None
     scrip_code: str | None
     date: str | None
     link: str | None

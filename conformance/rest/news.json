@@ -12,6 +12,7 @@
         "args": {
           "symbols": ["TCS", "INFY"],
           "scrip_codes": ["532540"],
+          "sectors": ["IT", "Bank"],
           "sentiment": "positive",
           "from": "2026-01-01",
           "to": "2026-01-31T23:59:59Z",
@@ -26,6 +27,7 @@
         "query": {
           "symbols": ["TCS,INFY"],
           "scrip_codes": ["532540"],
+          "sectors": ["IT,Bank"],
           "sentiment": ["positive"],
           "from": ["2026-01-01"],
           "to": ["2026-01-31T23:59:59Z"],
@@ -37,7 +39,7 @@
     },
     {
       "id": "news.empty_lists_are_omitted",
-      "call": { "method": "get_news", "args": { "symbols": [], "scrip_codes": [] } },
+      "call": { "method": "get_news", "args": { "symbols": [], "scrip_codes": [], "sectors": [] } },
       "expect_request": { "method": "GET", "path": "/v1/news", "query": {} }
     }
   ]

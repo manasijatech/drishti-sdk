@@ -101,7 +101,7 @@ public final class DrishtiClient {
     public static final String BASE_URL_ENV = "DRISHTI_BASE_URL";
 
     private static final String API_KEY_HEADER = "X-API-Key";
-    private static final String USER_AGENT = "drishti-sdk-java/1.1.0";
+    private static final String USER_AGENT = "drishti-sdk-java/1.1.1";
     private static final int MAX_REDIRECTS = 5;
 
     private final String apiKey;

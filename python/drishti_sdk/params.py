@@ -16,7 +16,7 @@ def _format_query_params(raw: dict[str, Any]) -> dict[str, Any] | None:
     for key, value in raw.items():
         if value is None:
             continue
-        if key in {"symbols", "scrip_codes", "categories", "ids", "type"} and isinstance(value, list):
+        if key in {"symbols", "scrip_codes", "sectors", "categories", "ids", "type"} and isinstance(value, list):
             if not value:
                 continue
             out[key] = ",".join(str(item) for item in value)
@@ -32,6 +32,7 @@ class NewsQueryParams(BaseModel):
 
     symbols: list[str] | None = None
     scrip_codes: list[str] | None = None
+    sectors: list[str] | None = None
     sentiment: NewsSentiment | None = None
     from_: str | None = Field(default=None, alias="from")
     to: str | None = None
