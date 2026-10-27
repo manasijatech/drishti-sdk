@@ -26,17 +26,17 @@ Maven:
 <dependency>
   <groupId>io.github.techmanasija</groupId>
   <artifactId>drishti-sdk</artifactId>
-  <version>1.1.1</version>
+  <version>1.1.2</version>
 </dependency>
 ```
 
 Gradle:
 
 ```groovy
-implementation("io.github.techmanasija:drishti-sdk:1.1.1")
+implementation("io.github.techmanasija:drishti-sdk:1.1.2")
 ```
 
-To drop the SDK onto a classpath without a build tool, use `drishti-sdk-1.1.1-all.jar`. It
+To drop the SDK onto a classpath without a build tool, use `drishti-sdk-1.1.2-all.jar`. It
 includes Jackson.
 
 ## Quick start
@@ -94,7 +94,9 @@ JsonNode summary  = client.postDailySummary(Map.of(
 ```
 
 `getEarnings` and `getEarningsDetail` copy `earnings_table_extraction` into `earnings_table` when
-the API only returns the extraction, so you can always read `earnings_table`.
+the API only returns the extraction, so you can always read `earnings_table`. Detailed rows also
+include `results_pages`, the 1-indexed PDF pages that hold the results statements; pass one to
+`getEarningsCitationPage`.
 
 For a route without a helper method, use `request()` directly:
 
@@ -251,7 +253,7 @@ DRISHTI_API_KEY=... ./mvnw test -Dtest=LiveSmokeTest  # optional: real API, uses
 - runs every shared conformance fixture, the websocket session tests (a port of the PHP suite),
   loopback tests for the real JDK HTTP and websocket transports, and the examples;
 - fails on any Javadoc warning (`doclint=all`);
-- writes `target/drishti-sdk-1.1.1.jar`, `-sources.jar`, `-javadoc.jar` and `-all.jar`.
+- writes `target/drishti-sdk-1.1.2.jar`, `-sources.jar`, `-javadoc.jar` and `-all.jar`.
 
 The API reference is generated at `target/reports/apidocs/index.html`.
 

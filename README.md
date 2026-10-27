@@ -37,7 +37,7 @@ Java install (Java 17+), Maven:
 <dependency>
   <groupId>io.github.techmanasija</groupId>
   <artifactId>drishti-sdk</artifactId>
-  <version>1.1.1</version>
+  <version>1.1.2</version>
 </dependency>
 ```
 

@@ -144,6 +144,8 @@ class EarningsWebSocketItem(EarningsListItem, total=False):
 class EarningsDetail(EarningsListItem, total=False):
     earnings_significant: bool
     earnings_table: dict[str, object] | None
+    # 1-indexed pages of the source PDF that hold the results statements ([] when none); pass one to get_earnings_citation_page.
+    results_pages: list[int]
 
 
 class EarningsWebSocketDetail(EarningsDetail, total=False):
