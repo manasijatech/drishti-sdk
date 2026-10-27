@@ -20,7 +20,7 @@ announcements, earnings, conference calls, news, or real-time updates.
 
 See `python/README.md`, `js/README.md`, `php/README.md`, `java/README.md`, `dotnet/README.md`, and `mcp/README.md` for install and usage.
 All SDKs pass the shared [conformance suite](conformance/README.md), so they behave the same.
-A scheduled [OpenAPI sync](openapi/README.md) workflow opens a PR updating every SDK when the public API spec changes.
+A scheduled [OpenAPI sync](openapi/README.md) workflow opens an issue when the public API spec changes in a way the SDKs need to follow.
 
 **Getting started:** [create a Drishti API key](https://platform.manasija.in/)
 and read the [Drishti API documentation](https://developers.manasija.in/docs).

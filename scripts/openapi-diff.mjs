@@ -259,7 +259,7 @@ function describe(change) {
   }
 }
 
-/** Markdown summary grouped by area, for the PR body and the Claude prompt. */
+/** Markdown summary grouped by area, for the run summary and the sync issue. */
 export function formatReport(changes, { specUrl, hash } = {}) {
   if (changes.length === 0) {
     return "No SDK-relevant changes in the OpenAPI spec.\n";

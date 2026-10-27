@@ -25,4 +25,4 @@ Each package publishes when its version changes on `main`: `python/pyproject.tom
 
 ## OpenAPI sync
 
-`.github/workflows/openapi-sync.yml` checks the live spec every 6 hours. On an SDK-relevant change it has Claude update the conformance cases and SDKs, then opens a `spec-sync` PR for review. It never merges or publishes. Needs the `ANTHROPIC_API_KEY` (or `CLAUDE_CODE_OAUTH_TOKEN`) and `SDK_SYNC_TOKEN` secrets.
+`.github/workflows/openapi-sync.yml` checks the live spec every 6 hours. On an SDK-relevant change it opens a `spec-sync` issue listing the changes with a checklist. Resolve it in one PR that updates the conformance cases and SDKs and runs `node scripts/openapi-diff.mjs --write`.
