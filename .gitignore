@@ -24,3 +24,7 @@ dotnet/**/obj/
 dotnet/**/TestResults/
 *.nupkg
 *.snupkg
+
+# OpenAPI sync working files
+openapi/.sync-report.md
+openapi/.sync-notes.md

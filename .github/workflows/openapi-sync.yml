@@ -1,0 +1,119 @@
+name: OpenAPI sync
+
+# Polls the live Drishti OpenAPI spec. When operations, parameters, or schemas change
+# (prose-only edits are ignored), it opens an issue listing the changes and a checklist for
+# updating the conformance cases and all five SDKs. Setup and manual runs: openapi/README.md.
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      spec_url:
+        description: OpenAPI spec to compare against the snapshot
+        default: https://developers.manasija.in/openapi.json
+      dry_run:
+        description: Only report the diff in the run summary; don't open an issue
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: openapi-sync
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SPEC_URL: ${{ inputs.spec_url || 'https://developers.manasija.in/openapi.json' }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Compare the live spec with the snapshot
+        id: diff
+        run: |
+          set +e
+          node scripts/openapi-diff.mjs --spec-url "$SPEC_URL" --report "$RUNNER_TEMP/report.md"
+          code=$?
+          set -e
+          if [ "$code" -ne 0 ] && [ "$code" -ne 10 ]; then
+            echo "::error::Could not compare the OpenAPI spec (exit $code)."
+            exit "$code"
+          fi
+          cat "$RUNNER_TEMP/report.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Open an issue for the SDK updates
+        if: steps.diff.outputs.changed == 'true' && inputs.dry_run != true
+        env:
+          HASH: ${{ steps.diff.outputs.hash }}
+          COUNT: ${{ steps.diff.outputs.count }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create spec-sync --color 1D76DB \
+            --description "The public OpenAPI spec changed; the SDKs need updating" 2>/dev/null || true
+
+          # One issue per spec shape: skip if this shape already has an open issue.
+          existing=$(gh issue list --label spec-sync --state open --limit 100 --json number,title \
+            --jq "map(select(.title | contains(\"$HASH\"))) | .[0].number // empty")
+          if [ -n "$existing" ]; then
+            echo "Issue #$existing already covers spec shape $HASH." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          report="$RUNNER_TEMP/report.md"
+          body="$RUNNER_TEMP/issue-body.md"
+          {
+            # GitHub caps issue bodies at 65,536 characters.
+            head -c 50000 "$report"
+            if [ "$(wc -c < "$report")" -gt 50000 ]; then
+              echo
+              echo "_Report truncated. The full diff is in the [workflow run]($RUN_URL) summary._"
+            fi
+            cat <<'EOF'
+
+          ## Checklist
+
+          Work through it in one PR (see `AGENTS.md`):
+
+          - [ ] Update the conformance cases in `conformance/` first
+          - [ ] Python (`python/`)
+          - [ ] TypeScript (`js/`)
+          - [ ] PHP (`php/`)
+          - [ ] Java (`java/`), including `ConformanceTest.invoke`
+          - [ ] .NET (`dotnet/`), including `ConformanceTests.Invoke`
+          - [ ] READMEs, examples, and `skills/drishti-sdk/references/usage.md`
+          - [ ] If a public surface changed, bump minor versions: `pyproject.toml`, `package.json` and `package-lock.json`, `pom.xml` and the Java User-Agent, the `.csproj` and the .NET User-Agent. Tag PHP `vX.Y.0` after merge.
+          - [ ] `bash scripts/run-sdk-tests.sh all` passes
+          - [ ] `node scripts/openapi-diff.mjs --write` so the snapshot matches the new spec
+          - [ ] Check whether the landing docs (`drishti-landing-page/lib/docs.ts`) need the same change, then run `bun run sync:docs` in platform-console
+          EOF
+            echo
+            echo "_Opened by the [OpenAPI sync workflow]($RUN_URL)._"
+          } > "$body"
+
+          plural=$([ "$COUNT" = 1 ] && echo change || echo changes)
+          url=$(gh issue create --label spec-sync --body-file "$body" \
+            --title "OpenAPI spec changed: update the SDKs ($COUNT $plural, $HASH)")
+          number=${url##*/}
+          echo "Opened $url" | tee -a "$GITHUB_STEP_SUMMARY"
+
+          # This issue diffs against the same snapshot, so it covers older open ones.
+          for old in $(gh issue list --label spec-sync --state open --limit 100 --json number \
+            --jq ".[] | select(.number != $number) | .number"); do
+            gh issue close "$old" --reason "not planned" \
+              --comment "Superseded by #$number, which lists every change since the snapshot."
+          done
